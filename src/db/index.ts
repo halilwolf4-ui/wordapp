@@ -93,7 +93,10 @@ export async function initializeDatabase(onProgress?: (progress: number, message
   }
 
   onProgress?.(10, 'Kelime verisi indiriliyor...');
-  const res = await fetch('/words.json');
+  const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+    ? import.meta.env.BASE_URL
+    : `${import.meta.env.BASE_URL}/`;
+  const res = await fetch(`${baseUrl}words.json`);
   if (!res.ok) {
     throw new Error(`words.json yüklenemedi: HTTP ${res.status}`);
   }
