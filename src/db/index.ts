@@ -50,7 +50,11 @@ export const DEFAULT_PROFILE: UserProfile = {
   streak: 0,
   lastActiveDate: '',
   unlockedBadges: [],
-  highScoreSpeedRound: 0
+  highScoreSpeedRound: 0,
+  streakFreezes: 0,
+  frozenDates: [],
+  consecutiveCompletedDays: 0,
+  lastCompletedDate: ''
 };
 
 /**

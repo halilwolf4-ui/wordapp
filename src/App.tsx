@@ -40,6 +40,47 @@ export const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSpeedRoundOpen, setIsSpeedRoundOpen] = useState(false);
   const [isPassaparolaOpen, setIsPassaparolaOpen] = useState(false);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // Keyboard awareness listener
+  useEffect(() => {
+    const handleFocusIn = (e: FocusEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') {
+        setIsKeyboardVisible(true);
+      }
+    };
+    const handleFocusOut = () => {
+      // Delay slightly to handle transitions between inputs
+      setTimeout(() => {
+        const activeTag = document.activeElement?.tagName;
+        if (activeTag !== 'INPUT' && activeTag !== 'TEXTAREA') {
+          setIsKeyboardVisible(false);
+        }
+      }, 100);
+    };
+
+    const handleViewportResize = () => {
+      if (window.visualViewport) {
+        const isShrunk = window.visualViewport.height < window.innerHeight * 0.75;
+        if (isShrunk) {
+          setIsKeyboardVisible(true);
+        } else if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+          setIsKeyboardVisible(false);
+        }
+      }
+    };
+
+    window.addEventListener('focusin', handleFocusIn);
+    window.addEventListener('focusout', handleFocusOut);
+    window.visualViewport?.addEventListener('resize', handleViewportResize);
+
+    return () => {
+      window.removeEventListener('focusin', handleFocusIn);
+      window.removeEventListener('focusout', handleFocusOut);
+      window.visualViewport?.removeEventListener('resize', handleViewportResize);
+    };
+  }, []);
 
   // Maps for O(1) lookups
   const wordsMap = useMemo(() => {
@@ -149,9 +190,12 @@ export const App: React.FC = () => {
     };
   }, [dailyLogs, today]);
 
-  // Streak & Active Day maintenance
+  // Streak & Active Day maintenance with Streak Freeze protection
   const updateStreakAndActivity = async (currentProf: UserProfile, dateStr: string): Promise<UserProfile> => {
     let newStreak = currentProf.streak;
+    let freezes = currentProf.streakFreezes || 0;
+    let frozenDates = [...(currentProf.frozenDates || [])];
+
     if (!currentProf.lastActiveDate) {
       newStreak = 1;
     } else if (currentProf.lastActiveDate !== dateStr) {
@@ -159,16 +203,71 @@ export const App: React.FC = () => {
       if (diff === 1) {
         newStreak += 1;
       } else if (diff > 1) {
-        newStreak = 1;
+        // Missed (diff - 1) days
+        const missedDays = diff - 1;
+        if (freezes > 0 && missedDays <= freezes) {
+          // Protected by streak freeze!
+          freezes -= missedDays;
+          for (let i = 1; i <= missedDays; i++) {
+            frozenDates.push(addDays(currentProf.lastActiveDate, i));
+          }
+          newStreak += 1; // Streak preserved and continued!
+        } else {
+          newStreak = 1;
+        }
       }
     }
 
     const updated: UserProfile = {
       ...currentProf,
       streak: newStreak,
-      lastActiveDate: dateStr
+      lastActiveDate: dateStr,
+      streakFreezes: freezes,
+      frozenDates: frozenDates
     };
     return updated;
+  };
+
+  // 5 consecutive days completed = 1 Streak Freeze (Max 2)
+  const handleSessionCompleted = async (): Promise<{ earnedFreeze: boolean }> => {
+    let earnedFreeze = false;
+    let consecutive = profile.consecutiveCompletedDays || 0;
+    let freezes = profile.streakFreezes || 0;
+
+    if (profile.lastCompletedDate !== today) {
+      if (!profile.lastCompletedDate) {
+        consecutive = 1;
+      } else {
+        const diff = daysBetween(profile.lastCompletedDate, today);
+        if (diff === 1) {
+          consecutive += 1;
+        } else if (diff === 2 && profile.frozenDates?.includes(addDays(profile.lastCompletedDate, 1))) {
+          consecutive += 1;
+        } else {
+          consecutive = 1;
+        }
+      }
+
+      if (consecutive >= 5) {
+        if (freezes < 2) {
+          freezes += 1;
+          earnedFreeze = true;
+        }
+        consecutive = 0; // Reset counter for next 5-day cycle
+      }
+
+      const updatedProf: UserProfile = {
+        ...profile,
+        lastCompletedDate: today,
+        consecutiveCompletedDays: consecutive,
+        streakFreezes: Math.min(2, freezes) // Strictly maximum 2
+      };
+
+      await db.profile.put(updatedProf);
+      setProfile(updatedProf);
+    }
+
+    return { earnedFreeze };
   };
 
   // Check and unlock badges
@@ -459,16 +558,20 @@ export const App: React.FC = () => {
       />
 
       {/* Sticky Top Header */}
-      <Header
-        profile={profile}
-        onOpenSpeedRound={() => setIsSpeedRoundOpen(true)}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-      />
+      {!isKeyboardVisible && (
+        <Header
+          profile={profile}
+          onOpenSpeedRound={() => setIsSpeedRoundOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+        />
+      )}
 
       {/* Main Container */}
-      <main className="flex-1 max-w-md w-full mx-auto px-4 pt-4">
+      <main className={`flex-1 max-w-md w-full mx-auto px-3.5 pt-2 ${
+        currentTab === 'home' && !isKeyboardVisible ? 'pb-20' : 'pb-2'
+      }`}>
         {/* PWA Install Banner (Tam Ekran Uygulama Olarak Yükle) */}
-        <InstallPromptBanner />
+        {currentTab === 'home' && !isKeyboardVisible && <InstallPromptBanner />}
 
         {/* OVERLAYS: Settings & Speed Round */}
         {isSettingsOpen ? (
@@ -527,9 +630,14 @@ export const App: React.FC = () => {
                 wordsQueue={newWordsQueue}
                 allWordsMap={wordsMap}
                 allProgress={allProgress}
+                dailyNewTarget={settings.dailyNewTarget}
+                profile={profile}
+                dailyLogs={dailyLogs}
+                todayStr={today}
                 onCompleteWord={handleLearnWordComplete}
                 onMarkWordKnown={handleMarkWordKnown}
                 onMarkWordLearning={handleMarkWordLearning}
+                onSessionCompleted={handleSessionCompleted}
                 onClose={() => setCurrentTab('home')}
                 onRefreshBatch={loadData}
               />
@@ -539,7 +647,12 @@ export const App: React.FC = () => {
               <ReviewView
                 dueQueue={dueQueue}
                 allWordsMap={wordsMap}
+                dailyReviewLimit={settings.dailyReviewLimit}
+                profile={profile}
+                dailyLogs={dailyLogs}
+                todayStr={today}
                 onReviewAnswer={handleReviewWordAnswer}
+                onSessionCompleted={handleSessionCompleted}
                 onClose={() => setCurrentTab('home')}
                 onRefreshDue={loadData}
               />
@@ -566,8 +679,8 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* Fixed Bottom Navigation */}
-      {!isSettingsOpen && !isSpeedRoundOpen && !isPassaparolaOpen && (
+      {/* Fixed Bottom Navigation - Hidden during active learning, review, passaparola, or keyboard typing */}
+      {!isSettingsOpen && !isSpeedRoundOpen && !isPassaparolaOpen && !isKeyboardVisible && currentTab !== 'learn' && currentTab !== 'review' && (
         <Navbar
           currentTab={currentTab}
           onTabChange={setCurrentTab}

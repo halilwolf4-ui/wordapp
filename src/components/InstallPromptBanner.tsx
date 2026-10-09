@@ -4,7 +4,13 @@ import { Download, Smartphone, X } from 'lucide-react';
 export const InstallPromptBanner: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isStandalone, setIsStandalone] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return localStorage.getItem('kelime_avi_pwa_dismissed') === '1';
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     // Check if already opened as PWA standalone app
@@ -25,6 +31,13 @@ export const InstallPromptBanner: React.FC = () => {
     };
   }, []);
 
+  const handleDismiss = () => {
+    try {
+      localStorage.setItem('kelime_avi_pwa_dismissed', '1');
+    } catch {}
+    setDismissed(true);
+  };
+
   const handleInstallClick = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
@@ -33,7 +46,6 @@ export const InstallPromptBanner: React.FC = () => {
         setDeferredPrompt(null);
       }
     } else {
-      // Guide user if browser event not fired yet
       alert(
         'Uygulama olarak yüklemek için:\n1. Chrome sağ üst köşedeki üç noktaya (⋮) dokunun.\n2. "Uygulamayı Yükle" veya "Ana Ekrana Ekle" seçeneğini seçin.'
       );
@@ -45,32 +57,31 @@ export const InstallPromptBanner: React.FC = () => {
   }
 
   return (
-    <div className="bg-gradient-to-r from-indigo-900/90 via-purple-900/90 to-slate-900/90 border border-indigo-500/40 rounded-2xl p-3.5 mb-4 shadow-xl backdrop-blur-md relative animate-fadeIn">
-      <button
-        onClick={() => setDismissed(true)}
-        className="absolute top-2.5 right-2.5 text-slate-400 hover:text-white p-1 rounded-full"
-        title="Kapat"
-      >
-        <X size={16} />
-      </button>
-
-      <div className="flex items-center space-x-3 pr-6">
-        <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-lg">
-          <Smartphone size={22} />
+    <div className="bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-slate-900/80 border border-indigo-500/30 rounded-xl p-2.5 mb-2.5 shadow-md backdrop-blur-md flex items-center justify-between animate-fadeIn text-xs">
+      <div className="flex items-center space-x-2.5 min-w-0 pr-2">
+        <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow">
+          <Smartphone size={16} />
         </div>
-        <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-bold text-white truncate">Uygulamayı Telefona İndir</h4>
-          <p className="text-xs text-indigo-200/80">Tam ekran mobil uygulama deneyimi</p>
+        <div className="truncate">
+          <span className="font-bold text-white block truncate">Uygulamayı Yükle</span>
+          <span className="text-[10px] text-indigo-200/80 block truncate">Tam ekran mobil deneyim</span>
         </div>
       </div>
 
-      <div className="mt-3">
+      <div className="flex items-center space-x-1.5 shrink-0">
         <button
           onClick={handleInstallClick}
-          className="w-full py-2.5 px-4 bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-2 shadow-md transition-all"
+          className="py-1 px-2.5 bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white text-[11px] font-bold rounded-lg flex items-center space-x-1 shadow transition-all"
         >
-          <Download size={16} />
-          <span>Telefona Yükle (Ana Ekrana Ekle)</span>
+          <Download size={13} />
+          <span>Yükle</span>
+        </button>
+        <button
+          onClick={handleDismiss}
+          className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors"
+          title="Kapat"
+        >
+          <X size={14} />
         </button>
       </div>
     </div>

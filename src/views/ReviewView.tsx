@@ -16,10 +16,18 @@ import {
 } from 'lucide-react';
 import { speakEnglish } from '../services/speech';
 
+import { UserProfile, DailyLog } from '../types';
+import { DailyStreakCompletion } from '../components/DailyStreakCompletion';
+
 interface Props {
   dueQueue: Progress[];
   allWordsMap: Map<number, Word>;
+  dailyReviewLimit?: number;
+  profile?: UserProfile;
+  dailyLogs?: DailyLog[];
+  todayStr?: string;
   onReviewAnswer: (wordId: number, isCorrect: boolean, isPartial: boolean) => Promise<void>;
+  onSessionCompleted?: () => Promise<{ earnedFreeze: boolean }>;
   onClose: () => void;
   onRefreshDue: () => void;
 }
@@ -38,10 +46,16 @@ const MIN_QUESTION_GAP = 5; // En az 5 soru aralık kuralı
 export const ReviewView: React.FC<Props> = ({
   dueQueue,
   allWordsMap,
+  dailyReviewLimit = 40,
+  profile,
+  dailyLogs,
+  todayStr,
   onReviewAnswer,
+  onSessionCompleted,
   onClose,
   onRefreshDue
 }) => {
+  const [earnedFreeze, setEarnedFreeze] = useState(false);
   const [sessionList, setSessionList] = useState<ReviewSessionState[]>([]);
   const [globalStep, setGlobalStep] = useState(0);
 
@@ -65,8 +79,19 @@ export const ReviewView: React.FC<Props> = ({
   const [combo, setCombo] = useState(0);
   const lastWordIdRef = useRef<number | null>(null);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const initializedRef = useRef(false);
+  const typingInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus and center typing input when keyboard appears
+  useEffect(() => {
+    if (currentQuestion?.type === 'typing') {
+      const timer = setTimeout(() => {
+        typingInputRef.current?.focus();
+        typingInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuestion]);
 
   // Pick Next Question with 5-question cooldown
   const pickNextQuestion = useCallback(
@@ -82,6 +107,11 @@ export const ReviewView: React.FC<Props> = ({
         setPhase('summary');
         sound.playLevelUp();
         fireCelebration();
+        if (onSessionCompleted) {
+          onSessionCompleted().then(res => {
+            if (res?.earnedFreeze) setEarnedFreeze(true);
+          });
+        }
         return;
       }
 
@@ -151,7 +181,8 @@ export const ReviewView: React.FC<Props> = ({
     if (!initializedRef.current && dueQueue.length > 0) {
       initializedRef.current = true;
       const items: ReviewSessionState[] = [];
-      const slice = dueQueue.slice(0, 15);
+      const limit = Math.max(1, dailyReviewLimit || 40);
+      const slice = dueQueue.slice(0, limit);
 
       slice.forEach((prog) => {
         const w = allWordsMap.get(prog.wordId);
@@ -309,15 +340,27 @@ export const ReviewView: React.FC<Props> = ({
     );
   }
 
-  // SUMMARY SCREEN
+  // SUMMARY SCREEN: Daily Streak & Freeze Progress
   if (phase === 'summary') {
+    if (profile && dailyLogs && todayStr) {
+      return (
+        <DailyStreakCompletion
+          profile={profile}
+          dailyLogs={dailyLogs}
+          todayStr={todayStr}
+          earnedFreeze={earnedFreeze}
+          onClose={onClose}
+        />
+      );
+    }
+
     return (
       <div className="space-y-6 pb-20 pt-4 text-center">
         <div className="w-20 h-20 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce">
           <CheckCircle2 size={44} />
         </div>
         <div className="space-y-2">
-          <h2 className="text-3xl font-black text-white">Tekrar Tamamlandı!</h2>
+          <h2 className="text-3xl font-black text-white">{sessionList.length} Tekrar Tamamlandı!</h2>
           <p className="text-slate-400 text-sm max-w-xs mx-auto">
             Günün tekrarlarını önce şıklarla, ardından klavyeyle yazarak başarıyla tazeledin.
           </p>
@@ -390,7 +433,7 @@ export const ReviewView: React.FC<Props> = ({
       {phase === 'study' && currentQuestion && (
         <div className="space-y-4">
           <div
-            className={`bg-gradient-to-b from-slate-800 to-slate-900 border rounded-3xl p-6 shadow-2xl space-y-6 transition-all relative ${
+            className={`bg-gradient-to-b from-slate-800 to-slate-900 border rounded-3xl p-4 sm:p-6 shadow-2xl space-y-4 sm:space-y-5 transition-all relative ${
               inlineFeedback?.status === 'correct'
                 ? 'border-indigo-500 bg-indigo-950/20'
                 : inlineFeedback?.status === 'wrong'
@@ -398,7 +441,7 @@ export const ReviewView: React.FC<Props> = ({
                 : 'border-slate-700'
             }`}
           >
-            <div className="text-center space-y-2">
+            <div className="text-center space-y-1.5">
               <div className="flex items-center justify-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
                 {currentQuestion.isFiller ? (
                   <span className="text-amber-400 flex items-center space-x-1">
@@ -415,18 +458,18 @@ export const ReviewView: React.FC<Props> = ({
                 )}
               </div>
 
-              <div className="flex items-center justify-center space-x-3">
-                <h2 className="text-4xl font-black text-white">{currentQuestion.word.en}</h2>
-                <AudioButton text={currentQuestion.word.en} size={24} />
+              <div className="flex items-center justify-center space-x-2">
+                <h2 className="text-2xl sm:text-4xl font-black text-white">{currentQuestion.word.en}</h2>
+                <AudioButton text={currentQuestion.word.en} size={20} />
               </div>
               {currentQuestion.word.ipa && (
-                <p className="text-sm font-mono text-indigo-400">{currentQuestion.word.ipa}</p>
+                <p className="text-xs sm:text-sm font-mono text-indigo-400">{currentQuestion.word.ipa}</p>
               )}
             </div>
 
             {/* A) Choice Mode */}
             {currentQuestion.type === 'choice' && (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {choiceOptions.map((opt, idx) => {
                   const isSelected = selectedChoice === opt;
                   const isThisCorrect = checkTurkishAnswer(opt, currentQuestion.word.tr);
@@ -447,7 +490,7 @@ export const ReviewView: React.FC<Props> = ({
                       key={idx}
                       disabled={selectedChoice !== null}
                       onClick={() => handleSelectChoice(opt)}
-                      className={`w-full p-4 rounded-2xl border text-left text-base font-semibold transition-all active:scale-[0.98] ${btnStyle}`}
+                      className={`w-full p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border text-left text-sm sm:text-base font-semibold transition-all active:scale-[0.98] ${btnStyle}`}
                     >
                       {opt}
                     </button>
@@ -467,19 +510,20 @@ export const ReviewView: React.FC<Props> = ({
                     handleTypingSubmit(e);
                   }
                 }}
-                className="space-y-4"
+                className="space-y-3"
               >
                 <input
+                  ref={typingInputRef}
                   type="text"
                   autoFocus
                   disabled={inlineFeedback !== null}
                   value={typedInput}
                   onChange={(e) => setTypedInput(e.target.value)}
                   placeholder="Türkçe anlamını yaz..."
-                  className={`w-full py-4 px-4 rounded-2xl bg-slate-900 border text-white text-center text-xl font-bold tracking-wide focus:outline-none ${
+                  className={`w-full py-3 px-3.5 rounded-xl bg-slate-900 border-2 text-white text-center text-lg sm:text-xl font-bold tracking-wide focus:outline-none transition-all ${
                     inlineFeedback?.status === 'wrong'
                       ? 'border-rose-500 bg-rose-950/30 text-rose-200'
-                      : 'border-slate-700 focus:border-indigo-500'
+                      : 'border-slate-700 focus:border-indigo-500 shadow-inner'
                   }`}
                 />
 
@@ -488,16 +532,16 @@ export const ReviewView: React.FC<Props> = ({
                     type="button"
                     autoFocus
                     onClick={handleAdvanceManually}
-                    className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-black rounded-2xl shadow-lg shadow-indigo-950/60 text-base transition-all flex items-center justify-center space-x-2"
+                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-black rounded-xl shadow-lg shadow-indigo-950/60 text-sm sm:text-base transition-all flex items-center justify-center space-x-2"
                   >
                     <span>Diğer Kelimeye Geç</span>
-                    <ArrowRight size={20} />
+                    <ArrowRight size={18} />
                   </button>
                 ) : (
                   <button
                     type="submit"
                     disabled={!typedInput.trim()}
-                    className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 active:scale-[0.98] disabled:opacity-50 text-white font-extrabold rounded-2xl shadow-lg shadow-indigo-950/60 text-base transition-all"
+                    className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 active:scale-[0.98] disabled:opacity-50 text-white font-black rounded-xl shadow-md text-sm sm:text-base transition-all"
                   >
                     Onayla
                   </button>

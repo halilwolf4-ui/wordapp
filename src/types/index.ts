@@ -56,6 +56,10 @@ export interface UserProfile {
   lastActiveDate: string;
   unlockedBadges: string[];
   highScoreSpeedRound: number;
+  streakFreezes?: number; // 0, 1, or maximum 2
+  frozenDates?: string[]; // list of dates saved by a freeze
+  consecutiveCompletedDays?: number; // 0-5 consecutive days toward next freeze
+  lastCompletedDate?: string; // last date user completed a daily study session
 }
 
 export interface DailyLog {

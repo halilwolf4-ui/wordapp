@@ -31,6 +31,17 @@ export const Header: React.FC<Props> = ({
             <span>{profile.streak} gün</span>
           </div>
 
+          {/* Streak Freeze Badge */}
+          {(profile.streakFreezes !== undefined && profile.streakFreezes > 0) && (
+            <div
+              className="flex items-center space-x-0.5 bg-sky-500/15 border border-sky-400/30 px-2 py-1 rounded-full text-sky-300 font-bold text-xs"
+              title={`${profile.streakFreezes} Seri Dondurma Hakkı`}
+            >
+              <span>🧊</span>
+              <span>{profile.streakFreezes}</span>
+            </div>
+          )}
+
           {/* Level & XP */}
           <div className="flex items-center space-x-1.5 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full text-xs">
             <span className="font-extrabold text-indigo-400">Lv.{profile.level}</span>

@@ -20,15 +20,21 @@ import {
 } from 'lucide-react';
 import { speakEnglish } from '../services/speech';
 
-import { Progress } from '../types';
+import { Progress, UserProfile, DailyLog } from '../types';
+import { DailyStreakCompletion } from '../components/DailyStreakCompletion';
 
 interface Props {
   wordsQueue: Word[];
   allWordsMap: Map<number, Word>;
   allProgress?: Progress[];
+  dailyNewTarget?: number;
+  profile?: UserProfile;
+  dailyLogs?: DailyLog[];
+  todayStr?: string;
   onCompleteWord: (word: Word, isCorrect: boolean) => Promise<void>;
   onMarkWordKnown?: (word: Word) => Promise<void>;
   onMarkWordLearning?: (word: Word) => Promise<void>;
+  onSessionCompleted?: () => Promise<{ earnedFreeze: boolean }>;
   onClose: () => void;
   onRefreshBatch: () => void;
 }
@@ -52,7 +58,6 @@ interface PersistedState {
   globalStep: number;
 }
 
-const TARGET_UNKNOWN = 20;
 const MIN_QUESTION_GAP = 5;
 const STORAGE_LEARN_SESSION = 'kelime_avi_active_learn_session';
 const STORAGE_BASKET = 'kelime_avi_learn_unknown_basket';
@@ -61,12 +66,20 @@ export const LearnView: React.FC<Props> = ({
   wordsQueue,
   allWordsMap,
   allProgress,
+  dailyNewTarget = 10,
+  profile,
+  dailyLogs,
+  todayStr,
   onCompleteWord,
   onMarkWordKnown,
   onMarkWordLearning,
+  onSessionCompleted,
   onClose,
   onRefreshBatch
 }) => {
+  const targetWordsCount = Math.max(1, dailyNewTarget);
+  const [earnedFreeze, setEarnedFreeze] = useState(false);
+
   // Discovery phase state
   const [candidateList, setCandidateList] = useState<Word[]>([]);
   const [candidateIndex, setCandidateIndex] = useState(0);
@@ -104,6 +117,18 @@ export const LearnView: React.FC<Props> = ({
   const lastWordIdRef = useRef<number | null>(null);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initializedRef = useRef(false);
+  const typingInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus and center typing input when keyboard appears
+  useEffect(() => {
+    if (currentQuestion?.type === 'typing') {
+      const timer = setTimeout(() => {
+        typingInputRef.current?.focus();
+        typingInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuestion]);
 
   // Helper to persist study session
   const saveSession = (list: WordSessionState[], step: number) => {
@@ -153,6 +178,11 @@ export const LearnView: React.FC<Props> = ({
         setPhase('summary');
         sound.playLevelUp();
         fireCelebration();
+        if (onSessionCompleted) {
+          onSessionCompleted().then(res => {
+            if (res?.earnedFreeze) setEarnedFreeze(true);
+          });
+        }
         return;
       }
 
@@ -269,12 +299,15 @@ export const LearnView: React.FC<Props> = ({
 
           const hasUncompleted = restoredList.some(i => !i.typingPassed);
           if (hasUncompleted) {
-            // DIRECTLY RESUME STUDYING THE UNKNOWN WORDS!
-            setSessionList(restoredList);
+            // Trim to targetWordsCount if previously loaded with 20 items and target is lower
+            const trimmedList = restoredList.length > targetWordsCount
+              ? restoredList.slice(0, targetWordsCount)
+              : restoredList;
+            setSessionList(trimmedList);
             const step = parsed.globalStep || 1;
             setGlobalStep(step);
             setPhase('study');
-            pickNextQuestion(restoredList, step, null);
+            pickNextQuestion(trimmedList, step, null);
             return;
           }
         }
@@ -313,19 +346,19 @@ export const LearnView: React.FC<Props> = ({
       }
     }
 
-    if (initialBasket.length >= TARGET_UNKNOWN) {
-      startStudy(initialBasket);
+    if (initialBasket.length >= targetWordsCount) {
+      startStudy(initialBasket.slice(0, targetWordsCount));
       return;
     }
 
-    // 3. No active study: show discovery to find 20 unknown words
+    // 3. No active study: show discovery to find targetWordsCount unknown words
     const unselectedCandidates = wordsQueue.filter(
       w => !initialBasket.some(b => b.id === w.id)
     );
 
     // If no candidate words remain in discovery pool, but we have words waiting:
     if (unselectedCandidates.length === 0 && initialBasket.length > 0) {
-      startStudy(initialBasket);
+      startStudy(initialBasket.slice(0, targetWordsCount));
       return;
     }
 
@@ -404,9 +437,9 @@ export const LearnView: React.FC<Props> = ({
     setIsFlipped(false);
     setDragOffset(0);
 
-    // If 20 unknown words collected -> immediately start study!
-    if (updatedBasket.length >= TARGET_UNKNOWN) {
-      startStudy(updatedBasket);
+    // If target unknown words collected -> immediately start study!
+    if (updatedBasket.length >= targetWordsCount) {
+      startStudy(updatedBasket.slice(0, targetWordsCount));
       return;
     }
 
@@ -529,15 +562,27 @@ export const LearnView: React.FC<Props> = ({
 
   const learnedCount = sessionList.filter(i => i.typingPassed).length;
 
-  // SUMMARY SCREEN
+  // SUMMARY SCREEN: Daily Streak & Freeze Progress
   if (phase === 'summary') {
+    if (profile && dailyLogs && todayStr) {
+      return (
+        <DailyStreakCompletion
+          profile={profile}
+          dailyLogs={dailyLogs}
+          todayStr={todayStr}
+          earnedFreeze={earnedFreeze}
+          onClose={onClose}
+        />
+      );
+    }
+
     return (
       <div className="space-y-6 pb-20 pt-4 text-center">
         <div className="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce">
           <CheckCircle2 size={44} />
         </div>
         <div className="space-y-2">
-          <h2 className="text-3xl font-black text-white">20 Kelime Tamamlandı!</h2>
+          <h2 className="text-3xl font-black text-white">{sessionList.length} Kelime Tamamlandı!</h2>
           <p className="text-slate-400 text-sm max-w-xs mx-auto">
             Bilmeyip seçtiğin tüm kelimeleri önce şıklarla, ardından klavyeyle yazarak başarıyla öğrendin.
           </p>
@@ -565,7 +610,7 @@ export const LearnView: React.FC<Props> = ({
             className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-2xl shadow-xl flex items-center justify-center space-x-2 text-base"
           >
             <RotateCcw size={18} />
-            <span>Yeni 20 Kelime Bul (Flash Kart)</span>
+            <span>Yeni {targetWordsCount} Kelime Bul (Flash Kart)</span>
           </button>
           <button
             onClick={onClose}
@@ -594,15 +639,15 @@ export const LearnView: React.FC<Props> = ({
           {phase === 'discovery' ? (
             <div>
               <div className="flex justify-between text-xs text-slate-400 mb-1">
-                <span>🎯 20 Bilinmeyen Kelime Topla</span>
+                <span>🎯 {targetWordsCount} Bilinmeyen Kelime Topla</span>
                 <span className="font-bold text-amber-400 font-mono">
-                  {unknownBasket.length} / {TARGET_UNKNOWN}
+                  {unknownBasket.length} / {targetWordsCount}
                 </span>
               </div>
               <div className="h-2.5 bg-slate-800 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-amber-500 transition-all duration-300"
-                  style={{ width: `${(unknownBasket.length / TARGET_UNKNOWN) * 100}%` }}
+                  style={{ width: `${(unknownBasket.length / targetWordsCount) * 100}%` }}
                 />
               </div>
             </div>
@@ -768,7 +813,7 @@ export const LearnView: React.FC<Props> = ({
       {phase === 'study' && currentQuestion && (
         <div className="space-y-4">
           <div
-            className={`bg-gradient-to-b from-slate-800 to-slate-900 border rounded-3xl p-6 shadow-2xl space-y-6 transition-all relative ${
+            className={`bg-gradient-to-b from-slate-800 to-slate-900 border rounded-3xl p-4 sm:p-6 shadow-2xl space-y-4 sm:space-y-5 transition-all relative ${
               inlineFeedback?.status === 'correct'
                 ? 'border-emerald-500 bg-emerald-950/20'
                 : inlineFeedback?.status === 'wrong'
@@ -777,7 +822,7 @@ export const LearnView: React.FC<Props> = ({
             }`}
           >
             {/* Header / Word */}
-            <div className="text-center space-y-2">
+            <div className="text-center space-y-1.5">
               <div className="flex items-center justify-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
                 {currentQuestion.isFiller ? (
                   <span className="text-amber-400 flex items-center space-x-1">
@@ -801,18 +846,18 @@ export const LearnView: React.FC<Props> = ({
                 </div>
               )}
 
-              <div className="flex items-center justify-center space-x-3">
-                <h2 className="text-4xl font-black text-white">{currentQuestion.word.en}</h2>
-                <AudioButton text={currentQuestion.word.en} size={24} />
+              <div className="flex items-center justify-center space-x-2">
+                <h2 className="text-2xl sm:text-4xl font-black text-white">{currentQuestion.word.en}</h2>
+                <AudioButton text={currentQuestion.word.en} size={20} />
               </div>
               {currentQuestion.word.ipa && (
-                <p className="text-sm font-mono text-indigo-400">{currentQuestion.word.ipa}</p>
+                <p className="text-xs sm:text-sm font-mono text-indigo-400">{currentQuestion.word.ipa}</p>
               )}
             </div>
 
             {/* A) Multiple Choice Mode */}
             {currentQuestion.type === 'choice' && (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {choiceOptions.map((opt, idx) => {
                   const isSelected = selectedChoice === opt;
                   const isThisCorrect = checkTurkishAnswer(opt, currentQuestion.word.tr);
@@ -833,7 +878,7 @@ export const LearnView: React.FC<Props> = ({
                       key={idx}
                       disabled={selectedChoice !== null}
                       onClick={() => handleSelectChoice(opt)}
-                      className={`w-full p-4 rounded-2xl border text-left text-base font-semibold transition-all active:scale-[0.98] ${btnStyle}`}
+                      className={`w-full p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border text-left text-sm sm:text-base font-semibold transition-all active:scale-[0.98] ${btnStyle}`}
                     >
                       {opt}
                     </button>
@@ -853,19 +898,20 @@ export const LearnView: React.FC<Props> = ({
                     handleTypingSubmit(e);
                   }
                 }}
-                className="space-y-4"
+                className="space-y-3"
               >
                 <input
+                  ref={typingInputRef}
                   type="text"
                   autoFocus
                   disabled={inlineFeedback !== null}
                   value={typedInput}
                   onChange={(e) => setTypedInput(e.target.value)}
                   placeholder="Türkçe anlamını yaz..."
-                  className={`w-full py-4 px-4 rounded-2xl bg-slate-900 border text-white text-center text-xl font-bold tracking-wide focus:outline-none ${
+                  className={`w-full py-3 px-3.5 rounded-xl bg-slate-900 border-2 text-white text-center text-lg sm:text-xl font-bold tracking-wide focus:outline-none transition-all ${
                     inlineFeedback?.status === 'wrong'
                       ? 'border-rose-500 bg-rose-950/30 text-rose-200'
-                      : 'border-slate-700 focus:border-indigo-500'
+                      : 'border-slate-700 focus:border-emerald-500 shadow-inner'
                   }`}
                 />
 
@@ -874,16 +920,16 @@ export const LearnView: React.FC<Props> = ({
                     type="button"
                     autoFocus
                     onClick={handleAdvanceManually}
-                    className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-black rounded-2xl shadow-lg shadow-indigo-950/60 text-base transition-all flex items-center justify-center space-x-2"
+                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-black rounded-xl shadow-lg shadow-indigo-950/60 text-sm sm:text-base transition-all flex items-center justify-center space-x-2"
                   >
                     <span>Diğer Kelimeye Geç</span>
-                    <ArrowRight size={20} />
+                    <ArrowRight size={18} />
                   </button>
                 ) : (
                   <button
                     type="submit"
                     disabled={!typedInput.trim()}
-                    className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.98] disabled:opacity-50 text-white font-extrabold rounded-2xl shadow-lg shadow-emerald-950/60 text-base transition-all"
+                    className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.98] disabled:opacity-50 text-white font-black rounded-xl shadow-md text-sm sm:text-base transition-all"
                   >
                     Onayla
                   </button>

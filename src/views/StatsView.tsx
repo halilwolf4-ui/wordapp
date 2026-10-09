@@ -105,6 +105,24 @@ export const StatsView: React.FC<Props> = ({
         </div>
       </div>
 
+      {/* Streak Freeze Status Banner */}
+      <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3 flex items-center justify-between text-xs">
+        <div className="flex items-center space-x-2.5">
+          <span className="text-lg">🧊</span>
+          <div>
+            <span className="font-bold text-white block">Seri Dondurma: {profile.streakFreezes || 0} / 2</span>
+            <span className="text-[10px] text-slate-400">
+              {(profile.streakFreezes || 0) >= 2
+                ? 'Maksimum dondurma hakkı dolu (2/2).'
+                : `${5 - (profile.consecutiveCompletedDays || 0)} gün sonra yeni hak verilir.`}
+            </span>
+          </div>
+        </div>
+        <span className="px-2 py-0.5 rounded-full bg-sky-500/15 border border-sky-400/30 text-sky-300 font-bold text-[10px]">
+          {profile.consecutiveCompletedDays || 0}/5 Gün
+        </span>
+      </div>
+
       {/* 30-Day Activity Heatmap */}
       <div className="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-5 space-y-3">
         <div className="flex items-center justify-between">
