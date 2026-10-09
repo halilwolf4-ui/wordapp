@@ -19,6 +19,7 @@ import { WordListView } from './views/WordListView';
 import { StatsView } from './views/StatsView';
 import { SettingsView } from './views/SettingsView';
 import { SpeedRoundView } from './views/SpeedRoundView';
+import { PassaparolaView } from './views/PassaparolaView';
 
 export const App: React.FC = () => {
   // Initialization state
@@ -38,6 +39,7 @@ export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavTab>('home');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSpeedRoundOpen, setIsSpeedRoundOpen] = useState(false);
+  const [isPassaparolaOpen, setIsPassaparolaOpen] = useState(false);
 
   // Maps for O(1) lookups
   const wordsMap = useMemo(() => {
@@ -485,6 +487,19 @@ export const App: React.FC = () => {
             onUpdateHighScore={handleUpdateHighScore}
             onClose={() => setIsSpeedRoundOpen(false)}
           />
+        ) : isPassaparolaOpen ? (
+          <PassaparolaView
+            allWords={allWords}
+            progressMap={progressMap}
+            onAddXp={async (amount) => {
+              const newXp = profile.xp + amount;
+              const newLevel = calculateLevel(newXp);
+              const updatedProf = { ...profile, xp: newXp, level: newLevel };
+              await db.profile.put(updatedProf);
+              setProfile(updatedProf);
+            }}
+            onClose={() => setIsPassaparolaOpen(false)}
+          />
         ) : (
           /* TAB VIEWS (Kept mounted to preserve learning session state and active questions) */
           <div>
@@ -503,6 +518,7 @@ export const App: React.FC = () => {
                 onStartReview={() => setCurrentTab('review')}
                 onStartLearn={() => setCurrentTab('learn')}
                 onStartSpeedRound={() => setIsSpeedRoundOpen(true)}
+                onStartPassaparola={() => setIsPassaparolaOpen(true)}
               />
             </div>
 
@@ -551,7 +567,7 @@ export const App: React.FC = () => {
       </main>
 
       {/* Fixed Bottom Navigation */}
-      {!isSettingsOpen && !isSpeedRoundOpen && (
+      {!isSettingsOpen && !isSpeedRoundOpen && !isPassaparolaOpen && (
         <Navbar
           currentTab={currentTab}
           onTabChange={setCurrentTab}

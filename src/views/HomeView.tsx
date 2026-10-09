@@ -16,6 +16,7 @@ interface Props {
   onStartReview: () => void;
   onStartLearn: () => void;
   onStartSpeedRound: () => void;
+  onStartPassaparola: () => void;
 }
 
 export const HomeView: React.FC<Props> = ({
@@ -30,7 +31,8 @@ export const HomeView: React.FC<Props> = ({
   profile,
   onStartReview,
   onStartLearn,
-  onStartSpeedRound
+  onStartSpeedRound,
+  onStartPassaparola
 }) => {
   // Goal ring percentage
   const goalPercent = Math.min(100, Math.round((todayCorrect / Math.max(1, dailyGoal)) * 100));
@@ -209,25 +211,55 @@ export const HomeView: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Quick Round Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-amber-600/30 to-orange-600/30 border border-amber-500/40 rounded-2xl p-4 flex items-center justify-between">
-        <div>
-          <div className="flex items-center space-x-1 text-amber-300 text-xs font-bold uppercase tracking-wider mb-0.5">
-            <Award size={14} />
-            <span>Mini Oyun</span>
+      {/* Mini Games Section */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 px-1">
+          Mini Oyunlar & Refleks
+        </h3>
+
+        {/* Passaparola Game Banner */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-purple-900/40 via-indigo-900/40 to-slate-900/60 border border-purple-500/40 rounded-2xl p-4 flex items-center justify-between shadow-lg shadow-purple-950/30">
+          <div>
+            <div className="flex items-center space-x-1.5 text-purple-300 text-xs font-bold uppercase tracking-wider mb-0.5">
+              <span className="w-4 h-4 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black flex items-center justify-center">
+                P
+              </span>
+              <span>Kelime Çarkı</span>
+            </div>
+            <h4 className="text-base font-extrabold text-white">Passaparola (120s)</h4>
+            <p className="text-xs text-purple-200/80 mt-0.5">
+              A'dan Z'ye kelimelerin Türkçesini yaz! Fiiller <em>"to"</em> olmadan sorulur.
+            </p>
           </div>
-          <h4 className="text-base font-extrabold text-white">60 Saniye Hızlı Tur</h4>
-          <p className="text-xs text-amber-200/80 mt-0.5">
-            Zamana karşı refleks testi! En yüksek rekorun: <span className="font-bold text-white">{profile.highScoreSpeedRound}</span>
-          </p>
+          <button
+            onClick={onStartPassaparola}
+            className="px-4 py-2.5 bg-gradient-to-r from-purple-500 via-indigo-500 to-pink-500 hover:opacity-95 active:scale-95 text-white font-black text-xs rounded-xl shadow-lg shadow-purple-950/50 flex items-center space-x-1.5 transition-all shrink-0 ml-2"
+          >
+            <Play size={14} className="fill-white" />
+            <span>Çarkı Başlat</span>
+          </button>
         </div>
-        <button
-          onClick={onStartSpeedRound}
-          className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 active:scale-95 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-orange-950/50 flex items-center space-x-1.5 transition-all"
-        >
-          <Play size={14} className="fill-slate-950" />
-          <span>Başla</span>
-        </button>
+
+        {/* Quick Round Banner */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-amber-600/30 to-orange-600/30 border border-amber-500/40 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <div className="flex items-center space-x-1 text-amber-300 text-xs font-bold uppercase tracking-wider mb-0.5">
+              <Award size={14} />
+              <span>Refleks Testi</span>
+            </div>
+            <h4 className="text-base font-extrabold text-white">60 Saniye Hızlı Tur</h4>
+            <p className="text-xs text-amber-200/80 mt-0.5">
+              Doğru <span className="text-emerald-400 font-bold">+1 sn</span>, yanlış <span className="text-rose-400 font-bold">-1 sn</span>! Rekorun: <span className="font-bold text-white">{profile.highScoreSpeedRound}</span>
+            </p>
+          </div>
+          <button
+            onClick={onStartSpeedRound}
+            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 active:scale-95 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-orange-950/50 flex items-center space-x-1.5 transition-all shrink-0 ml-2"
+          >
+            <Play size={14} className="fill-slate-950" />
+            <span>Başla</span>
+          </button>
+        </div>
       </div>
     </div>
   );

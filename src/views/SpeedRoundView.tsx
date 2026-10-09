@@ -24,6 +24,7 @@ export const SpeedRoundView: React.FC<Props> = ({
   const [currentWord, setCurrentWord] = useState<Word | null>(null);
   const [options, setOptions] = useState<string[]>([]);
   const [isNewRecord, setIsNewRecord] = useState(false);
+  const [timeDelta, setTimeDelta] = useState<{ val: number; id: number } | null>(null);
 
   // Pick new question
   const nextQuestion = () => {
@@ -50,6 +51,7 @@ export const SpeedRoundView: React.FC<Props> = ({
     setScore(0);
     setCombo(0);
     setTimeLeft(60);
+    setTimeDelta(null);
     setIsNewRecord(false);
     setGameState('playing');
     nextQuestion();
@@ -96,9 +98,23 @@ export const SpeedRoundView: React.FC<Props> = ({
       setScore(nextScore);
       setCombo(nextCombo);
       sound.playCorrect(nextCombo);
+
+      // +1 second bonus
+      setTimeDelta({ val: 1, id: Date.now() });
+      setTimeLeft((prev) => Math.min(prev + 1, 999));
     } else {
       setCombo(0);
       sound.playWrong();
+
+      // -1 second penalty
+      setTimeDelta({ val: -1, id: Date.now() });
+      setTimeLeft((prev) => {
+        const next = Math.max(prev - 1, 0);
+        if (next === 0) {
+          endGame();
+        }
+        return next;
+      });
     }
 
     nextQuestion();
@@ -131,7 +147,7 @@ export const SpeedRoundView: React.FC<Props> = ({
           <div className="space-y-2">
             <h2 className="text-2xl font-black text-white">Reflekslerini Sına!</h2>
             <p className="text-sm text-slate-400">
-              60 saniye içinde bilebildiğin kadar çok kelime bil. Yanlışlar tekrar havuzunu etkilemez!
+              60 saniye içinde en çok kelimeyi bil. Doğru cevaplar <span className="text-emerald-400 font-bold">+1 sn</span> kazandırır, yanlışlar <span className="text-rose-400 font-bold">-1 sn</span> götürür!
             </p>
           </div>
 
@@ -154,14 +170,26 @@ export const SpeedRoundView: React.FC<Props> = ({
         <div className="space-y-5">
           {/* Top Indicators */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-800/90 border border-slate-700 rounded-2xl p-3 flex items-center justify-between">
+            <div className="bg-slate-800/90 border border-slate-700 rounded-2xl p-3 flex items-center justify-between relative overflow-hidden">
               <span className="text-xs text-slate-400 flex items-center space-x-1">
                 <Clock size={16} className="text-amber-400" />
                 <span>Kalan Süre</span>
               </span>
-              <span className={`text-2xl font-black font-mono ${timeLeft <= 10 ? 'text-rose-500 animate-ping' : 'text-white'}`}>
-                {timeLeft}s
-              </span>
+              <div className="flex items-center space-x-1.5">
+                {timeDelta && (
+                  <span
+                    key={timeDelta.id}
+                    className={`text-xs font-black animate-bounce ${
+                      timeDelta.val > 0 ? 'text-emerald-400' : 'text-rose-400'
+                    }`}
+                  >
+                    {timeDelta.val > 0 ? '+1s' : '-1s'}
+                  </span>
+                )}
+                <span className={`text-2xl font-black font-mono ${timeLeft <= 10 ? 'text-rose-500 animate-ping' : 'text-white'}`}>
+                  {timeLeft}s
+                </span>
+              </div>
             </div>
 
             <div className="bg-slate-800/90 border border-slate-700 rounded-2xl p-3 flex items-center justify-between">
