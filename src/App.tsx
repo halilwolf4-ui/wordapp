@@ -10,6 +10,7 @@ import { fireLevelUp } from './components/Confetti';
 import { Header } from './components/Header';
 import { Navbar, NavTab } from './components/Navbar';
 import { BackupReminderBanner } from './components/BackupReminderBanner';
+import { InstallPromptBanner } from './components/InstallPromptBanner';
 
 import { HomeView } from './views/HomeView';
 import { LearnView } from './views/LearnView';
@@ -464,6 +465,9 @@ export const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-md w-full mx-auto px-4 pt-4">
+        {/* PWA Install Banner (Tam Ekran Uygulama Olarak Yükle) */}
+        <InstallPromptBanner />
+
         {/* OVERLAYS: Settings & Speed Round */}
         {isSettingsOpen ? (
           <SettingsView

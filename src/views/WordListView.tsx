@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Word, Progress } from '../types';
 import { AudioButton } from '../components/AudioButton';
 import { HighlightedText } from '../components/HighlightedText';
-import { Plus, Search, RotateCcw, CheckCircle, Sparkles, Filter, X } from 'lucide-react';
+import { Plus, Search, RotateCcw, CheckCircle, Sparkles, Filter, X, Loader2, BookOpen, Wand2 } from 'lucide-react';
+import { lookupWord } from '../services/dictionaryService';
 
 interface Props {
   allWords: Word[];
@@ -28,6 +29,79 @@ export const WordListView: React.FC<Props> = ({
   const [newExampleEn, setNewExampleEn] = useState('');
   const [newExampleTr, setNewExampleTr] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Dictionary Lookup State
+  const [isSearchingDict, setIsSearchingDict] = useState(false);
+  const [dictStatus, setDictStatus] = useState<{
+    text: string;
+    source: 'local' | 'online' | 'none';
+  } | null>(null);
+
+  // Trigger dictionary lookup
+  const performLookup = async (englishWord: string, allowOnline = true) => {
+    const q = englishWord.trim();
+    if (!q || q.length < 2) return;
+
+    setIsSearchingDict(true);
+    setDictStatus(null);
+
+    try {
+      const result = await lookupWord(q, allWords, allowOnline);
+      if (result) {
+        setNewTr(result.tr || '');
+        if (result.ipa) setNewIpa(result.ipa);
+        if (result.exampleEn) setNewExampleEn(result.exampleEn);
+        if (result.exampleTr) setNewExampleTr(result.exampleTr);
+
+        setDictStatus({
+          text: result.source === 'local'
+            ? '✓ Yerel sözlükte bulundu ve otomatik dolduruldu!'
+            : '✓ Çevrimiçi sözlükte bulundu ve otomatik dolduruldu!',
+          source: result.source
+        });
+      } else {
+        setDictStatus({
+          text: 'Sözlükte bulunamadı, bilgileri elle girebilirsiniz.',
+          source: 'none'
+        });
+      }
+    } catch {
+      setDictStatus({
+        text: 'Sözlük araması sırasında hata oluştu.',
+        source: 'none'
+      });
+    } finally {
+      setIsSearchingDict(false);
+    }
+  };
+
+  // Debounced auto-lookup from local dictionary while typing
+  useEffect(() => {
+    const trimmed = newEn.trim();
+    if (!trimmed || trimmed.length < 2 || !isAddModalOpen) {
+      setDictStatus(null);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      // Auto-lookup locally first silently (fast offline experience)
+      lookupWord(trimmed, allWords, false).then(result => {
+        if (result) {
+          // If found in local words and user hasn't typed Turkish translation yet
+          setNewTr(prev => (prev ? prev : result.tr));
+          setNewIpa(prev => (prev ? prev : (result.ipa || '')));
+          setNewExampleEn(prev => (prev ? prev : (result.exampleEn || '')));
+          setNewExampleTr(prev => (prev ? prev : (result.exampleTr || '')));
+          setDictStatus({
+            text: '✓ Yerel sözlükte bulundu ve otomatik dolduruldu!',
+            source: 'local'
+          });
+        }
+      });
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [newEn, allWords, isAddModalOpen]);
 
   // Filtered words
   const filteredWords = useMemo(() => {
@@ -77,6 +151,7 @@ export const WordListView: React.FC<Props> = ({
       setNewIpa('');
       setNewExampleEn('');
       setNewExampleTr('');
+      setDictStatus(null);
       setIsAddModalOpen(false);
       setActiveFilter('custom');
     } finally {
@@ -266,17 +341,67 @@ export const WordListView: React.FC<Props> = ({
 
             <form onSubmit={handleCreateWord} className="space-y-3.5 text-sm">
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
-                  İngilizce Kelime *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newEn}
-                  onChange={(e) => setNewEn(e.target.value)}
-                  placeholder="örn: resilient"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-300">
+                    İngilizce Kelime *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => performLookup(newEn, true)}
+                    disabled={isSearchingDict || !newEn.trim()}
+                    className="flex items-center space-x-1 text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 disabled:opacity-40 disabled:hover:text-indigo-400 transition-colors"
+                    title="Sözlükten çeviri, telaffuz ve örnek cümleyi otomatik çek"
+                  >
+                    {isSearchingDict ? (
+                      <>
+                        <Loader2 size={12} className="animate-spin text-indigo-400" />
+                        <span>Aranıyor...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 size={12} />
+                        <span>Sözlükten Getir</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    value={newEn}
+                    onChange={(e) => setNewEn(e.target.value)}
+                    onBlur={() => {
+                      if (newEn.trim() && !dictStatus && !newTr.trim()) {
+                        performLookup(newEn, true);
+                      }
+                    }}
+                    placeholder="örn: resilient"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                {/* Status indicator */}
+                {dictStatus && (
+                  <div className="mt-1.5">
+                    {dictStatus.source === 'local' ? (
+                      <div className="flex items-center space-x-1.5 text-[11px] text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                        <CheckCircle size={13} className="shrink-0" />
+                        <span>{dictStatus.text}</span>
+                      </div>
+                    ) : dictStatus.source === 'online' ? (
+                      <div className="flex items-center space-x-1.5 text-[11px] text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded-lg border border-sky-500/20">
+                        <BookOpen size={13} className="shrink-0" />
+                        <span>{dictStatus.text}</span>
+                      </div>
+                    ) : (
+                      <div className="text-[11px] text-amber-400/90 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
+                        {dictStatus.text}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>
