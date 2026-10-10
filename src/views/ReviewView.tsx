@@ -19,6 +19,8 @@ import { speakEnglish } from '../services/speech';
 import { UserProfile, DailyLog } from '../types';
 import { DailyStreakCompletion } from '../components/DailyStreakCompletion';
 import { QuizOptionButton } from '../components/QuizOptionButton';
+import { WordHintsList } from '../components/WordHintsList';
+import { getWordHints, prefetchHints, getMaxAllowedHints, WordHint } from '../services/hintService';
 
 interface Props {
   dueQueue: Progress[];
@@ -67,6 +69,10 @@ export const ReviewView: React.FC<Props> = ({
   const [sessionList, setSessionList] = useState<ReviewSessionState[]>([]);
   const [sessionTarget, setSessionTarget] = useState(1);
   const [globalStep, setGlobalStep] = useState(0);
+
+  // Encounter-based Hints state
+  const [hintStats, setHintStats] = useState<Record<number, { encounters: number; wrongCount: number; revealedCount: number }>>({});
+  const [currentWordHints, setCurrentWordHints] = useState<WordHint[]>([]);
 
   const [currentQuestion, setCurrentQuestion] = useState<{
     word: Word;
@@ -324,6 +330,23 @@ export const ReviewView: React.FC<Props> = ({
       lastWordIdRef.current = chosenWord.id;
       setCurrentQuestion({ word: chosenWord, type: questionType, isFiller, isRefresher });
 
+      // Track encounter count for hints
+      setHintStats(prev => {
+        const existing = prev[chosenWord.id] || { encounters: 0, wrongCount: 0, revealedCount: 0 };
+        return {
+          ...prev,
+          [chosenWord.id]: {
+            ...existing,
+            encounters: existing.encounters + 1
+          }
+        };
+      });
+
+      // Load English hints for this word
+      getWordHints(chosenWord, Array.from(allWordsMap.values())).then(hints => {
+        setCurrentWordHints(hints);
+      });
+
       if (questionType === 'choice') {
         const allWordsArr = Array.from(allWordsMap.values());
         const correctTr = chosenWord.tr.split(/[,;/]+/)[0].trim();
@@ -378,12 +401,30 @@ export const ReviewView: React.FC<Props> = ({
         setCombo(0);
         setGlobalStep(1);
         lastWordIdRef.current = null;
+        prefetchHints(items.map(i => i.word), Array.from(allWordsMap.values()));
         if (items.length > 0) {
           pickNextQuestion(items, 1, null, items.length);
         }
       }
     }
   }, [dueQueue, allWordsMap, dailyReviewLimit, pickNextQuestion, todayStr, dailyLogs]);
+
+  // Reveal next English hint (Eş anlamlı / Benzer anlamlı / Zıt anlamlı)
+  const handleRevealNextHint = () => {
+    if (!currentQuestion) return;
+    const wordId = currentQuestion.word.id;
+    setHintStats(prev => {
+      const existing = prev[wordId] || { encounters: 1, wrongCount: 0, revealedCount: 0 };
+      const nextRevealed = Math.min(3, existing.revealedCount + 1);
+      return {
+        ...prev,
+        [wordId]: {
+          ...existing,
+          revealedCount: nextRevealed
+        }
+      };
+    });
+  };
 
   // Auto pronounce
   useEffect(() => {
@@ -439,6 +480,18 @@ export const ReviewView: React.FC<Props> = ({
         setSessionList(updatedList);
       }
 
+      // Increment wrong count for hints logic
+      setHintStats(prev => {
+        const existing = prev[targetWord.id] || { encounters: 1, wrongCount: 0, revealedCount: 0 };
+        return {
+          ...prev,
+          [targetWord.id]: {
+            ...existing,
+            wrongCount: existing.wrongCount + 1
+          }
+        };
+      });
+
       setInlineFeedback({ status: 'wrong', correctAnswer: targetWord.tr });
 
       const nextStep = globalStep + 1;
@@ -487,6 +540,18 @@ export const ReviewView: React.FC<Props> = ({
           : item
       );
       setSessionList(updatedList);
+
+      // Increment wrong count for hints logic
+      setHintStats(prev => {
+        const existing = prev[targetWord.id] || { encounters: 1, wrongCount: 0, revealedCount: 0 };
+        return {
+          ...prev,
+          [targetWord.id]: {
+            ...existing,
+            wrongCount: existing.wrongCount + 1
+          }
+        };
+      });
 
       setInlineFeedback({ status: 'wrong', correctAnswer: targetWord.tr });
 
@@ -667,6 +732,15 @@ export const ReviewView: React.FC<Props> = ({
                 <p className="text-xs sm:text-sm font-mono text-indigo-400">{currentQuestion.word.ipa}</p>
               )}
             </div>
+
+            {/* Word Hints List (Encounter-gated English hints: Eş/Benzer/Zıt) */}
+            <WordHintsList
+              hints={currentWordHints}
+              revealedCount={hintStats[currentQuestion.word.id]?.revealedCount || 0}
+              maxAllowed={getMaxAllowedHints(hintStats[currentQuestion.word.id]?.encounters || 1)}
+              onRevealNext={handleRevealNextHint}
+              disabled={inlineFeedback !== null}
+            />
 
             {/* A) Choice Mode with QuizOptionButton */}
             {currentQuestion.type === 'choice' && (

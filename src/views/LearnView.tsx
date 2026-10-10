@@ -23,6 +23,8 @@ import { speakEnglish } from '../services/speech';
 import { Progress, UserProfile, DailyLog } from '../types';
 import { DailyStreakCompletion } from '../components/DailyStreakCompletion';
 import { QuizOptionButton } from '../components/QuizOptionButton';
+import { WordHintsList } from '../components/WordHintsList';
+import { getWordHints, prefetchHints, getMaxAllowedHints, WordHint } from '../services/hintService';
 
 interface Props {
   wordsQueue: Word[];
@@ -57,6 +59,7 @@ interface PersistedState {
     choicePassedAtStep: number | null;
   }[];
   globalStep: number;
+  hintStats?: Record<number, { encounters: number; wrongCount: number; revealedCount: number }>;
 }
 
 const MIN_QUESTION_GAP = 5;
@@ -96,6 +99,10 @@ export const LearnView: React.FC<Props> = ({
   const [sessionList, setSessionList] = useState<WordSessionState[]>([]);
   const [globalStep, setGlobalStep] = useState(0);
 
+  // Encounter-based Hints state
+  const [hintStats, setHintStats] = useState<Record<number, { encounters: number; wrongCount: number; revealedCount: number }>>({});
+  const [currentWordHints, setCurrentWordHints] = useState<WordHint[]>([]);
+
   // Active question
   const [currentQuestion, setCurrentQuestion] = useState<{
     word: Word;
@@ -132,8 +139,11 @@ export const LearnView: React.FC<Props> = ({
   }, [currentQuestion]);
 
   // Helper to persist study session
-  // Helper to persist study session
-  const saveSession = (list: WordSessionState[], step: number) => {
+  const saveSession = (
+    list: WordSessionState[],
+    step: number,
+    stats: Record<number, { encounters: number; wrongCount: number; revealedCount: number }> = hintStats
+  ) => {
     const uncompleted = list.filter(i => !i.typingPassed);
     const learned = list.filter(i => i.typingPassed).length;
     if (learned >= targetWordsCount || uncompleted.length === 0) {
@@ -147,7 +157,8 @@ export const LearnView: React.FC<Props> = ({
         typingPassed: i.typingPassed,
         choicePassedAtStep: i.choicePassedAtStep
       })),
-      globalStep: step
+      globalStep: step,
+      hintStats: stats
     };
     try {
       localStorage.setItem(STORAGE_LEARN_SESSION, JSON.stringify(data));
@@ -263,6 +274,25 @@ export const LearnView: React.FC<Props> = ({
       lastWordIdRef.current = chosenWord.id;
       setCurrentQuestion({ word: chosenWord, type: questionType, isFiller });
 
+      // Track encounter count for hints
+      setHintStats(prev => {
+        const existing = prev[chosenWord.id] || { encounters: 0, wrongCount: 0, revealedCount: 0 };
+        const updated = {
+          ...prev,
+          [chosenWord.id]: {
+            ...existing,
+            encounters: existing.encounters + 1
+          }
+        };
+        saveSession(list, currentStep, updated);
+        return updated;
+      });
+
+      // Load English hints for this word
+      getWordHints(chosenWord, Array.from(allWordsMap.values())).then(hints => {
+        setCurrentWordHints(hints);
+      });
+
       if (questionType === 'choice') {
         const allWordsArr = Array.from(allWordsMap.values());
         const correctTr = chosenWord.tr.split(/[,;/]+/)[0].trim();
@@ -290,9 +320,10 @@ export const LearnView: React.FC<Props> = ({
       setGlobalStep(1);
       saveSession(list, 1);
       localStorage.removeItem(STORAGE_BASKET);
+      prefetchHints(words, Array.from(allWordsMap.values()));
       pickNextQuestion(list, 1, null);
     },
-    [pickNextQuestion]
+    [pickNextQuestion, allWordsMap]
   );
 
   // Initialize or resume on mount
@@ -337,6 +368,10 @@ export const LearnView: React.FC<Props> = ({
               ? restoredList.slice(0, targetWordsCount)
               : restoredList;
             setSessionList(trimmedList);
+            if (parsed.hintStats) {
+              setHintStats(parsed.hintStats);
+            }
+            prefetchHints(trimmedList.map(i => i.word), Array.from(allWordsMap.values()));
             const step = parsed.globalStep || 1;
             setGlobalStep(step);
             setPhase('study');
@@ -547,6 +582,25 @@ export const LearnView: React.FC<Props> = ({
     }
   };
 
+  // Reveal next English hint (Eş anlamlı / Benzer anlamlı / Zıt anlamlı)
+  const handleRevealNextHint = () => {
+    if (!currentQuestion) return;
+    const wordId = currentQuestion.word.id;
+    setHintStats(prev => {
+      const existing = prev[wordId] || { encounters: 1, wrongCount: 0, revealedCount: 0 };
+      const nextRevealed = Math.min(3, existing.revealedCount + 1);
+      const updated = {
+        ...prev,
+        [wordId]: {
+          ...existing,
+          revealedCount: nextRevealed
+        }
+      };
+      saveSession(sessionList, globalStep, updated);
+      return updated;
+    });
+  };
+
   // Multiple Choice Answer
   const handleSelectChoice = (option: string) => {
     if (selectedChoice !== null || !currentQuestion) return;
@@ -585,7 +639,20 @@ export const LearnView: React.FC<Props> = ({
 
       const nextStep = globalStep + 1;
       setGlobalStep(nextStep);
-      saveSession(sessionList, nextStep);
+
+      // Increment wrong count for hints logic
+      setHintStats(prev => {
+        const existing = prev[targetWord.id] || { encounters: 1, wrongCount: 0, revealedCount: 0 };
+        const updated = {
+          ...prev,
+          [targetWord.id]: {
+            ...existing,
+            wrongCount: existing.wrongCount + 1
+          }
+        };
+        saveSession(sessionList, nextStep, updated);
+        return updated;
+      });
     }
   };
 
@@ -627,7 +694,20 @@ export const LearnView: React.FC<Props> = ({
 
       const nextStep = globalStep + 1;
       setGlobalStep(nextStep);
-      saveSession(sessionList, nextStep);
+
+      // Increment wrong count for hints logic
+      setHintStats(prev => {
+        const existing = prev[targetWord.id] || { encounters: 1, wrongCount: 0, revealedCount: 0 };
+        const updated = {
+          ...prev,
+          [targetWord.id]: {
+            ...existing,
+            wrongCount: existing.wrongCount + 1
+          }
+        };
+        saveSession(sessionList, nextStep, updated);
+        return updated;
+      });
     }
   };
 
@@ -643,6 +723,8 @@ export const LearnView: React.FC<Props> = ({
     localStorage.removeItem(STORAGE_BASKET);
     setSessionList([]);
     setUnknownBasket([]);
+    setHintStats({});
+    setCurrentWordHints([]);
     setCandidateIndex(0);
     setCandidateList(wordsQueue);
     setIsFlipped(false);
@@ -968,6 +1050,15 @@ export const LearnView: React.FC<Props> = ({
                 <p className="text-xs sm:text-sm font-mono text-indigo-400">{currentQuestion.word.ipa}</p>
               )}
             </div>
+
+            {/* Word Hints List (Encounter-gated English hints: Eş/Benzer/Zıt) */}
+            <WordHintsList
+              hints={currentWordHints}
+              revealedCount={hintStats[currentQuestion.word.id]?.revealedCount || 0}
+              maxAllowed={getMaxAllowedHints(hintStats[currentQuestion.word.id]?.encounters || 1)}
+              onRevealNext={handleRevealNextHint}
+              disabled={inlineFeedback !== null}
+            />
 
             {/* A) Multiple Choice Mode with QuizOptionButton */}
             {currentQuestion.type === 'choice' && (
