@@ -47,37 +47,37 @@ export const StatsView: React.FC<Props> = ({
   const lvlPercent = Math.min(100, Math.round((currentLvlProgress / currentLvlNeeded) * 100));
 
   return (
-    <div className="space-y-6 pb-24 pt-1">
+    <div className="space-y-4 pb-24 pt-1 select-none">
       <div>
-        <h2 className="text-xl font-black text-white">İstatistik ve Başarılar</h2>
+        <h2 className="text-xl font-bold text-white">İstatistik ve Başarılar</h2>
         <p className="text-xs text-slate-400">Öğrenme yolculuğunun detaylı grafikleri</p>
       </div>
 
       {/* Level & XP Hero Card */}
-      <div className="bg-gradient-to-br from-indigo-900/60 via-slate-800 to-purple-900/60 border border-indigo-500/30 rounded-3xl p-5 shadow-xl space-y-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider">
+            <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">
               Seviye {profile.level}
             </span>
-            <h3 className="text-2xl font-black text-white">
+            <h3 className="text-2xl font-extrabold text-white">
               {profile.xp.toLocaleString()} XP
             </h3>
           </div>
-          <div className="p-3 bg-indigo-500/20 text-indigo-400 rounded-2xl border border-indigo-500/30">
-            <Award size={32} />
+          <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-2xl border border-indigo-500/20">
+            <Award size={30} />
           </div>
         </div>
 
         {/* Progress to next level */}
         <div className="space-y-1.5">
-          <div className="flex justify-between text-xs text-slate-300">
+          <div className="flex justify-between text-xs text-slate-300 font-medium">
             <span>Seviye {profile.level + 1} için</span>
             <span>{currentLvlProgress} / {currentLvlNeeded} XP (%{lvlPercent})</span>
           </div>
-          <div className="h-2.5 bg-slate-900 rounded-full overflow-hidden">
+          <div className="h-2 bg-slate-950 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
+              className="h-full bg-indigo-500 rounded-full transition-all duration-500"
               style={{ width: `${lvlPercent}%` }}
             />
           </div>
@@ -86,27 +86,27 @@ export const StatsView: React.FC<Props> = ({
 
       {/* Quick Summary Grid */}
       <div className="grid grid-cols-3 gap-2.5">
-        <div className="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3 text-center">
-          <Flame size={20} className="text-amber-400 mx-auto mb-1 fill-amber-400 animate-pulse" />
-          <span className="text-lg font-black text-white">{profile.streak} gün</span>
-          <p className="text-[10px] text-slate-400">Aktif Seri</p>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-center shadow-sm">
+          <Flame size={20} className="text-amber-500 mx-auto mb-1 fill-amber-500" />
+          <span className="text-lg font-bold text-white">{profile.streak} gün</span>
+          <p className="text-[11px] text-slate-400">Aktif Seri</p>
         </div>
 
-        <div className="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3 text-center">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-center shadow-sm">
           <CheckCircle size={20} className="text-emerald-400 mx-auto mb-1" />
-          <span className="text-lg font-black text-emerald-400">{totalMastered}</span>
-          <p className="text-[10px] text-slate-400">Mastered</p>
+          <span className="text-lg font-bold text-emerald-400">{totalMastered}</span>
+          <p className="text-[11px] text-slate-400">Öğrenildi</p>
         </div>
 
-        <div className="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3 text-center">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-center shadow-sm">
           <BarChart3 size={20} className="text-indigo-400 mx-auto mb-1" />
-          <span className="text-lg font-black text-indigo-400">{totalLearned}</span>
-          <p className="text-[10px] text-slate-400">Hafızada</p>
+          <span className="text-lg font-bold text-indigo-400">{totalLearned}</span>
+          <p className="text-[11px] text-slate-400">Hafızada</p>
         </div>
       </div>
 
       {/* Streak Freeze Status Banner */}
-      <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3 flex items-center justify-between text-xs">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between text-xs shadow-sm">
         <div className="flex items-center space-x-2.5">
           <span className="text-lg">🧊</span>
           <div>
@@ -118,26 +118,26 @@ export const StatsView: React.FC<Props> = ({
             </span>
           </div>
         </div>
-        <span className="px-2 py-0.5 rounded-full bg-sky-500/15 border border-sky-400/30 text-sky-300 font-bold text-[10px]">
+        <span className="px-2.5 py-1 rounded-xl bg-slate-850 border border-slate-800 text-sky-400 font-bold text-[10px]">
           {profile.consecutiveCompletedDays || 0}/5 Gün
         </span>
       </div>
 
       {/* 30-Day Activity Heatmap */}
-      <div className="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-5 space-y-3">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-3 shadow-sm">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-bold text-white flex items-center space-x-2">
             <Calendar size={16} className="text-indigo-400" />
             <span>Son 30 Gün Takvim Isı Haritası</span>
           </h4>
-          <span className="text-xs text-slate-400">Geçmiş 30 gün</span>
+          <span className="text-xs text-slate-400">30 gün</span>
         </div>
 
         <div className="grid grid-cols-6 sm:grid-cols-10 gap-2 pt-2">
           {last30Days.map((day) => {
-            let bgClass = 'bg-slate-900/80 border-slate-800 text-slate-600';
-            if (day.count > 0 && day.count < 10) bgClass = 'bg-emerald-950 border-emerald-800 text-emerald-300';
-            else if (day.count >= 10 && day.count < 25) bgClass = 'bg-emerald-800 border-emerald-600 text-emerald-100 font-bold';
+            let bgClass = 'bg-slate-950 border-slate-850 text-slate-600';
+            if (day.count > 0 && day.count < 10) bgClass = 'bg-emerald-950/60 border-emerald-800/80 text-emerald-300';
+            else if (day.count >= 10 && day.count < 25) bgClass = 'bg-emerald-700 border-emerald-600 text-white font-bold';
             else if (day.count >= 25) bgClass = 'bg-emerald-500 border-emerald-400 text-slate-950 font-black';
 
             return (
@@ -155,7 +155,7 @@ export const StatsView: React.FC<Props> = ({
       </div>
 
       {/* Daily Correct Bar Chart (Last 14 Days) */}
-      <div className="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-5 space-y-3">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-3 shadow-sm">
         <h4 className="text-sm font-bold text-white flex items-center space-x-2">
           <BarChart3 size={16} className="text-emerald-400" />
           <span>Günlük Doğru Sayısı Grafiği</span>
@@ -167,7 +167,7 @@ export const StatsView: React.FC<Props> = ({
             return (
               <div key={d.date} className="flex-1 flex flex-col items-center space-y-1">
                 <div
-                  className="w-full bg-gradient-to-t from-indigo-600 to-emerald-400 rounded-t-md transition-all duration-500 min-h-[4px]"
+                  className="w-full bg-indigo-500 hover:bg-indigo-400 rounded-t-md transition-all duration-300 min-h-[4px]"
                   style={{ height: `${d.count > 0 ? barHeightPct : 4}%` }}
                   title={`${d.date}: ${d.count} doğru`}
                 />
@@ -181,7 +181,7 @@ export const StatsView: React.FC<Props> = ({
       </div>
 
       {/* Badges Section */}
-      <div className="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-5 space-y-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-bold text-white flex items-center space-x-2">
             <Award size={16} className="text-amber-400" />
@@ -197,8 +197,8 @@ export const StatsView: React.FC<Props> = ({
                 key={b.id}
                 className={`p-3 rounded-2xl border flex items-center space-x-3 transition-all ${
                   unlocked
-                    ? 'bg-slate-800 border-amber-500/30'
-                    : 'bg-slate-900/40 border-slate-800 opacity-50 grayscale'
+                    ? 'bg-slate-850 border-amber-500/30'
+                    : 'bg-slate-950/60 border-slate-850 opacity-40 grayscale'
                 }`}
               >
                 <div className="text-2xl">{b.icon}</div>

@@ -123,7 +123,7 @@ export const SettingsView: React.FC<Props> = ({
       </div>
 
       {/* Target Settings */}
-      <div className="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-5 space-y-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-sm">
         <h3 className="text-sm font-bold text-white flex items-center space-x-2">
           <Sliders size={16} className="text-indigo-400" />
           <span>Çalışma Hedefleri</span>
@@ -206,7 +206,7 @@ export const SettingsView: React.FC<Props> = ({
       </div>
 
       {/* Audio & Haptic Settings */}
-      <div className="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-5 space-y-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-sm">
         <h3 className="text-sm font-bold text-white flex items-center space-x-2">
           <Volume2 size={16} className="text-amber-400" />
           <span>Ses ve Titreşim</span>
@@ -271,7 +271,7 @@ export const SettingsView: React.FC<Props> = ({
       </div>
 
       {/* Backup & Restore Section */}
-      <div className="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-5 space-y-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-white flex items-center space-x-2">
             <ShieldCheck size={16} className="text-emerald-400" />
@@ -318,7 +318,7 @@ export const SettingsView: React.FC<Props> = ({
       </div>
 
       {/* Category Management */}
-      <div className="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-5 space-y-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-sm">
         <h3 className="text-sm font-bold text-white flex items-center space-x-2">
           <Sliders size={16} className="text-indigo-400" />
           <span>Kategori Seçimi ({settings.enabledCategories?.length || 0} Açık)</span>
@@ -368,8 +368,8 @@ export const SettingsView: React.FC<Props> = ({
 
       {/* Backup Preview & Restore Modal */}
       {previewModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
             <h3 className="text-lg font-bold text-white">Yedek Önizlemesi</h3>
 
             <div className="bg-slate-800/80 rounded-2xl p-4 border border-slate-700 text-xs space-y-2 text-slate-300">

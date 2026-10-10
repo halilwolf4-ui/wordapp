@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserProfile, DailyLog } from '../types';
 import { Check, Gift, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { parseDate, formatDate } from '../services/dateUtils';
+import { fireStreakCelebration } from './Confetti';
 
 interface Props {
   profile: UserProfile;
@@ -84,8 +85,12 @@ export const DailyStreakCompletion: React.FC<Props> = ({
     (badgePage + 1) * itemsPerPage
   );
 
+  useEffect(() => {
+    fireStreakCelebration();
+  }, []);
+
   return (
-    <div className="bg-slate-900 border border-slate-700/80 rounded-3xl p-5 sm:p-6 space-y-5 shadow-2xl text-slate-100 max-w-md mx-auto animate-scaleUp relative">
+    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-5 shadow-sm text-slate-100 max-w-md mx-auto animate-scaleUp relative">
       {/* Top Close Button */}
       <button
         onClick={onClose}
@@ -250,7 +255,7 @@ export const DailyStreakCompletion: React.FC<Props> = ({
       <div className="pt-2">
         <button
           onClick={onClose}
-          className="w-full py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:opacity-95 active:scale-[0.98] text-slate-950 font-black text-sm rounded-2xl shadow-xl shadow-orange-950/40 transition-all flex items-center justify-center space-x-2"
+          className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-slate-950 font-bold text-sm rounded-2xl shadow-sm transition-all flex items-center justify-center space-x-2"
         >
           <span>Devam Et</span>
         </button>

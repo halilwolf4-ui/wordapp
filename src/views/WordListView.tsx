@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Word, Progress } from '../types';
 import { AudioButton } from '../components/AudioButton';
 import { HighlightedText } from '../components/HighlightedText';
-import { Plus, Search, RotateCcw, CheckCircle, Sparkles, Filter, X, Loader2, BookOpen, Wand2 } from 'lucide-react';
+import { Plus, Search, RotateCcw, CheckCircle, Sparkles, X, Loader2, BookOpen, Wand2 } from 'lucide-react';
 import { lookupWord } from '../services/dictionaryService';
 
 interface Props {
@@ -172,7 +172,7 @@ export const WordListView: React.FC<Props> = ({
 
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center space-x-1.5 px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md transition-all"
+          className="flex items-center space-x-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
         >
           <Plus size={16} />
           <span>Kelime Ekle</span>
@@ -187,7 +187,7 @@ export const WordListView: React.FC<Props> = ({
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="İngilizce veya Türkçe kelime ara..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500"
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500"
         />
         {searchTerm && (
           <button
@@ -203,10 +203,10 @@ export const WordListView: React.FC<Props> = ({
       <div className="flex space-x-2 overflow-x-auto pb-1 text-xs font-semibold no-scrollbar">
         <button
           onClick={() => setActiveFilter('custom')}
-          className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl shrink-0 transition-all ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl shrink-0 transition-all ${
             activeFilter === 'custom'
               ? 'bg-purple-600 text-white shadow-sm'
-              : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
+              : 'bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-850'
           }`}
         >
           <Sparkles size={14} />
@@ -214,21 +214,21 @@ export const WordListView: React.FC<Props> = ({
         </button>
         <button
           onClick={() => setActiveFilter('mastered')}
-          className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl shrink-0 transition-all ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl shrink-0 transition-all ${
             activeFilter === 'mastered'
               ? 'bg-emerald-600 text-white shadow-sm'
-              : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
+              : 'bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-850'
           }`}
         >
           <CheckCircle size={14} />
-          <span>Öğrenilenler (Mastered)</span>
+          <span>Öğrenilenler</span>
         </button>
         <button
           onClick={() => setActiveFilter('learning')}
-          className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl shrink-0 transition-all ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl shrink-0 transition-all ${
             activeFilter === 'learning'
               ? 'bg-indigo-600 text-white shadow-sm'
-              : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
+              : 'bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-850'
           }`}
         >
           <RotateCcw size={14} />
@@ -236,13 +236,12 @@ export const WordListView: React.FC<Props> = ({
         </button>
         <button
           onClick={() => setActiveFilter('all')}
-          className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl shrink-0 transition-all ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl shrink-0 transition-all ${
             activeFilter === 'all'
-              ? 'bg-slate-700 text-white'
-              : 'bg-slate-800/80 text-slate-400 hover:bg-slate-700'
+              ? 'bg-slate-800 text-white border border-slate-700'
+              : 'bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-850'
           }`}
         >
-          <Filter size={14} />
           <span>Tümü</span>
         </button>
       </div>
@@ -262,7 +261,7 @@ export const WordListView: React.FC<Props> = ({
             return (
               <div
                 key={w.id}
-                className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 flex flex-col space-y-2 hover:border-slate-600 transition-all"
+                className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-2 hover:border-slate-700 shadow-sm transition-all"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-2">
@@ -290,7 +289,7 @@ export const WordListView: React.FC<Props> = ({
                       Adım {prog.step + 1}/6
                     </span>
                   ) : (
-                    <span className="text-[11px] text-slate-500 bg-slate-900 px-2 py-0.5 rounded-md">
+                    <span className="text-[11px] text-slate-500 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-850">
                       Yeni
                     </span>
                   )}
@@ -307,7 +306,7 @@ export const WordListView: React.FC<Props> = ({
                 )}
 
                 {w.examples && w.examples.length > 0 && (
-                  <div className="pt-1 text-xs text-slate-300 bg-slate-900/40 p-2 rounded-xl">
+                  <div className="pt-1 text-xs text-slate-300 bg-slate-950 p-2.5 rounded-xl border border-slate-850">
                     <p className="italic">
                       <HighlightedText text={w.examples[0].en} />
                     </p>
@@ -324,8 +323,8 @@ export const WordListView: React.FC<Props> = ({
 
       {/* Add Custom Word Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl animate-scaleUp">
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl animate-scaleUp">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <h3 className="text-lg font-bold text-white flex items-center space-x-2">
                 <Sparkles size={18} className="text-purple-400" />

@@ -18,6 +18,7 @@ import { speakEnglish } from '../services/speech';
 
 import { UserProfile, DailyLog } from '../types';
 import { DailyStreakCompletion } from '../components/DailyStreakCompletion';
+import { QuizOptionButton } from '../components/QuizOptionButton';
 
 interface Props {
   dueQueue: Progress[];
@@ -523,16 +524,16 @@ export const ReviewView: React.FC<Props> = ({
       {phase === 'study' && currentQuestion && (
         <div className="space-y-4">
           <div
-            className={`bg-gradient-to-b from-slate-800 to-slate-900 border rounded-3xl p-4 sm:p-6 shadow-2xl space-y-4 sm:space-y-5 transition-all relative ${
+            className={`bg-slate-900 border rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 sm:space-y-5 transition-all relative ${
               inlineFeedback?.status === 'correct'
-                ? 'border-indigo-500 bg-indigo-950/20'
+                ? 'border-emerald-500/70'
                 : inlineFeedback?.status === 'wrong'
-                ? 'border-rose-500/80 bg-rose-950/20'
-                : 'border-slate-700'
+                ? 'border-rose-500/70'
+                : 'border-slate-800'
             }`}
           >
-            <div className="text-center space-y-1.5">
-              <div className="flex items-center justify-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="text-center space-y-2">
+              <div className="flex items-center justify-center space-x-1.5 text-xs font-semibold tracking-wide text-slate-400">
                 {currentQuestion.isRefresher ? (
                   <span className="text-amber-400 flex items-center space-x-1">
                     <RotateCcw size={13} />
@@ -553,42 +554,33 @@ export const ReviewView: React.FC<Props> = ({
                 )}
               </div>
 
-              <div className="flex items-center justify-center space-x-2">
-                <h2 className="text-2xl sm:text-4xl font-black text-white">{currentQuestion.word.en}</h2>
-                <AudioButton text={currentQuestion.word.en} size={20} />
+              <div className="flex items-center justify-center space-x-2 pt-1">
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">{currentQuestion.word.en}</h2>
+                <AudioButton text={currentQuestion.word.en} size={22} />
               </div>
               {currentQuestion.word.ipa && (
                 <p className="text-xs sm:text-sm font-mono text-indigo-400">{currentQuestion.word.ipa}</p>
               )}
             </div>
 
-            {/* A) Choice Mode */}
+            {/* A) Choice Mode with QuizOptionButton */}
             {currentQuestion.type === 'choice' && (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {choiceOptions.map((opt, idx) => {
                   const isSelected = selectedChoice === opt;
                   const isThisCorrect = checkTurkishAnswer(opt, currentQuestion.word.tr);
 
-                  let btnStyle = 'bg-slate-800/80 hover:bg-slate-700/80 border-slate-700 text-slate-200';
-                  if (inlineFeedback) {
-                    if (isThisCorrect) {
-                      btnStyle = 'bg-emerald-600/30 border-emerald-500 text-emerald-300 font-bold';
-                    } else if (isSelected && !isThisCorrect) {
-                      btnStyle = 'bg-rose-600/30 border-rose-500 text-rose-300 font-bold';
-                    } else {
-                      btnStyle = 'bg-slate-800/40 border-slate-800 text-slate-500 opacity-60';
-                    }
-                  }
-
                   return (
-                    <button
+                    <QuizOptionButton
                       key={idx}
+                      index={idx}
+                      text={opt}
+                      isSelected={isSelected}
+                      isCorrect={isThisCorrect}
+                      hasFeedback={inlineFeedback !== null}
                       disabled={selectedChoice !== null}
-                      onClick={() => handleSelectChoice(opt)}
-                      className={`w-full p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border text-left text-sm sm:text-base font-semibold transition-all active:scale-[0.98] ${btnStyle}`}
-                    >
-                      {opt}
-                    </button>
+                      onSelect={() => handleSelectChoice(opt)}
+                    />
                   );
                 })}
               </div>
@@ -615,10 +607,10 @@ export const ReviewView: React.FC<Props> = ({
                   value={typedInput}
                   onChange={(e) => setTypedInput(e.target.value)}
                   placeholder="Türkçe anlamını yaz..."
-                  className={`w-full py-3 px-3.5 rounded-xl bg-slate-900 border-2 text-white text-center text-lg sm:text-xl font-bold tracking-wide focus:outline-none transition-all ${
+                  className={`w-full py-3 px-3.5 rounded-xl bg-slate-950 border-2 text-white text-center text-lg sm:text-xl font-bold tracking-wide focus:outline-none transition-all ${
                     inlineFeedback?.status === 'wrong'
-                      ? 'border-rose-500 bg-rose-950/30 text-rose-200'
-                      : 'border-slate-700 focus:border-indigo-500 shadow-inner'
+                      ? 'border-rose-500 bg-rose-950/20 text-rose-200 animate-wrong-shake'
+                      : 'border-slate-800 focus:border-indigo-500 shadow-inner'
                   }`}
                 />
 
@@ -627,7 +619,7 @@ export const ReviewView: React.FC<Props> = ({
                     type="button"
                     autoFocus
                     onClick={handleAdvanceManually}
-                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-black rounded-xl shadow-lg shadow-indigo-950/60 text-sm sm:text-base transition-all flex items-center justify-center space-x-2"
+                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-xl shadow-sm text-sm sm:text-base transition-all flex items-center justify-center space-x-2"
                   >
                     <span>Diğer Kelimeye Geç</span>
                     <ArrowRight size={18} />
@@ -636,7 +628,7 @@ export const ReviewView: React.FC<Props> = ({
                   <button
                     type="submit"
                     disabled={!typedInput.trim()}
-                    className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 active:scale-[0.98] disabled:opacity-50 text-white font-black rounded-xl shadow-md text-sm sm:text-base transition-all"
+                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] disabled:opacity-40 text-white font-bold rounded-xl shadow-sm text-sm sm:text-base transition-all"
                   >
                     Onayla
                   </button>
@@ -644,22 +636,22 @@ export const ReviewView: React.FC<Props> = ({
               </form>
             )}
 
-            {/* INLINE SLEEK WRONG FEEDBACK (NO GIGANTIC MODAL!) */}
+            {/* INLINE SLEEK WRONG FEEDBACK */}
             {inlineFeedback?.status === 'wrong' && (
-              <div className="pt-2 animate-fadeIn">
-                <div className="bg-rose-500/15 border border-rose-500/30 rounded-2xl p-3.5 flex items-center justify-between">
+              <div className="pt-1 animate-fadeIn">
+                <div className="bg-slate-950 border border-rose-500/40 rounded-2xl p-3.5 flex items-center justify-between">
                   <div className="space-y-0.5 pr-2">
-                    <span className="text-[11px] font-bold text-rose-300 block">
+                    <span className="text-[11px] font-semibold text-rose-400 block">
                       Yanlış Cevap! Doğru Anlam:
                     </span>
-                    <span className="text-sm font-black text-white leading-tight">
+                    <span className="text-sm font-bold text-white leading-tight">
                       {inlineFeedback.correctAnswer}
                     </span>
                   </div>
 
                   <button
                     onClick={handleAdvanceManually}
-                    className="shrink-0 flex items-center space-x-1 bg-rose-500 hover:bg-rose-400 text-slate-950 font-black text-xs px-3.5 py-2 rounded-xl transition-all active:scale-95 shadow"
+                    className="shrink-0 flex items-center space-x-1 bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-xl transition-all active:scale-95"
                   >
                     <span>Geç</span>
                     <ArrowRight size={14} />

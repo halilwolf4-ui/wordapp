@@ -57,31 +57,31 @@ export const InstallPromptBanner: React.FC = () => {
   }
 
   return (
-    <div className="bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-slate-900/80 border border-indigo-500/30 rounded-xl p-2.5 mb-2.5 shadow-md backdrop-blur-md flex items-center justify-between animate-fadeIn text-xs">
+    <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 mb-3 shadow-sm flex items-center justify-between text-xs animate-fadeIn select-none">
       <div className="flex items-center space-x-2.5 min-w-0 pr-2">
-        <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow">
+        <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
           <Smartphone size={16} />
         </div>
         <div className="truncate">
           <span className="font-bold text-white block truncate">Uygulamayı Yükle</span>
-          <span className="text-[10px] text-indigo-200/80 block truncate">Tam ekran mobil deneyim</span>
+          <span className="text-[11px] text-slate-400 block truncate">Tam ekran hızlı mobil deneyim</span>
         </div>
       </div>
 
       <div className="flex items-center space-x-1.5 shrink-0">
         <button
           onClick={handleInstallClick}
-          className="py-1 px-2.5 bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white text-[11px] font-bold rounded-lg flex items-center space-x-1 shadow transition-all"
+          className="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-[11px] font-bold rounded-lg flex items-center space-x-1.5 shadow-sm transition-all"
         >
           <Download size={13} />
           <span>Yükle</span>
         </button>
         <button
           onClick={handleDismiss}
-          className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors"
+          className="p-1.5 text-slate-400 hover:text-slate-200 rounded-lg transition-colors"
           title="Kapat"
         >
-          <X size={14} />
+          <X size={15} />
         </button>
       </div>
     </div>

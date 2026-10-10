@@ -538,9 +538,9 @@ export const App: React.FC = () => {
         <p className="text-slate-400 text-sm mb-6 max-w-xs">{initMessage}</p>
 
         {/* Progress Bar */}
-        <div className="w-64 h-3 bg-slate-900 rounded-full border border-slate-800 overflow-hidden mb-3">
+        <div className="w-64 h-2.5 bg-slate-900 rounded-full border border-slate-800 overflow-hidden mb-3">
           <div
-            className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-300"
+            className="h-full bg-indigo-500 rounded-full transition-all duration-300"
             style={{ width: `${initPercent}%` }}
           />
         </div>

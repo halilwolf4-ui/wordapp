@@ -271,7 +271,7 @@ export const PassaparolaView: React.FC<Props> = ({
 
           <button
             onClick={startGame}
-            className="w-full py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:opacity-95 active:scale-[0.98] text-slate-950 font-black text-sm rounded-2xl shadow-xl shadow-orange-950/50 transition-all flex items-center justify-center space-x-2"
+            className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-slate-950 font-bold text-sm rounded-2xl shadow-sm transition-all flex items-center justify-center space-x-2"
           >
             <Play size={16} className="fill-slate-950" />
             <span>Çarkı Başlat (120s)</span>
@@ -306,17 +306,17 @@ export const PassaparolaView: React.FC<Props> = ({
               const isCurrent = idx === currentIndex;
 
               // Letter styling requirement:
-              // Unvisited -> saydam (semi-transparent)
+              // Unvisited -> slate-900 border border-slate-800
               // Pass -> sarı (yellow)
               // Correct -> yeşil (green)
               // Wrong -> kırmızı (red)
-              let nodeStyle = 'bg-slate-800/40 text-slate-400 border border-slate-700/60 backdrop-blur-sm';
+              let nodeStyle = 'bg-slate-900 text-slate-400 border border-slate-800';
               if (q.state === 'correct') {
-                nodeStyle = 'bg-emerald-500 text-white font-black border border-emerald-400 shadow-md shadow-emerald-500/40';
+                nodeStyle = 'bg-emerald-500 text-white font-black border border-emerald-400 shadow-sm';
               } else if (q.state === 'wrong') {
-                nodeStyle = 'bg-rose-500 text-white font-black border border-rose-400 shadow-md shadow-rose-500/40';
+                nodeStyle = 'bg-rose-500 text-white font-black border border-rose-400 shadow-sm';
               } else if (q.state === 'pass') {
-                nodeStyle = 'bg-amber-400 text-slate-950 font-black border border-amber-300 shadow-md shadow-amber-500/40';
+                nodeStyle = 'bg-amber-400 text-slate-950 font-black border border-amber-300 shadow-sm';
               }
 
               return (
@@ -328,9 +328,9 @@ export const PassaparolaView: React.FC<Props> = ({
                     top: `${y}px`,
                     transform: 'translate(-50%, -50%)'
                   }}
-                  className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-[11px] transition-all duration-200 ${nodeStyle} ${
+                  className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] transition-all duration-200 ${nodeStyle} ${
                     isCurrent
-                      ? 'ring-2 ring-amber-400 bg-amber-400/25 text-amber-200 border-amber-300 scale-125 z-30 font-extrabold shadow-lg shadow-amber-400/50'
+                      ? 'ring-2 ring-indigo-400 bg-indigo-600 text-white border-indigo-300 scale-125 z-30 font-black shadow-md'
                       : ''
                   }`}
                 >
@@ -389,7 +389,7 @@ export const PassaparolaView: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={handlePass}
-                className="flex-1 py-2.5 bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 text-amber-300 border border-amber-500/40 font-black text-xs rounded-xl transition-all"
+                className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-850 active:scale-95 text-amber-400 border border-slate-800 font-bold text-xs rounded-xl transition-all"
               >
                 PAS GEÇ
               </button>
@@ -397,7 +397,7 @@ export const PassaparolaView: React.FC<Props> = ({
               <button
                 type="submit"
                 disabled={!inputVal.trim()}
-                className="flex-[2] py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:opacity-95 active:scale-95 disabled:opacity-40 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all"
+                className="flex-[2] py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-40 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
               >
                 CEVAPLA
               </button>
