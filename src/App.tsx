@@ -647,6 +647,7 @@ export const App: React.FC = () => {
               <ReviewView
                 dueQueue={dueQueue}
                 allWordsMap={wordsMap}
+                allProgress={allProgress}
                 dailyReviewLimit={settings.dailyReviewLimit}
                 profile={profile}
                 dailyLogs={dailyLogs}

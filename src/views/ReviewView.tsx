@@ -22,6 +22,7 @@ import { DailyStreakCompletion } from '../components/DailyStreakCompletion';
 interface Props {
   dueQueue: Progress[];
   allWordsMap: Map<number, Word>;
+  allProgress?: Progress[];
   dailyReviewLimit?: number;
   profile?: UserProfile;
   dailyLogs?: DailyLog[];
@@ -46,6 +47,7 @@ const MIN_QUESTION_GAP = 5; // En az 5 soru aralık kuralı
 export const ReviewView: React.FC<Props> = ({
   dueQueue,
   allWordsMap,
+  allProgress,
   dailyReviewLimit = 40,
   profile,
   dailyLogs,
@@ -57,12 +59,14 @@ export const ReviewView: React.FC<Props> = ({
 }) => {
   const [earnedFreeze, setEarnedFreeze] = useState(false);
   const [sessionList, setSessionList] = useState<ReviewSessionState[]>([]);
+  const [sessionTarget, setSessionTarget] = useState(1);
   const [globalStep, setGlobalStep] = useState(0);
 
   const [currentQuestion, setCurrentQuestion] = useState<{
     word: Word;
     type: 'choice' | 'typing';
     isFiller?: boolean;
+    isRefresher?: boolean;
   } | null>(null);
 
   const [phase, setPhase] = useState<'study' | 'summary'>('study');
@@ -78,6 +82,7 @@ export const ReviewView: React.FC<Props> = ({
 
   const [combo, setCombo] = useState(0);
   const lastWordIdRef = useRef<number | null>(null);
+  const lastWasRefresherRef = useRef(false);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initializedRef = useRef(false);
   const typingInputRef = useRef<HTMLInputElement>(null);
@@ -93,17 +98,66 @@ export const ReviewView: React.FC<Props> = ({
     }
   }, [currentQuestion]);
 
+  // Önceki tekrar edilmiş veya öğrenilmiş kelimeleri topla
+  const getPreviouslyReviewedWords = useCallback((): Word[] => {
+    const result: Word[] = [];
+    const addedIds = new Set<number>();
+
+    // 1. Bu oturumda zaten tamamlanmış kelimeler
+    sessionList.forEach(item => {
+      if (item.typingPassed && !addedIds.has(item.word.id)) {
+        result.push(item.word);
+        addedIds.add(item.word.id);
+      }
+    });
+
+    // 2. Geçmişte tekrar edilmiş veya pekişmiş (mastered) kelimeler
+    if (allProgress && allProgress.length > 0) {
+      allProgress.forEach(p => {
+        if ((!!p.lastReviewDate || p.status === 'mastered' || p.step > 0) && !addedIds.has(p.wordId)) {
+          const w = allWordsMap.get(p.wordId);
+          if (w) {
+            result.push(w);
+            addedIds.add(w.id);
+          }
+        }
+      });
+    }
+
+    // 3. Yedek havuz: en az bir kere doğru bilinmiş öğrenme aşamasındaki kelimeler
+    if (result.length < 5 && allProgress) {
+      allProgress.forEach(p => {
+        if (p.totalCorrect > 0 && !addedIds.has(p.wordId)) {
+          const w = allWordsMap.get(p.wordId);
+          if (w) {
+            result.push(w);
+            addedIds.add(w.id);
+          }
+        }
+      });
+    }
+
+    return result;
+  }, [sessionList, allProgress, allWordsMap]);
+
   // Pick Next Question with 5-question cooldown
   const pickNextQuestion = useCallback(
-    (list: ReviewSessionState[], currentStep: number, excludeWordId: number | null) => {
+    (
+      list: ReviewSessionState[],
+      currentStep: number,
+      excludeWordId: number | null,
+      targetCount: number = sessionTarget
+    ) => {
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
       setInlineFeedback(null);
       setSelectedChoice(null);
       setTypedInput('');
 
       const uncompleted = list.filter(item => !item.typingPassed);
+      const fullyReviewed = list.filter(item => item.typingPassed).length;
 
-      if (uncompleted.length === 0) {
+      // Hedef sayıya ulaşıldıysa veya tüm kelimeler bittiyse tamamla
+      if (fullyReviewed >= targetCount || uncompleted.length === 0) {
         setPhase('summary');
         sound.playLevelUp();
         fireCelebration();
@@ -136,20 +190,49 @@ export const ReviewView: React.FC<Props> = ({
         if (availableTyping.length === 0) availableTyping = eligibleForTyping;
       }
 
+      // Kalan uncompleted olmayan önceki kelimeler havuzu
+      const uncompletedIds = new Set(uncompleted.map(i => i.word.id));
+      const prevWords = getPreviouslyReviewedWords().filter(
+        w => !uncompletedIds.has(w.id) && w.id !== excludeWordId
+      );
+
       let chosenWord: Word;
       let questionType: 'choice' | 'typing';
       let isFiller = false;
+      let isRefresher = false;
 
-      if (availableTyping.length > 0 && (availableChoice.length === 0 || Math.random() < 0.45)) {
+      // Son 4 kelime kaldıysa veya bekleme süresine girildiyse önceki tekrar edilen kelimeleri araya sok:
+      // "4 tane kaldıysa tekrar önceki tekrar ettiklerini edebilir ama öğrenme sayısından düşmesin ki tekrar daha kolay"
+      const cooldownBlocked = availableChoice.length === 0 && availableTyping.length === 0;
+      const shouldInjectRefresher =
+        uncompleted.length <= 4 &&
+        prevWords.length > 0 &&
+        (!lastWasRefresherRef.current || cooldownBlocked) &&
+        (Math.random() < 0.45 || cooldownBlocked);
+
+      if (shouldInjectRefresher) {
+        chosenWord = prevWords[Math.floor(Math.random() * prevWords.length)];
+        questionType = 'choice';
+        isRefresher = true;
+        lastWasRefresherRef.current = true;
+      } else if (availableTyping.length > 0 && (availableChoice.length === 0 || Math.random() < 0.45)) {
         const picked = availableTyping[Math.floor(Math.random() * availableTyping.length)];
         chosenWord = picked.word;
         questionType = 'typing';
+        lastWasRefresherRef.current = false;
       } else if (availableChoice.length > 0) {
         const picked = availableChoice[Math.floor(Math.random() * availableChoice.length)];
         chosenWord = picked.word;
         questionType = 'choice';
+        lastWasRefresherRef.current = false;
+      } else if (prevWords.length > 0) {
+        // Bekleme aralığında rastgele sözlük kelimesi yerine bildiği önceki tekrar kelimesi sor
+        chosenWord = prevWords[Math.floor(Math.random() * prevWords.length)];
+        questionType = 'choice';
+        isRefresher = true;
+        lastWasRefresherRef.current = true;
       } else {
-        // Cooldown filler question from database
+        // Sözlükten fallback soru
         const allWordsArr = Array.from(allWordsMap.values());
         const nonActiveWords = allWordsArr.filter(
           w => !uncompleted.some(u => u.word.id === w.id) && w.id !== excludeWordId
@@ -159,10 +242,11 @@ export const ReviewView: React.FC<Props> = ({
           allWordsArr[Math.floor(Math.random() * allWordsArr.length)];
         questionType = 'choice';
         isFiller = true;
+        lastWasRefresherRef.current = false;
       }
 
       lastWordIdRef.current = chosenWord.id;
-      setCurrentQuestion({ word: chosenWord, type: questionType, isFiller });
+      setCurrentQuestion({ word: chosenWord, type: questionType, isFiller, isRefresher });
 
       if (questionType === 'choice') {
         const allWordsArr = Array.from(allWordsMap.values());
@@ -173,7 +257,7 @@ export const ReviewView: React.FC<Props> = ({
         setChoiceOptions(opts);
       }
     },
-    [allWordsMap]
+    [allWordsMap, getPreviouslyReviewedWords, onSessionCompleted, sessionTarget]
   );
 
   // Initialize
@@ -198,16 +282,17 @@ export const ReviewView: React.FC<Props> = ({
         }
       });
 
+      setSessionTarget(items.length);
       setSessionList(items);
       setPhase('study');
       setCombo(0);
       setGlobalStep(1);
       lastWordIdRef.current = null;
       if (items.length > 0) {
-        pickNextQuestion(items, 1, null);
+        pickNextQuestion(items, 1, null, items.length);
       }
     }
-  }, [dueQueue, allWordsMap, pickNextQuestion]);
+  }, [dueQueue, allWordsMap, dailyReviewLimit, pickNextQuestion]);
 
   // Auto pronounce
   useEffect(() => {
@@ -229,13 +314,14 @@ export const ReviewView: React.FC<Props> = ({
     setSelectedChoice(option);
     const targetWord = currentQuestion.word;
     const isCorrect = checkTurkishAnswer(option, targetWord.tr);
+    const isRefresherOrFiller = currentQuestion.isRefresher || currentQuestion.isFiller;
 
     if (isCorrect) {
       sound.playCorrect(combo + 1);
       setCombo(prev => prev + 1);
 
       let updatedList = sessionList;
-      if (!currentQuestion.isFiller) {
+      if (!isRefresherOrFiller) {
         updatedList = sessionList.map(item =>
           item.word.id === targetWord.id
             ? { ...item, choicePassed: true, choicePassedAtStep: globalStep }
@@ -249,16 +335,18 @@ export const ReviewView: React.FC<Props> = ({
       const nextStep = globalStep + 1;
       setGlobalStep(nextStep);
       feedbackTimerRef.current = setTimeout(() => {
-        pickNextQuestion(updatedList, nextStep, targetWord.id);
+        pickNextQuestion(updatedList, nextStep, targetWord.id, sessionTarget);
       }, 350);
     } else {
       sound.playWrong();
       setCombo(0);
 
-      const updatedList = sessionList.map(item =>
-        item.word.id === targetWord.id ? { ...item, failedAny: true } : item
-      );
-      setSessionList(updatedList);
+      if (!isRefresherOrFiller) {
+        const updatedList = sessionList.map(item =>
+          item.word.id === targetWord.id ? { ...item, failedAny: true } : item
+        );
+        setSessionList(updatedList);
+      }
 
       setInlineFeedback({ status: 'wrong', correctAnswer: targetWord.tr });
 
@@ -296,7 +384,7 @@ export const ReviewView: React.FC<Props> = ({
       const nextStep = globalStep + 1;
       setGlobalStep(nextStep);
       feedbackTimerRef.current = setTimeout(() => {
-        pickNextQuestion(updatedList, nextStep, targetWord.id);
+        pickNextQuestion(updatedList, nextStep, targetWord.id, sessionTarget);
       }, 350);
     } else {
       sound.playWrong();
@@ -317,7 +405,7 @@ export const ReviewView: React.FC<Props> = ({
 
   const handleAdvanceManually = () => {
     if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
-    pickNextQuestion(sessionList, globalStep, currentQuestion?.word.id ?? null);
+    pickNextQuestion(sessionList, globalStep, currentQuestion?.word.id ?? null, sessionTarget);
   };
 
   const fullyReviewedCount = sessionList.filter(i => i.typingPassed).length;
@@ -360,7 +448,7 @@ export const ReviewView: React.FC<Props> = ({
           <CheckCircle2 size={44} />
         </div>
         <div className="space-y-2">
-          <h2 className="text-3xl font-black text-white">{sessionList.length} Tekrar Tamamlandı!</h2>
+          <h2 className="text-3xl font-black text-white">{sessionTarget} Tekrar Tamamlandı!</h2>
           <p className="text-slate-400 text-sm max-w-xs mx-auto">
             Günün tekrarlarını önce şıklarla, ardından klavyeyle yazarak başarıyla tazeledin.
           </p>
@@ -400,7 +488,9 @@ export const ReviewView: React.FC<Props> = ({
           <div className="flex justify-between text-xs text-slate-400 mb-1">
             <span className="flex items-center space-x-1">
               <span>
-                {currentQuestion?.isFiller
+                {currentQuestion?.isRefresher
+                  ? '🔄 Hızlı Tekrar'
+                  : currentQuestion?.isFiller
                   ? '🔄 Ara Pekiştirme'
                   : currentQuestion?.type === 'choice'
                   ? 'Şıklı Tekrar'
@@ -411,13 +501,13 @@ export const ReviewView: React.FC<Props> = ({
               )}
             </span>
             <span className="font-bold text-indigo-400 font-mono">
-              {fullyReviewedCount} / {sessionList.length} Tamamlandı
+              {fullyReviewedCount} / {sessionTarget} Tamamlandı
             </span>
           </div>
           <div className="h-2.5 bg-slate-800 rounded-full overflow-hidden">
             <div
               className="h-full bg-indigo-500 transition-all duration-300"
-              style={{ width: `${(fullyReviewedCount / Math.max(1, sessionList.length)) * 100}%` }}
+              style={{ width: `${Math.min(100, (fullyReviewedCount / Math.max(1, sessionTarget)) * 100)}%` }}
             />
           </div>
         </div>
@@ -443,7 +533,12 @@ export const ReviewView: React.FC<Props> = ({
           >
             <div className="text-center space-y-1.5">
               <div className="flex items-center justify-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
-                {currentQuestion.isFiller ? (
+                {currentQuestion.isRefresher ? (
+                  <span className="text-amber-400 flex items-center space-x-1">
+                    <RotateCcw size={13} />
+                    <span>Kolay Hatırlatma (Önceki Tekrar)</span>
+                  </span>
+                ) : currentQuestion.isFiller ? (
                   <span className="text-amber-400 flex items-center space-x-1">
                     <RefreshCw size={13} />
                     <span>Ara Pekiştirme Sorusu</span>

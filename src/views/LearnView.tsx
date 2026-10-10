@@ -131,9 +131,11 @@ export const LearnView: React.FC<Props> = ({
   }, [currentQuestion]);
 
   // Helper to persist study session
+  // Helper to persist study session
   const saveSession = (list: WordSessionState[], step: number) => {
     const uncompleted = list.filter(i => !i.typingPassed);
-    if (uncompleted.length === 0) {
+    const learned = list.filter(i => i.typingPassed).length;
+    if (learned >= targetWordsCount || uncompleted.length === 0) {
       localStorage.removeItem(STORAGE_LEARN_SESSION);
       return;
     }
@@ -171,8 +173,11 @@ export const LearnView: React.FC<Props> = ({
       setTypedInput('');
 
       const uncompleted = list.filter(item => !item.typingPassed);
+      const learned = list.filter(item => item.typingPassed).length;
 
-      if (uncompleted.length === 0) {
+      // Hedef tamamlandıysa veya tüm kelimeler bittiyse oturumu tamamla:
+      // "yukarıdaki bar dolunca bitsin diğerlerini bitirmesine gerek kalmasın"
+      if (learned >= targetWordsCount || uncompleted.length === 0) {
         localStorage.removeItem(STORAGE_LEARN_SESSION);
         localStorage.removeItem(STORAGE_BASKET);
         setPhase('summary');
@@ -184,6 +189,20 @@ export const LearnView: React.FC<Props> = ({
           });
         }
         return;
+      }
+
+      // KULLANICI İSTEĞİ:
+      // "öğren kısmında 4 tane öğrenmesi kaldıysa kullanıcının biliyorum bilmiyorum kartları çıksın arada 5e çıkınca devam etsin öğrenmeye ama yukarıdaki bar dolunca bitsin diğerlerini bitirmesine gerek kalmasın sadece sonda 4 taneyi sürekli sormasın"
+      if (uncompleted.length <= 4) {
+        const inSessionIds = new Set(list.map(i => i.word.id));
+        const availableCandidates = wordsQueue.filter(w => !inSessionIds.has(w.id));
+        if (availableCandidates.length > 0) {
+          setCandidateList(availableCandidates);
+          setCandidateIndex(0);
+          setIsFlipped(false);
+          setPhase('discovery');
+          return;
+        }
       }
 
       const needChoice = uncompleted.filter(item => !item.choicePassed);
@@ -249,7 +268,7 @@ export const LearnView: React.FC<Props> = ({
         setChoiceOptions(opts);
       }
     },
-    [allWordsMap]
+    [allWordsMap, onSessionCompleted, targetWordsCount, wordsQueue]
   );
 
   // Start study with given words
@@ -415,6 +434,66 @@ export const LearnView: React.FC<Props> = ({
   const handleFlashcardChoice = async (knows: boolean) => {
     if (!currentCandidate) return;
 
+    // Çalışma esnasında ara keşif (öğrenmede son 4 kelime kaldığında 5'e tamamlamak için açılan kartlar)
+    const isMidStudy = sessionList.length > 0;
+
+    if (isMidStudy) {
+      if (!knows) {
+        sound.playWrong();
+        // Bilmediği için veritabanında 'learning' olarak kaydet
+        if (onMarkWordLearning) {
+          await onMarkWordLearning(currentCandidate);
+        }
+        const newItem: WordSessionState = {
+          word: currentCandidate,
+          choicePassed: false,
+          typingPassed: false,
+          choicePassedAtStep: null
+        };
+        const updatedList = [...sessionList, newItem];
+        setSessionList(updatedList);
+        saveSession(updatedList, globalStep + 1);
+
+        setIsFlipped(false);
+        setDragOffset(0);
+
+        const uncomp = updatedList.filter(i => !i.typingPassed);
+        // "arada 5e çıkınca devam etsin öğrenmeye"
+        if (uncomp.length >= 5) {
+          setPhase('study');
+          const nextStep = globalStep + 1;
+          setGlobalStep(nextStep);
+          pickNextQuestion(updatedList, nextStep, currentCandidate.id);
+          return;
+        } else {
+          // Henüz 5 olmadıysa sıradaki karta geç
+          if (candidateIndex + 1 < candidateList.length) {
+            setCandidateIndex(prev => prev + 1);
+          } else {
+            // Aday kalmadıysa çalışmaya dön
+            setPhase('study');
+            pickNextQuestion(updatedList, globalStep, null);
+          }
+          return;
+        }
+      } else {
+        sound.playCorrect(1);
+        if (onMarkWordKnown) {
+          await onMarkWordKnown(currentCandidate);
+        }
+        setIsFlipped(false);
+        setDragOffset(0);
+        if (candidateIndex + 1 < candidateList.length) {
+          setCandidateIndex(prev => prev + 1);
+        } else {
+          setPhase('study');
+          pickNextQuestion(sessionList, globalStep, null);
+        }
+        return;
+      }
+    }
+
+    // İlk Keşif Aşaması (Henüz oturum başlamadan önceki 10 kelime seçimi)
     let updatedBasket = unknownBasket;
 
     if (!knows) {
@@ -582,7 +661,7 @@ export const LearnView: React.FC<Props> = ({
           <CheckCircle2 size={44} />
         </div>
         <div className="space-y-2">
-          <h2 className="text-3xl font-black text-white">{sessionList.length} Kelime Tamamlandı!</h2>
+          <h2 className="text-3xl font-black text-white">{learnedCount} Kelime Tamamlandı!</h2>
           <p className="text-slate-400 text-sm max-w-xs mx-auto">
             Bilmeyip seçtiğin tüm kelimeleri önce şıklarla, ardından klavyeyle yazarak başarıyla öğrendin.
           </p>
@@ -590,10 +669,10 @@ export const LearnView: React.FC<Props> = ({
 
         <div className="bg-slate-800/80 border border-slate-700 rounded-3xl p-5 max-w-sm mx-auto text-left space-y-2">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-            Öğrenilen Kelimeler ({sessionList.length})
+            Öğrenilen Kelimeler ({learnedCount})
           </span>
           <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
-            {sessionList.map(i => (
+            {sessionList.filter(i => i.typingPassed).map(i => (
               <span
                 key={i.word.id}
                 className="px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-700 text-emerald-400 text-xs font-bold"
@@ -639,15 +718,34 @@ export const LearnView: React.FC<Props> = ({
           {phase === 'discovery' ? (
             <div>
               <div className="flex justify-between text-xs text-slate-400 mb-1">
-                <span>🎯 {targetWordsCount} Bilinmeyen Kelime Topla</span>
-                <span className="font-bold text-amber-400 font-mono">
-                  {unknownBasket.length} / {targetWordsCount}
-                </span>
+                {sessionList.length > 0 ? (
+                  <>
+                    <span className="text-amber-400 font-bold">
+                      🎯 Havuzu 5'e Tamamla ({sessionList.filter(i => !i.typingPassed).length}/5 Aktif)
+                    </span>
+                    <span className="font-bold text-emerald-400 font-mono">
+                      {learnedCount} / {targetWordsCount} Hedef
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span>🎯 {targetWordsCount} Bilinmeyen Kelime Topla</span>
+                    <span className="font-bold text-amber-400 font-mono">
+                      {unknownBasket.length} / {targetWordsCount}
+                    </span>
+                  </>
+                )}
               </div>
               <div className="h-2.5 bg-slate-800 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-amber-500 transition-all duration-300"
-                  style={{ width: `${(unknownBasket.length / targetWordsCount) * 100}%` }}
+                  className={`h-full transition-all duration-300 ${
+                    sessionList.length > 0 ? 'bg-emerald-500' : 'bg-amber-500'
+                  }`}
+                  style={{
+                    width: sessionList.length > 0
+                      ? `${Math.min(100, (learnedCount / targetWordsCount) * 100)}%`
+                      : `${(unknownBasket.length / targetWordsCount) * 100}%`
+                  }}
                 />
               </div>
             </div>
@@ -667,13 +765,13 @@ export const LearnView: React.FC<Props> = ({
                   )}
                 </span>
                 <span className="font-bold text-emerald-400 font-mono">
-                  {learnedCount} / {sessionList.length} Tamamen Öğrenildi
+                  {learnedCount} / {targetWordsCount} Tamamen Öğrenildi
                 </span>
               </div>
               <div className="h-2.5 bg-slate-800 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-emerald-500 transition-all duration-300"
-                  style={{ width: `${(learnedCount / Math.max(1, sessionList.length)) * 100}%` }}
+                  style={{ width: `${Math.min(100, (learnedCount / targetWordsCount) * 100)}%` }}
                 />
               </div>
             </div>
@@ -794,7 +892,21 @@ export const LearnView: React.FC<Props> = ({
             </button>
           </div>
 
-          {unknownBasket.length >= 5 && (
+          {sessionList.length > 0 && (
+            <div className="text-center pt-2">
+              <button
+                onClick={() => {
+                  setPhase('study');
+                  pickNextQuestion(sessionList, globalStep, null);
+                }}
+                className="text-xs font-bold text-slate-400 hover:text-white underline transition-colors"
+              >
+                Kalan {sessionList.filter(i => !i.typingPassed).length} kelimeyle devam et ➔
+              </button>
+            </div>
+          )}
+
+          {sessionList.length === 0 && unknownBasket.length >= 5 && (
             <div className="text-center pt-2">
               <button
                 onClick={() => startStudy(unknownBasket)}
