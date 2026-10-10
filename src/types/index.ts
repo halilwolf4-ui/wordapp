@@ -68,6 +68,7 @@ export interface DailyLog {
   wrongCount: number;
   newLearnedCount: number;
   reviewsDone: number;
+  masteredCount?: number;
   xpEarned: number;
 }
 
@@ -76,6 +77,7 @@ export interface BadgeDefinition {
   title: string;
   description: string;
   icon: string;
+  category?: 'words' | 'streak' | 'speed' | 'master' | 'special';
 }
 
 export interface BackupData {

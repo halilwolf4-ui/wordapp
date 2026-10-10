@@ -181,6 +181,9 @@ export const LearnView: React.FC<Props> = ({
       if (learned >= targetWordsCount || uncompleted.length === 0) {
         localStorage.removeItem(STORAGE_LEARN_SESSION);
         localStorage.removeItem(STORAGE_BASKET);
+        if (todayStr) {
+          localStorage.setItem('kelime_avi_learn_completed_' + todayStr, 'true');
+        }
         setPhase('summary');
         sound.playLevelUp();
         fireCelebration();
@@ -269,7 +272,7 @@ export const LearnView: React.FC<Props> = ({
         setChoiceOptions(opts);
       }
     },
-    [allWordsMap, onSessionCompleted, targetWordsCount, wordsQueue]
+    [allWordsMap, onSessionCompleted, targetWordsCount, wordsQueue, todayStr]
   );
 
   // Start study with given words
@@ -297,6 +300,16 @@ export const LearnView: React.FC<Props> = ({
     if (initializedRef.current) return;
     if (!allWordsMap || allWordsMap.size === 0) return; // Must wait for dictionary!
     initializedRef.current = true;
+
+    // 0. Gün tamamlandı mı kontrolü ("gün sıfırlanmadan o ekran kalacak")
+    const isCompletedToday =
+      (todayStr && localStorage.getItem('kelime_avi_learn_completed_' + todayStr) === 'true') ||
+      (dailyLogs && todayStr && (dailyLogs.find(l => l.date === todayStr)?.newLearnedCount || 0) >= targetWordsCount && (dailyLogs.find(l => l.date === todayStr)?.newLearnedCount || 0) > 0);
+
+    if (isCompletedToday) {
+      setPhase('summary');
+      return;
+    }
 
     // 1. Check if there is an active unfinished study session
     const savedSessionRaw = localStorage.getItem(STORAGE_LEARN_SESSION);
@@ -685,13 +698,15 @@ export const LearnView: React.FC<Props> = ({
         </div>
 
         <div className="space-y-3 pt-2 max-w-sm mx-auto">
-          <button
-            onClick={handleStartFreshDiscovery}
-            className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-2xl shadow-xl flex items-center justify-center space-x-2 text-base"
-          >
-            <RotateCcw size={18} />
-            <span>Yeni {targetWordsCount} Kelime Bul (Flash Kart)</span>
-          </button>
+          {!(todayStr && localStorage.getItem('kelime_avi_learn_completed_' + todayStr) === 'true') && (
+            <button
+              onClick={handleStartFreshDiscovery}
+              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-2xl shadow-xl flex items-center justify-center space-x-2 text-base"
+            >
+              <RotateCcw size={18} />
+              <span>Yeni {targetWordsCount} Kelime Bul (Flash Kart)</span>
+            </button>
+          )}
           <button
             onClick={onClose}
             className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-2xl"
@@ -892,20 +907,6 @@ export const LearnView: React.FC<Props> = ({
               <Check size={18} />
             </button>
           </div>
-
-          {sessionList.length > 0 && (
-            <div className="text-center pt-2">
-              <button
-                onClick={() => {
-                  setPhase('study');
-                  pickNextQuestion(sessionList, globalStep, null);
-                }}
-                className="text-xs font-bold text-slate-400 hover:text-white underline transition-colors"
-              >
-                Kalan {sessionList.filter(i => !i.typingPassed).length} kelimeyle devam et ➔
-              </button>
-            </div>
-          )}
 
           {sessionList.length === 0 && unknownBasket.length >= 5 && (
             <div className="text-center pt-2">

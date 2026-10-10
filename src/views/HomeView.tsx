@@ -13,6 +13,8 @@ interface Props {
   customWordsCount: number;
   profile: UserProfile;
   settings: UserSettings;
+  isLearnCompletedToday?: boolean;
+  isReviewCompletedToday?: boolean;
   onStartReview: () => void;
   onStartLearn: () => void;
   onStartSpeedRound: () => void;
@@ -29,6 +31,8 @@ export const HomeView: React.FC<Props> = ({
   totalWordsCount,
   customWordsCount,
   profile,
+  isLearnCompletedToday = false,
+  isReviewCompletedToday = false,
   onStartReview,
   onStartLearn,
   onStartSpeedRound,
@@ -124,29 +128,43 @@ export const HomeView: React.FC<Props> = ({
         {/* Tekrar Card */}
         <button
           onClick={onStartReview}
-          disabled={dueCount === 0}
+          disabled={!isReviewCompletedToday && dueCount === 0}
           className={`flex flex-col justify-between p-4 rounded-2xl border text-left transition-all active:scale-[0.98] ${
-            dueCount > 0
+            isReviewCompletedToday
+              ? 'bg-slate-900 hover:bg-slate-850 border-indigo-500/40 shadow-sm cursor-pointer'
+              : dueCount > 0
               ? 'bg-slate-900 hover:bg-slate-850 border-slate-800 hover:border-indigo-500/50 shadow-sm cursor-pointer'
               : 'bg-slate-900/50 border-slate-850 opacity-50 cursor-not-allowed'
           }`}
         >
           <div className="flex items-center justify-between w-full mb-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
-              <Repeat size={18} />
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+              isReviewCompletedToday
+                ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                : 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400'
+            }`}>
+              {isReviewCompletedToday ? <CheckCircle2 size={18} /> : <Repeat size={18} />}
             </div>
             <span
               className={`px-2.5 py-0.5 text-xs font-bold rounded-lg ${
-                dueCount > 0 ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'
+                isReviewCompletedToday
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  : dueCount > 0
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-800 text-slate-400'
               }`}
             >
-              {dueCount}
+              {isReviewCompletedToday ? '✓ Tamam' : dueCount}
             </span>
           </div>
           <div>
             <h3 className="font-bold text-sm text-white">Günlük Tekrar</h3>
             <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-              {dueCount > 0 ? `${dueCount} kelime bekliyor` : 'Tekrarlar bitti'}
+              {isReviewCompletedToday
+                ? 'Bugün bitti (Özeti Gör)'
+                : dueCount > 0
+                ? `${dueCount} kelime bekliyor`
+                : 'Tekrarlar bitti'}
             </p>
           </div>
         </button>
@@ -154,29 +172,39 @@ export const HomeView: React.FC<Props> = ({
         {/* Yeni Kelimeler Card */}
         <button
           onClick={onStartLearn}
-          disabled={newCount === 0}
+          disabled={!isLearnCompletedToday && newCount === 0}
           className={`flex flex-col justify-between p-4 rounded-2xl border text-left transition-all active:scale-[0.98] ${
-            newCount > 0
+            isLearnCompletedToday
+              ? 'bg-slate-900 hover:bg-slate-850 border-emerald-500/40 shadow-sm cursor-pointer'
+              : newCount > 0
               ? 'bg-slate-900 hover:bg-slate-850 border-slate-800 hover:border-emerald-500/50 shadow-sm cursor-pointer'
               : 'bg-slate-900/50 border-slate-850 opacity-50 cursor-not-allowed'
           }`}
         >
           <div className="flex items-center justify-between w-full mb-3">
             <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
-              <BookOpen size={18} />
+              {isLearnCompletedToday ? <CheckCircle2 size={18} /> : <BookOpen size={18} />}
             </div>
             <span
               className={`px-2.5 py-0.5 text-xs font-bold rounded-lg ${
-                newCount > 0 ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'
+                isLearnCompletedToday
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  : newCount > 0
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-800 text-slate-400'
               }`}
             >
-              {newCount}
+              {isLearnCompletedToday ? '✓ Tamam' : newCount}
             </span>
           </div>
           <div>
             <h3 className="font-bold text-sm text-white">Yeni Kelimeler</h3>
             <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-              {newCount > 0 ? `${newCount} yeni kelime` : 'Hepsi öğrenildi'}
+              {isLearnCompletedToday
+                ? 'Bugün bitti (Özeti Gör)'
+                : newCount > 0
+                ? `${newCount} yeni kelime`
+                : 'Hepsi öğrenildi'}
             </p>
           </div>
         </button>

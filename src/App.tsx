@@ -3,7 +3,7 @@ import { db, initializeDatabase, DEFAULT_SETTINGS, DEFAULT_PROFILE } from './db'
 import { Word, Progress, UserSettings, UserProfile, DailyLog } from './types';
 import { selectDailyReviewQueue, selectDailyNewWordsQueue, calculateNextProgress } from './services/srsEngine';
 import { getEffectiveDate, daysBetween, addDays } from './services/dateUtils';
-import { calculateLevel, getComboMultiplier } from './services/gamification';
+import { calculateLevel, getComboMultiplier, checkUnlockedBadges } from './services/gamification';
 import { sound } from './services/audio';
 import { fireLevelUp } from './components/Confetti';
 
@@ -125,6 +125,22 @@ export const App: React.FC = () => {
     const loadedSettings = (await db.settings.get(1)) || DEFAULT_SETTINGS;
     const loadedProfile = (await db.profile.get(1)) || DEFAULT_PROFILE;
     const loadedLogs = await db.dailyLogs.toArray();
+
+    // Check & unlock any newly qualified badges from expanded badge list
+    const learnedCnt = loadedProgress.filter(p => p.status === 'learning' || p.status === 'mastered').length;
+    const masteredCnt = loadedProgress.filter(p => p.status === 'mastered').length;
+    const syncedBadges = checkUnlockedBadges({
+      currentBadges: loadedProfile.unlockedBadges || [],
+      totalLearned: learnedCnt,
+      streak: loadedProfile.streak,
+      speedScore: loadedProfile.highScoreSpeedRound,
+      masteredCount: masteredCnt,
+      hasCustomWord: loadedWords.some(w => !!w.isCustom)
+    });
+    if (syncedBadges.length !== (loadedProfile.unlockedBadges?.length || 0)) {
+      loadedProfile.unlockedBadges = syncedBadges;
+      await db.profile.put(loadedProfile);
+    }
 
     setAllWords(loadedWords);
     setAllProgress(loadedProgress);
@@ -275,22 +291,29 @@ export const App: React.FC = () => {
     currentProf: UserProfile,
     totalLearned: number,
     streak: number,
-    isCustomWordCreated: boolean = false
+    isCustomWordCreated: boolean = false,
+    speedScore?: number,
+    masteredCount?: number,
+    comboCount?: number
   ): string[] => {
-    const existing = new Set(currentProf.unlockedBadges);
-    if (totalLearned >= 1) existing.add('first_word');
-    if (totalLearned >= 25) existing.add('words_25');
-    if (totalLearned >= 100) existing.add('words_100');
-    if (totalLearned >= 500) existing.add('words_500');
-    if (streak >= 3) existing.add('streak_3');
-    if (streak >= 7) existing.add('streak_7');
-    if (streak >= 21) existing.add('streak_21');
-    if (isCustomWordCreated) existing.add('custom_creator');
-    return Array.from(existing);
+    return checkUnlockedBadges({
+      currentBadges: currentProf.unlockedBadges || [],
+      totalLearned,
+      streak,
+      speedScore: speedScore ?? currentProf.highScoreSpeedRound,
+      masteredCount,
+      comboCount,
+      hasCustomWord: isCustomWordCreated || allWords.some(w => !!w.isCustom)
+    });
   };
 
   // Add XP, check level up & record logs
-  const recordAnswerResult = async (isCorrect: boolean, isNewLearned: boolean = false, comboCount: number = 1) => {
+  const recordAnswerResult = async (
+    isCorrect: boolean,
+    isNewLearned: boolean = false,
+    comboCount: number = 1,
+    isMastered: boolean = false
+  ) => {
     const xpGain = isCorrect ? Math.round(10 * getComboMultiplier(comboCount)) : 0;
     const nextXp = profile.xp + xpGain;
     const prevLevel = profile.level;
@@ -304,7 +327,16 @@ export const App: React.FC = () => {
     // Update profile
     let updatedProf = await updateStreakAndActivity(profile, today);
     const learnedCount = allProgress.filter(p => p.status === 'learning' || p.status === 'mastered').length;
-    const newBadges = checkBadges(updatedProf, learnedCount, updatedProf.streak);
+    const masteredCountTotal = allProgress.filter(p => p.status === 'mastered').length + (isMastered ? 1 : 0);
+    const newBadges = checkBadges(
+      updatedProf,
+      learnedCount + (isNewLearned ? 1 : 0),
+      updatedProf.streak,
+      false,
+      updatedProf.highScoreSpeedRound,
+      masteredCountTotal,
+      comboCount
+    );
 
     updatedProf = {
       ...updatedProf,
@@ -322,6 +354,7 @@ export const App: React.FC = () => {
       wrongCount: 0,
       newLearnedCount: 0,
       reviewsDone: 0,
+      masteredCount: 0,
       xpEarned: 0
     };
 
@@ -331,6 +364,7 @@ export const App: React.FC = () => {
       wrongCount: !isCorrect ? currentLog.wrongCount + 1 : currentLog.wrongCount,
       newLearnedCount: isNewLearned ? currentLog.newLearnedCount + 1 : currentLog.newLearnedCount,
       reviewsDone: !isNewLearned ? currentLog.reviewsDone + 1 : currentLog.reviewsDone,
+      masteredCount: (currentLog.masteredCount || 0) + (isMastered ? 1 : 0),
       xpEarned: currentLog.xpEarned + xpGain
     };
 
@@ -388,6 +422,7 @@ export const App: React.FC = () => {
     };
     await db.progress.put(knownProg);
     setAllProgress(prev => [...prev.filter(p => p.wordId !== word.id), knownProg]);
+    await recordAnswerResult(true, true, 1, true);
   };
 
   // Mark word as learning when swiped 'Bilmiyorum' in discovery
@@ -418,6 +453,7 @@ export const App: React.FC = () => {
     if (isPartial && isCorrect && nextProgress.step > 1) {
       nextProgress.step -= 1; // don't jump full ladder if hint was used
     }
+    const becameMastered = isCorrect && nextProgress.status === 'mastered' && !isPartial;
 
     await db.progress.put(nextProgress);
     setAllProgress(prev => {
@@ -425,7 +461,7 @@ export const App: React.FC = () => {
       return [...filtered, nextProgress];
     });
 
-    await recordAnswerResult(isCorrect, false);
+    await recordAnswerResult(isCorrect, false, 1, becameMastered);
   };
 
   // Add custom word (directly assigned to 'learning' queue)
@@ -498,10 +534,22 @@ export const App: React.FC = () => {
 
   // Update High Score in Speed Round
   const handleUpdateHighScore = async (score: number) => {
-    const updatedProf = { ...profile, highScoreSpeedRound: score };
-    if (score >= 20 && !updatedProf.unlockedBadges.includes('speed_20')) {
-      updatedProf.unlockedBadges.push('speed_20');
-    }
+    const newBest = Math.max(profile.highScoreSpeedRound || 0, score);
+    const learnedCnt = allProgress.filter(p => p.status === 'learning' || p.status === 'mastered').length;
+    const masteredCnt = allProgress.filter(p => p.status === 'mastered').length;
+    const updatedBadges = checkBadges(
+      profile,
+      learnedCnt,
+      profile.streak,
+      false,
+      newBest,
+      masteredCnt
+    );
+    const updatedProf: UserProfile = {
+      ...profile,
+      highScoreSpeedRound: newBest,
+      unlockedBadges: updatedBadges
+    };
     await db.profile.put(updatedProf);
     setProfile(updatedProf);
   };
@@ -517,6 +565,8 @@ export const App: React.FC = () => {
     setAllProgress([]);
     localStorage.removeItem('kelime_avi_active_learn_session');
     localStorage.removeItem('kelime_avi_learn_unknown_basket');
+    localStorage.removeItem('kelime_avi_learn_completed_' + today);
+    localStorage.removeItem('kelime_avi_review_completed_' + today);
     await loadData();
     setIsSettingsOpen(false);
     setCurrentTab('learn');
@@ -526,6 +576,20 @@ export const App: React.FC = () => {
   const learningCount = allProgress.filter(p => p.status === 'learning').length;
   const masteredCount = allProgress.filter(p => p.status === 'mastered').length;
   const customWordsCount = allWords.filter(w => !!w.isCustom || w.categories?.includes('custom')).length;
+
+  const isLearnCompletedToday = useMemo(() => {
+    return (
+      localStorage.getItem('kelime_avi_learn_completed_' + today) === 'true' ||
+      (todayLog && todayLog.newLearnedCount >= settings.dailyNewTarget && todayLog.newLearnedCount > 0)
+    );
+  }, [today, todayLog, settings.dailyNewTarget]);
+
+  const isReviewCompletedToday = useMemo(() => {
+    return (
+      localStorage.getItem('kelime_avi_review_completed_' + today) === 'true' ||
+      (todayLog && todayLog.reviewsDone >= settings.dailyReviewLimit && todayLog.reviewsDone > 0)
+    );
+  }, [today, todayLog, settings.dailyReviewLimit]);
 
   // Loading Screen
   if (isInitializing) {
@@ -618,6 +682,8 @@ export const App: React.FC = () => {
                 customWordsCount={customWordsCount}
                 profile={profile}
                 settings={settings}
+                isLearnCompletedToday={isLearnCompletedToday}
+                isReviewCompletedToday={isReviewCompletedToday}
                 onStartReview={() => setCurrentTab('review')}
                 onStartLearn={() => setCurrentTab('learn')}
                 onStartSpeedRound={() => setIsSpeedRoundOpen(true)}
@@ -674,6 +740,7 @@ export const App: React.FC = () => {
                 dailyLogs={dailyLogs}
                 totalLearned={learningCount}
                 totalMastered={masteredCount}
+                allProgress={allProgress}
               />
             </div>
           </div>

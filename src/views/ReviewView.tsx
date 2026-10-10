@@ -45,6 +45,11 @@ interface ReviewSessionState {
 
 const MIN_QUESTION_GAP = 5; // En az 5 soru aralık kuralı
 
+interface PoolQueueItem {
+  wordId: number;
+  isBuffer: boolean;
+}
+
 export const ReviewView: React.FC<Props> = ({
   dueQueue,
   allWordsMap,
@@ -83,10 +88,10 @@ export const ReviewView: React.FC<Props> = ({
 
   const [combo, setCombo] = useState(0);
   const lastWordIdRef = useRef<number | null>(null);
-  const lastWasRefresherRef = useRef(false);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initializedRef = useRef(false);
   const typingInputRef = useRef<HTMLInputElement>(null);
+  const poolQueueRef = useRef<PoolQueueItem[]>([]);
 
   // Auto-focus and center typing input when keyboard appears
   useEffect(() => {
@@ -99,7 +104,7 @@ export const ReviewView: React.FC<Props> = ({
     }
   }, [currentQuestion]);
 
-  // Önceki tekrar edilmiş veya öğrenilmiş kelimeleri topla
+  // Önceki tekrar edilmiş veya öğrenilmiş kelimeleri topla (Tampon / Pekiştirme havuzu)
   const getPreviouslyReviewedWords = useCallback((): Word[] => {
     const result: Word[] = [];
     const addedIds = new Set<number>();
@@ -138,10 +143,21 @@ export const ReviewView: React.FC<Props> = ({
       });
     }
 
+    // 4. Güvenlik fallback: allWordsMap'ten kelimeler (garantili en az 10 kelime)
+    if (result.length < 10 && allWordsMap.size > 0) {
+      for (const w of allWordsMap.values()) {
+        if (!addedIds.has(w.id)) {
+          result.push(w);
+          addedIds.add(w.id);
+          if (result.length >= 15) break;
+        }
+      }
+    }
+
     return result;
   }, [sessionList, allProgress, allWordsMap]);
 
-  // Pick Next Question with 5-question cooldown
+  // Pick Next Question
   const pickNextQuestion = useCallback(
     (
       list: ReviewSessionState[],
@@ -157,8 +173,13 @@ export const ReviewView: React.FC<Props> = ({
       const uncompleted = list.filter(item => !item.typingPassed);
       const fullyReviewed = list.filter(item => item.typingPassed).length;
 
-      // Hedef sayıya ulaşıldıysa veya tüm kelimeler bittiyse tamamla
+      // 1. Hedef sayıya ulaşıldıysa veya tüm kelimeler bittiyse oturumu tamamla:
+      // "hedefte günlük 20 tekrar varsa mesela 19 tane bildiyse 5 kelime tekrar çıkacak terkrar etmediği brini bile doğru hallederse bitireceğiz o günü kalan 4e gerek yok"
       if (fullyReviewed >= targetCount || uncompleted.length === 0) {
+        poolQueueRef.current = [];
+        if (todayStr) {
+          localStorage.setItem('kelime_avi_review_completed_' + todayStr, 'true');
+        }
         setPhase('summary');
         sound.playLevelUp();
         fireCelebration();
@@ -170,80 +191,134 @@ export const ReviewView: React.FC<Props> = ({
         return;
       }
 
-      const needChoice = uncompleted.filter(item => !item.choicePassed);
-      const eligibleForTyping = uncompleted.filter(
-        item =>
-          item.choicePassed &&
-          !item.typingPassed &&
-          item.choicePassedAtStep !== null &&
-          currentStep - item.choicePassedAtStep >= MIN_QUESTION_GAP
-      );
-
-      let availableChoice = needChoice;
-      if (needChoice.length > 1 && excludeWordId !== null) {
-        availableChoice = needChoice.filter(i => i.word.id !== excludeWordId);
-        if (availableChoice.length === 0) availableChoice = needChoice;
-      }
-
-      let availableTyping = eligibleForTyping;
-      if (eligibleForTyping.length > 1 && excludeWordId !== null) {
-        availableTyping = eligibleForTyping.filter(i => i.word.id !== excludeWordId);
-        if (availableTyping.length === 0) availableTyping = eligibleForTyping;
-      }
-
-      // Kalan uncompleted olmayan önceki kelimeler havuzu
-      const uncompletedIds = new Set(uncompleted.map(i => i.word.id));
-      const prevWords = getPreviouslyReviewedWords().filter(
-        w => !uncompletedIds.has(w.id) && w.id !== excludeWordId
-      );
-
       let chosenWord: Word;
       let questionType: 'choice' | 'typing';
       let isFiller = false;
       let isRefresher = false;
 
-      // Son 4 kelime kaldıysa veya bekleme süresine girildiyse önceki tekrar edilen kelimeleri araya sok:
-      // "4 tane kaldıysa tekrar önceki tekrar ettiklerini edebilir ama öğrenme sayısından düşmesin ki tekrar daha kolay"
-      const cooldownBlocked = availableChoice.length === 0 && availableTyping.length === 0;
-      const shouldInjectRefresher =
-        uncompleted.length <= 4 &&
-        prevWords.length > 0 &&
-        (!lastWasRefresherRef.current || cooldownBlocked) &&
-        (Math.random() < 0.45 || cooldownBlocked);
+      // 2. KULLANICI KURALI:
+      // "son 4 ve daha az kelime kalmasına izin vermeyeceğiz ama hedefte günlük 20 tekrar varsa mesela 19 tane bildiyse 5 kelime tekrar çıkacak terkrar etmediği brini bile doğru hallederse bitireceğiz o günü kalan 4e gerek yok"
+      // Yani uncompleted sayısı 4 veya daha az ise havuz DAİMA 5 kelime olacak!
+      if (uncompleted.length <= 4) {
+        const uncompletedIds = new Set(uncompleted.map(i => i.word.id));
 
-      if (shouldInjectRefresher) {
-        chosenWord = prevWords[Math.floor(Math.random() * prevWords.length)];
-        questionType = 'choice';
-        isRefresher = true;
-        lastWasRefresherRef.current = true;
-      } else if (availableTyping.length > 0 && (availableChoice.length === 0 || Math.random() < 0.45)) {
-        const picked = availableTyping[Math.floor(Math.random() * availableTyping.length)];
-        chosenWord = picked.word;
-        questionType = 'typing';
-        lastWasRefresherRef.current = false;
-      } else if (availableChoice.length > 0) {
-        const picked = availableChoice[Math.floor(Math.random() * availableChoice.length)];
-        chosenWord = picked.word;
-        questionType = 'choice';
-        lastWasRefresherRef.current = false;
-      } else if (prevWords.length > 0) {
-        // Bekleme aralığında rastgele sözlük kelimesi yerine bildiği önceki tekrar kelimesi sor
-        chosenWord = prevWords[Math.floor(Math.random() * prevWords.length)];
-        questionType = 'choice';
-        isRefresher = true;
-        lastWasRefresherRef.current = true;
+        // Kuyruğu senkronize et:
+        // a) Kuyruktaki uncompleted olmayan öğeleri buffer olarak işaretle
+        let currentQueue = poolQueueRef.current.map(item => {
+          if (!item.isBuffer && !uncompletedIds.has(item.wordId)) {
+            return { ...item, isBuffer: true };
+          }
+          return item;
+        });
+
+        // b) Eksik olan uncompleted kelimeleri kuyruğa ekle
+        uncompleted.forEach(u => {
+          if (!currentQueue.some(q => q.wordId === u.word.id)) {
+            currentQueue.push({ wordId: u.word.id, isBuffer: false });
+          }
+        });
+
+        // c) Buffer kelimeleri tamamla (toplam 5 eleman olacak şekilde)
+        const candidateBuffers = getPreviouslyReviewedWords().filter(w => !uncompletedIds.has(w.id));
+        const existingIdsInQueue = new Set(currentQueue.map(q => q.wordId));
+
+        for (const w of candidateBuffers) {
+          if (currentQueue.length >= 5) break;
+          if (!existingIdsInQueue.has(w.id)) {
+            currentQueue.push({ wordId: w.id, isBuffer: true });
+            existingIdsInQueue.add(w.id);
+          }
+        }
+
+        // d) Fazla buffer varsa kırp (tam 5 öğe)
+        if (currentQueue.length > 5) {
+          const uncompInQueue = currentQueue.filter(q => !q.isBuffer);
+          const buffersInQueue = currentQueue.filter(q => q.isBuffer);
+          currentQueue = [...uncompInQueue, ...buffersInQueue.slice(0, Math.max(0, 5 - uncompInQueue.length))];
+        }
+
+        // Kuyruktan sıradaki soruyu seç (excludeWordId ile ardışık aynı kelime olmasını engelle)
+        let pickIdx = 0;
+        if (currentQueue.length > 1 && excludeWordId !== null && currentQueue[0].wordId === excludeWordId) {
+          pickIdx = 1;
+        }
+
+        const pickedItem = currentQueue[pickIdx];
+        // Seçilen öğeyi döngünün en sonuna taşı
+        currentQueue.splice(pickIdx, 1);
+        currentQueue.push(pickedItem);
+        poolQueueRef.current = currentQueue;
+
+        const foundWord = allWordsMap.get(pickedItem.wordId);
+        chosenWord = foundWord || uncompleted[0].word;
+
+        if (pickedItem.isBuffer) {
+          questionType = 'choice';
+          isRefresher = true;
+        } else {
+          const targetItem = list.find(i => i.word.id === chosenWord.id);
+          if (!targetItem || !targetItem.choicePassed) {
+            questionType = 'choice';
+          } else {
+            // Şıkkı geçmiş kelime için klavye sırası
+            const canType =
+              targetItem.choicePassedAtStep === null ||
+              currentStep - targetItem.choicePassedAtStep >= MIN_QUESTION_GAP;
+            if (canType) {
+              questionType = 'typing';
+            } else {
+              questionType = 'choice';
+            }
+          }
+        }
       } else {
-        // Sözlükten fallback soru
-        const allWordsArr = Array.from(allWordsMap.values());
-        const nonActiveWords = allWordsArr.filter(
-          w => !uncompleted.some(u => u.word.id === w.id) && w.id !== excludeWordId
+        // uncompleted.length > 4 olduğunda standart seçim
+        poolQueueRef.current = [];
+        const needChoice = uncompleted.filter(item => !item.choicePassed);
+        const eligibleForTyping = uncompleted.filter(
+          item =>
+            item.choicePassed &&
+            !item.typingPassed &&
+            item.choicePassedAtStep !== null &&
+            currentStep - item.choicePassedAtStep >= MIN_QUESTION_GAP
         );
-        chosenWord =
-          nonActiveWords[Math.floor(Math.random() * nonActiveWords.length)] ||
-          allWordsArr[Math.floor(Math.random() * allWordsArr.length)];
-        questionType = 'choice';
-        isFiller = true;
-        lastWasRefresherRef.current = false;
+
+        let availableChoice = needChoice;
+        if (needChoice.length > 1 && excludeWordId !== null) {
+          availableChoice = needChoice.filter(i => i.word.id !== excludeWordId);
+          if (availableChoice.length === 0) availableChoice = needChoice;
+        }
+
+        let availableTyping = eligibleForTyping;
+        if (eligibleForTyping.length > 1 && excludeWordId !== null) {
+          availableTyping = eligibleForTyping.filter(i => i.word.id !== excludeWordId);
+          if (availableTyping.length === 0) availableTyping = eligibleForTyping;
+        }
+
+        if (availableTyping.length > 0 && (availableChoice.length === 0 || Math.random() < 0.45)) {
+          const picked = availableTyping[Math.floor(Math.random() * availableTyping.length)];
+          chosenWord = picked.word;
+          questionType = 'typing';
+        } else if (availableChoice.length > 0) {
+          const picked = availableChoice[Math.floor(Math.random() * availableChoice.length)];
+          chosenWord = picked.word;
+          questionType = 'choice';
+        } else {
+          // Nadir durum: bekleme aralığında bildiği önceki tekrar kelimesi sor
+          const prevWords = getPreviouslyReviewedWords().filter(
+            w => !uncompleted.some(u => u.word.id === w.id) && w.id !== excludeWordId
+          );
+          if (prevWords.length > 0) {
+            chosenWord = prevWords[Math.floor(Math.random() * prevWords.length)];
+            questionType = 'choice';
+            isRefresher = true;
+          } else {
+            const allWordsArr = Array.from(allWordsMap.values());
+            chosenWord = allWordsArr[Math.floor(Math.random() * allWordsArr.length)];
+            questionType = 'choice';
+            isFiller = true;
+          }
+        }
       }
 
       lastWordIdRef.current = chosenWord.id;
@@ -258,42 +333,57 @@ export const ReviewView: React.FC<Props> = ({
         setChoiceOptions(opts);
       }
     },
-    [allWordsMap, getPreviouslyReviewedWords, onSessionCompleted, sessionTarget]
+    [allWordsMap, getPreviouslyReviewedWords, onSessionCompleted, sessionTarget, todayStr]
   );
 
   // Initialize
   useEffect(() => {
-    if (!initializedRef.current && dueQueue.length > 0) {
-      initializedRef.current = true;
-      const items: ReviewSessionState[] = [];
-      const limit = Math.max(1, dailyReviewLimit || 40);
-      const slice = dueQueue.slice(0, limit);
+    if (!initializedRef.current) {
+      if (!allWordsMap || allWordsMap.size === 0) return;
 
-      slice.forEach((prog) => {
-        const w = allWordsMap.get(prog.wordId);
-        if (w) {
-          items.push({
-            progress: prog,
-            word: w,
-            choicePassed: false,
-            typingPassed: false,
-            failedAny: false,
-            choicePassedAtStep: null
-          });
+      // 0. Gün tamamlandı mı kontrolü ("gün sıfırlanmadan o ekran kalacak")
+      const isCompletedToday =
+        (todayStr && localStorage.getItem('kelime_avi_review_completed_' + todayStr) === 'true') ||
+        (dailyLogs && todayStr && (dailyLogs.find(l => l.date === todayStr)?.reviewsDone || 0) >= (dailyReviewLimit || 40) && (dailyLogs.find(l => l.date === todayStr)?.reviewsDone || 0) > 0);
+
+      if (isCompletedToday) {
+        initializedRef.current = true;
+        setPhase('summary');
+        return;
+      }
+
+      if (dueQueue.length > 0) {
+        initializedRef.current = true;
+        const items: ReviewSessionState[] = [];
+        const limit = Math.max(1, dailyReviewLimit || 40);
+        const slice = dueQueue.slice(0, limit);
+
+        slice.forEach((prog) => {
+          const w = allWordsMap.get(prog.wordId);
+          if (w) {
+            items.push({
+              progress: prog,
+              word: w,
+              choicePassed: false,
+              typingPassed: false,
+              failedAny: false,
+              choicePassedAtStep: null
+            });
+          }
+        });
+
+        setSessionTarget(items.length);
+        setSessionList(items);
+        setPhase('study');
+        setCombo(0);
+        setGlobalStep(1);
+        lastWordIdRef.current = null;
+        if (items.length > 0) {
+          pickNextQuestion(items, 1, null, items.length);
         }
-      });
-
-      setSessionTarget(items.length);
-      setSessionList(items);
-      setPhase('study');
-      setCombo(0);
-      setGlobalStep(1);
-      lastWordIdRef.current = null;
-      if (items.length > 0) {
-        pickNextQuestion(items, 1, null, items.length);
       }
     }
-  }, [dueQueue, allWordsMap, dailyReviewLimit, pickNextQuestion]);
+  }, [dueQueue, allWordsMap, dailyReviewLimit, pickNextQuestion, todayStr, dailyLogs]);
 
   // Auto pronounce
   useEffect(() => {
@@ -392,7 +482,9 @@ export const ReviewView: React.FC<Props> = ({
       setCombo(0);
 
       const updatedList = sessionList.map(item =>
-        item.word.id === targetWord.id ? { ...item, failedAny: true } : item
+        item.word.id === targetWord.id
+          ? { ...item, failedAny: true, choicePassedAtStep: globalStep }
+          : item
       );
       setSessionList(updatedList);
 
@@ -456,13 +548,19 @@ export const ReviewView: React.FC<Props> = ({
         </div>
 
         <div className="space-y-3 pt-2 max-w-sm mx-auto">
-          <button
-            onClick={() => onRefreshDue()}
-            className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-2xl shadow-xl flex items-center justify-center space-x-2 text-base"
-          >
-            <RotateCcw size={18} />
-            <span>Bir Tur Daha Tekrar Et</span>
-          </button>
+          {!(todayStr && localStorage.getItem('kelime_avi_review_completed_' + todayStr) === 'true') && (
+            <button
+              onClick={() => {
+                initializedRef.current = false;
+                poolQueueRef.current = [];
+                onRefreshDue();
+              }}
+              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-2xl shadow-xl flex items-center justify-center space-x-2 text-base"
+            >
+              <RotateCcw size={18} />
+              <span>Bir Tur Daha Tekrar Et</span>
+            </button>
+          )}
           <button
             onClick={onClose}
             className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-2xl"
@@ -473,6 +571,8 @@ export const ReviewView: React.FC<Props> = ({
       </div>
     );
   }
+
+  const uncompletedCount = sessionList.filter(i => !i.typingPassed).length;
 
   return (
     <div className="space-y-5 pb-24 pt-2">
@@ -486,8 +586,8 @@ export const ReviewView: React.FC<Props> = ({
         </button>
 
         <div className="flex-1 mx-3">
-          <div className="flex justify-between text-xs text-slate-400 mb-1">
-            <span className="flex items-center space-x-1">
+          <div className="flex justify-between items-center text-xs text-slate-400 mb-1">
+            <span className="flex items-center space-x-1.5 flex-wrap">
               <span>
                 {currentQuestion?.isRefresher
                   ? '🔄 Hızlı Tekrar'
@@ -499,6 +599,11 @@ export const ReviewView: React.FC<Props> = ({
               </span>
               {currentQuestion?.type === 'typing' && (
                 <Keyboard size={12} className="text-indigo-400 inline" />
+              )}
+              {uncompletedCount <= 4 && uncompletedCount > 0 && (
+                <span className="text-[10px] text-amber-400 font-semibold px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20">
+                  🎯 5'li Havuz ({uncompletedCount} Hedef)
+                </span>
               )}
             </span>
             <span className="font-bold text-indigo-400 font-mono">
