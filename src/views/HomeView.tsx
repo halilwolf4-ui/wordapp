@@ -19,6 +19,7 @@ interface Props {
   onStartLearn: () => void;
   onStartSpeedRound: () => void;
   onStartPassaparola: () => void;
+  onStartClozeTest: () => void;
 }
 
 export const HomeView: React.FC<Props> = ({
@@ -36,7 +37,8 @@ export const HomeView: React.FC<Props> = ({
   onStartReview,
   onStartLearn,
   onStartSpeedRound,
-  onStartPassaparola
+  onStartPassaparola,
+  onStartClozeTest
 }) => {
   // Goal ring percentage
   const goalPercent = Math.min(100, Math.round((todayCorrect / Math.max(1, dailyGoal)) * 100));
@@ -262,6 +264,32 @@ export const HomeView: React.FC<Props> = ({
           </div>
         </button>
       </div>
+
+      {/* Cloze Test Card */}
+      <button
+        onClick={onStartClozeTest}
+        className="bg-gradient-to-r from-slate-900 via-indigo-950/30 to-slate-900 hover:from-slate-850 hover:to-slate-850 border border-slate-800 hover:border-indigo-500/40 rounded-2xl p-3.5 text-left transition-all active:scale-[0.98] shadow-sm group flex items-center justify-between"
+      >
+        <div className="flex items-center space-x-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform shrink-0">
+            <Sparkles size={18} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center space-x-2">
+              <h4 className="text-xs sm:text-sm font-bold text-white">Cloze Test</h4>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">
+                Boşluk Doldurma
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+              Kelime Tekrarı & Edatlar (Prepositions)
+            </p>
+          </div>
+        </div>
+        <div className="w-6 h-6 rounded-lg bg-slate-850 border border-slate-800 text-slate-400 flex items-center justify-center group-hover:text-white transition-colors shrink-0 ml-2">
+          <Play size={10} className="fill-current ml-0.5" />
+        </div>
+      </button>
 
       {/* 4. OVERALL PROGRESS BAR & STATS CHIPS */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">

@@ -11,51 +11,183 @@ export interface DictionaryResult {
 
 /**
  * Normalizes an English word for dictionary lookup:
- * lowercases, trims, strips punctuation and leading "to " infinitive prefix if needed.
+ * lowercases, trims, and strips surrounding punctuation.
  */
 export function normalizeWord(word: string): string {
-  return word.trim().toLowerCase();
+  if (!word) return '';
+  return word
+    .trim()
+    .toLowerCase()
+    .replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '');
+}
+
+/**
+ * Generates root candidate words for morphological lookup (plurals, verb tenses, adverbs).
+ */
+export function getWordCandidates(word: string): string[] {
+  const q = normalizeWord(word);
+  if (!q) return [];
+
+  const candidates: string[] = [q];
+
+  // "to " prefix handling
+  if (q.startsWith('to ')) {
+    candidates.push(q.slice(3).trim());
+  } else {
+    candidates.push(`to ${q}`);
+  }
+
+  // Plurals
+  if (q.endsWith('ies') && q.length > 4) {
+    candidates.push(q.slice(0, -3) + 'y');
+  }
+  if (q.endsWith('es') && q.length > 4) {
+    candidates.push(q.slice(0, -2));
+  }
+  if (q.endsWith('s') && !q.endsWith('ss') && q.length > 3) {
+    candidates.push(q.slice(0, -1));
+  }
+
+  // Past tense / participles (-ed)
+  if (q.endsWith('ied') && q.length > 4) {
+    candidates.push(q.slice(0, -3) + 'y');
+  }
+  if (q.endsWith('ed') && q.length > 4) {
+    candidates.push(q.slice(0, -2)); // e.g. played -> play
+    candidates.push(q.slice(0, -1)); // e.g. cared -> care
+    // Double consonant check (e.g. stopped -> stop, travelled -> travel)
+    if (q.length > 5 && q[q.length - 3] === q[q.length - 4]) {
+      candidates.push(q.slice(0, -3));
+    }
+  }
+
+  // Continuous (-ing)
+  if (q.endsWith('ing') && q.length > 5) {
+    candidates.push(q.slice(0, -3)); // e.g. speaking -> speak
+    candidates.push(q.slice(0, -3) + 'e'); // e.g. caring -> care
+    // Double consonant check (e.g. running -> run)
+    if (q.length > 6 && q[q.length - 4] === q[q.length - 5]) {
+      candidates.push(q.slice(0, -4));
+    }
+  }
+
+  // Adverbs (-ly)
+  if (q.endsWith('ly') && q.length > 4) {
+    candidates.push(q.slice(0, -2)); // e.g. quickly -> quick
+    if (q.endsWith('ily') && q.length > 5) {
+      candidates.push(q.slice(0, -3) + 'y'); // e.g. happily -> happy
+    }
+  }
+
+  // Comparatives / Superlatives (-er, -est)
+  if (q.endsWith('est') && q.length > 5) {
+    candidates.push(q.slice(0, -3));
+    candidates.push(q.slice(0, -2));
+  }
+  if (q.endsWith('er') && q.length > 4) {
+    candidates.push(q.slice(0, -2));
+    candidates.push(q.slice(0, -1));
+  }
+
+  return Array.from(new Set(candidates));
 }
 
 /**
  * Searches the local database of words (from words.json / Dexie) for an English match.
  */
 export function lookupLocalWord(query: string, allWords: Word[]): DictionaryResult | null {
-  const q = normalizeWord(query);
-  if (!q) return null;
+  const candidates = getWordCandidates(query);
+  if (candidates.length === 0) return null;
 
-  // 1. Exact match
-  let match = allWords.find(w => normalizeWord(w.en) === q);
+  for (const cand of candidates) {
+    // 1. Exact match on en
+    let match = allWords.find(w => normalizeWord(w.en) === cand);
 
-  // 2. Try with or without "to " prefix (e.g., "to run" vs "run")
-  if (!match) {
-    if (q.startsWith('to ')) {
-      const stripped = q.slice(3).trim();
-      match = allWords.find(w => normalizeWord(w.en) === stripped);
-    } else {
-      const withTo = `to ${q}`;
-      match = allWords.find(w => normalizeWord(w.en) === withTo);
+    // 2. Try match with "to " prefix
+    if (!match && !cand.startsWith('to ')) {
+      match = allWords.find(w => normalizeWord(w.en) === `to ${cand}`);
+    }
+
+    // 3. Try irregular verbs check (e.g. went in "go, goes - went - gone")
+    if (!match) {
+      match = allWords.find(w => {
+        if (w.categories && w.categories.includes('irregular_verbs')) {
+          const forms = w.en.toLowerCase().split(/\s*-\s*|\s*,\s*/);
+          return forms.includes(cand);
+        }
+        return false;
+      });
+    }
+
+    if (match) {
+      const firstExample = match.examples && match.examples.length > 0 ? match.examples[0] : undefined;
+      return {
+        en: match.en,
+        tr: match.tr,
+        ipa: match.ipa || undefined,
+        exampleEn: firstExample ? firstExample.en : undefined,
+        exampleTr: firstExample ? firstExample.tr : undefined,
+        source: 'local'
+      };
     }
   }
 
-  // 3. Try matching base words if query has plurals or suffixes
-  if (!match && q.endsWith('s') && q.length > 3) {
-    const singular = q.slice(0, -1);
-    match = allWords.find(w => normalizeWord(w.en) === singular);
+  return null;
+}
+
+// In-memory cache for Kaikki dictionary
+let kaikkiDictCache: Record<string, { tr: string; ipa?: string }> | null = null;
+let kaikkiLoadingPromise: Promise<Record<string, { tr: string; ipa?: string }> | null> | null = null;
+
+/**
+ * Loads the Kaikki English-to-Turkish dictionary from /dict_kaikki.json
+ */
+export async function loadKaikkiDict(): Promise<Record<string, { tr: string; ipa?: string }> | null> {
+  if (kaikkiDictCache) return kaikkiDictCache;
+  if (kaikkiLoadingPromise) return await kaikkiLoadingPromise;
+
+  kaikkiLoadingPromise = (async () => {
+    try {
+      if (typeof window !== 'undefined' && typeof fetch !== 'undefined') {
+        const baseUrl = (typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL)
+          ? (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`)
+          : '/';
+        const res = await fetch(`${baseUrl}dict_kaikki.json`);
+        if (res.ok) {
+          kaikkiDictCache = await res.json();
+          return kaikkiDictCache;
+        }
+      }
+      return null;
+    } catch (err) {
+      console.warn('Failed to load Kaikki dictionary:', err);
+      return null;
+    }
+  })();
+
+  return await kaikkiLoadingPromise;
+}
+
+/**
+ * Searches the Kaikki Wiktionary dictionary for a word candidate.
+ */
+export function lookupKaikkiWord(
+  query: string,
+  dict: Record<string, { tr: string; ipa?: string }>
+): DictionaryResult | null {
+  const candidates = getWordCandidates(query);
+  for (const cand of candidates) {
+    const entry = dict[cand];
+    if (entry && entry.tr) {
+      return {
+        en: cand,
+        tr: entry.tr,
+        ipa: entry.ipa,
+        source: 'local'
+      };
+    }
   }
-
-  if (!match) return null;
-
-  const firstExample = match.examples && match.examples.length > 0 ? match.examples[0] : undefined;
-
-  return {
-    en: match.en,
-    tr: match.tr,
-    ipa: match.ipa || undefined,
-    exampleEn: firstExample ? firstExample.en : undefined,
-    exampleTr: firstExample ? firstExample.tr : undefined,
-    source: 'local'
-  };
+  return null;
 }
 
 /**
@@ -130,7 +262,6 @@ export async function lookupOnlineWord(query: string): Promise<DictionaryResult 
     let formattedExampleTr: string | undefined = undefined;
 
     if (exampleEn) {
-      // Highlight the word if present
       const reg = new RegExp(`\\b(${q})\\b`, 'gi');
       if (reg.test(exampleEn)) {
         formattedExampleEn = exampleEn.replace(reg, '#$1#');
@@ -167,19 +298,35 @@ export async function lookupOnlineWord(query: string): Promise<DictionaryResult 
 
 /**
  * Main lookup function:
- * First checks local 6,120+ words dictionary.
- * If not found, attempts online dictionary lookup.
+ * 1. Checks local 6,120+ words database (words.json / Dexie).
+ * 2. Checks Kaikki Wiktionary database (25,400+ words).
+ * 3. If not found and allowOnline is true, queries Google Translate & Free Dictionary APIs.
  */
 export async function lookupWord(
   query: string,
   allWords: Word[],
   allowOnline = true
 ): Promise<DictionaryResult | null> {
+  // 1. Local App Database (words.json / user custom words)
   const localResult = lookupLocalWord(query, allWords);
   if (localResult) {
     return localResult;
   }
 
+  // 2. Kaikki English-to-Turkish Database
+  try {
+    const kaikkiDict = await loadKaikkiDict();
+    if (kaikkiDict) {
+      const kaikkiResult = lookupKaikkiWord(query, kaikkiDict);
+      if (kaikkiResult) {
+        return kaikkiResult;
+      }
+    }
+  } catch (e) {
+    console.warn('Kaikki lookup error:', e);
+  }
+
+  // 3. Online Lookup Fallback
   if (allowOnline) {
     return await lookupOnlineWord(query);
   }

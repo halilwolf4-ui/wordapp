@@ -20,6 +20,7 @@ import { StatsView } from './views/StatsView';
 import { SettingsView } from './views/SettingsView';
 import { SpeedRoundView } from './views/SpeedRoundView';
 import { PassaparolaView } from './views/PassaparolaView';
+import { ClozeTestView } from './views/ClozeTestView';
 
 export const App: React.FC = () => {
   // Initialization state
@@ -40,6 +41,7 @@ export const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSpeedRoundOpen, setIsSpeedRoundOpen] = useState(false);
   const [isPassaparolaOpen, setIsPassaparolaOpen] = useState(false);
+  const [isClozeTestOpen, setIsClozeTestOpen] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   // Keyboard awareness listener
@@ -465,7 +467,7 @@ export const App: React.FC = () => {
   };
 
   // Add custom word (directly assigned to 'learning' queue)
-  const handleAddCustomWord = async (wordData: Omit<Word, 'id'>) => {
+  const handleAddCustomWord = async (wordData: Omit<Word, 'id'>, silent: boolean = false) => {
     // Generate unique ID >= 1000000
     const highestId = allWords.reduce((max, w) => Math.max(max, w.id), 0);
     const newId = Math.max(1000001, highestId + 1);
@@ -503,7 +505,9 @@ export const App: React.FC = () => {
     await db.profile.put(updatedProf);
     setProfile(updatedProf);
 
-    alert(`"${newWord.en}" kelimesi eklendi ve 'Öğreniliyor' olarak sıraya alındı!`);
+    if (!silent) {
+      alert(`"${newWord.en}" kelimesi eklendi ve 'Öğreniliyor' olarak sıraya alındı!`);
+    }
   };
 
   // Restore mastered word to review pool
@@ -667,6 +671,23 @@ export const App: React.FC = () => {
             }}
             onClose={() => setIsPassaparolaOpen(false)}
           />
+        ) : isClozeTestOpen ? (
+          <ClozeTestView
+            dueQueue={dueQueue}
+            allWordsMap={wordsMap}
+            allWords={allWords}
+            allProgress={allProgress}
+            onReviewAnswer={handleReviewWordAnswer}
+            onAddXp={async (amount) => {
+              const newXp = profile.xp + amount;
+              const newLevel = calculateLevel(newXp);
+              const updatedProf = { ...profile, xp: newXp, level: newLevel };
+              await db.profile.put(updatedProf);
+              setProfile(updatedProf);
+            }}
+            onAddCustomWord={handleAddCustomWord}
+            onClose={() => setIsClozeTestOpen(false)}
+          />
         ) : (
           /* TAB VIEWS (Kept mounted to preserve learning session state and active questions) */
           <div>
@@ -688,6 +709,7 @@ export const App: React.FC = () => {
                 onStartLearn={() => setCurrentTab('learn')}
                 onStartSpeedRound={() => setIsSpeedRoundOpen(true)}
                 onStartPassaparola={() => setIsPassaparolaOpen(true)}
+                onStartClozeTest={() => setIsClozeTestOpen(true)}
               />
             </div>
 
@@ -747,8 +769,8 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* Fixed Bottom Navigation - Hidden during active learning, review, passaparola, or keyboard typing */}
-      {!isSettingsOpen && !isSpeedRoundOpen && !isPassaparolaOpen && !isKeyboardVisible && currentTab !== 'learn' && currentTab !== 'review' && (
+      {/* Fixed Bottom Navigation - Hidden during active learning, review, passaparola, cloze test, or keyboard typing */}
+      {!isSettingsOpen && !isSpeedRoundOpen && !isPassaparolaOpen && !isClozeTestOpen && !isKeyboardVisible && currentTab !== 'learn' && currentTab !== 'review' && (
         <Navbar
           currentTab={currentTab}
           onTabChange={setCurrentTab}

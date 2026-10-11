@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeWord, lookupLocalWord } from './dictionaryService';
+import { normalizeWord, lookupLocalWord, lookupKaikkiWord } from './dictionaryService';
 import { Word } from '../types';
 
 const mockWords: Word[] = [
@@ -68,4 +68,25 @@ describe('dictionaryService - local lookup', () => {
     const res = lookupLocalWord('nonexistentword123', mockWords);
     expect(res).toBeNull();
   });
+
+  it('matches inflected words like past tense or participles', () => {
+    const res = lookupLocalWord('cleaned', mockWords);
+    expect(res).not.toBeNull();
+    expect(res?.tr).toBe('temizlemek, yıkamak');
+  });
+
+  it('correctly looks up words from Kaikki dictionary', () => {
+    const mockKaikki = {
+      meeting: { tr: 'toplantı', ipa: '/ˈmiːtɪŋ/' },
+      careful: { tr: 'dikkatli' }
+    };
+    const res1 = lookupKaikkiWord('meeting', mockKaikki);
+    expect(res1).not.toBeNull();
+    expect(res1?.tr).toBe('toplantı');
+
+    const res2 = lookupKaikkiWord('carefully', mockKaikki);
+    expect(res2).not.toBeNull();
+    expect(res2?.tr).toBe('dikkatli');
+  });
 });
+
