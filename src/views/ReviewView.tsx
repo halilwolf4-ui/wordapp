@@ -21,6 +21,7 @@ import { DailyStreakCompletion } from '../components/DailyStreakCompletion';
 import { QuizOptionButton } from '../components/QuizOptionButton';
 import { WordHintsList } from '../components/WordHintsList';
 import { getWordHints, prefetchHints, getMaxAllowedHints, WordHint } from '../services/hintService';
+import { syncAndSelectNextQuestion, PoolQueueItem, MIN_QUESTION_GAP } from '../utils/sessionQueue';
 
 interface Props {
   dueQueue: Progress[];
@@ -43,13 +44,7 @@ interface ReviewSessionState {
   typingPassed: boolean;
   failedAny: boolean;
   choicePassedAtStep: number | null;
-}
-
-const MIN_QUESTION_GAP = 5; // En az 5 soru aralık kuralı
-
-interface PoolQueueItem {
-  wordId: number;
-  isBuffer: boolean;
+  lastAskedStep: number | null;
 }
 
 export const ReviewView: React.FC<Props> = ({
@@ -98,6 +93,7 @@ export const ReviewView: React.FC<Props> = ({
   const initializedRef = useRef(false);
   const typingInputRef = useRef<HTMLInputElement>(null);
   const poolQueueRef = useRef<PoolQueueItem[]>([]);
+  const bufferLastAskedRef = useRef<Map<number, number>>(new Map());
 
   // Auto-focus and center typing input when keyboard appears
   useEffect(() => {
@@ -197,135 +193,34 @@ export const ReviewView: React.FC<Props> = ({
         return;
       }
 
-      let chosenWord: Word;
-      let questionType: 'choice' | 'typing';
-      let isFiller = false;
-      let isRefresher = false;
-
       // 2. KULLANICI KURALI:
-      // "son 4 ve daha az kelime kalmasına izin vermeyeceğiz ama hedefte günlük 20 tekrar varsa mesela 19 tane bildiyse 5 kelime tekrar çıkacak terkrar etmediği brini bile doğru hallederse bitireceğiz o günü kalan 4e gerek yok"
-      // Yani uncompleted sayısı 4 veya daha az ise havuz DAİMA 5 kelime olacak!
-      if (uncompleted.length <= 4) {
-        const uncompletedIds = new Set(uncompleted.map(i => i.word.id));
+      // Aktif döngüde daima en az 5 kelime bulunur.
+      // Sonda 1 kelime kalsa bile araya 4 farklı kelime girer (toplam en az 5 kelime döngüsü).
+      // Bir kelime sorulduktan veya yanlış yapıldıktan sonra araya en az 5 soru girmeden tekrar sorulamaz.
+      const candidateBuffers = getPreviouslyReviewedWords();
 
-        // Kuyruğu senkronize et:
-        // a) Kuyruktaki uncompleted olmayan öğeleri buffer olarak işaretle
-        let currentQueue = poolQueueRef.current.map(item => {
-          if (!item.isBuffer && !uncompletedIds.has(item.wordId)) {
-            return { ...item, isBuffer: true };
-          }
-          return item;
-        });
+      const result = syncAndSelectNextQuestion({
+        list,
+        currentStep,
+        excludeWordId,
+        currentQueue: poolQueueRef.current,
+        candidateBuffers,
+        allWordsMap,
+        bufferLastAskedMap: bufferLastAskedRef.current,
+        minGap: MIN_QUESTION_GAP
+      });
 
-        // b) Eksik olan uncompleted kelimeleri kuyruğa ekle
-        uncompleted.forEach(u => {
-          if (!currentQueue.some(q => q.wordId === u.word.id)) {
-            currentQueue.push({ wordId: u.word.id, isBuffer: false });
-          }
-        });
-
-        // c) Buffer kelimeleri tamamla (toplam 5 eleman olacak şekilde)
-        const candidateBuffers = getPreviouslyReviewedWords().filter(w => !uncompletedIds.has(w.id));
-        const existingIdsInQueue = new Set(currentQueue.map(q => q.wordId));
-
-        for (const w of candidateBuffers) {
-          if (currentQueue.length >= 5) break;
-          if (!existingIdsInQueue.has(w.id)) {
-            currentQueue.push({ wordId: w.id, isBuffer: true });
-            existingIdsInQueue.add(w.id);
-          }
-        }
-
-        // d) Fazla buffer varsa kırp (tam 5 öğe)
-        if (currentQueue.length > 5) {
-          const uncompInQueue = currentQueue.filter(q => !q.isBuffer);
-          const buffersInQueue = currentQueue.filter(q => q.isBuffer);
-          currentQueue = [...uncompInQueue, ...buffersInQueue.slice(0, Math.max(0, 5 - uncompInQueue.length))];
-        }
-
-        // Kuyruktan sıradaki soruyu seç (excludeWordId ile ardışık aynı kelime olmasını engelle)
-        let pickIdx = 0;
-        if (currentQueue.length > 1 && excludeWordId !== null && currentQueue[0].wordId === excludeWordId) {
-          pickIdx = 1;
-        }
-
-        const pickedItem = currentQueue[pickIdx];
-        // Seçilen öğeyi döngünün en sonuna taşı
-        currentQueue.splice(pickIdx, 1);
-        currentQueue.push(pickedItem);
-        poolQueueRef.current = currentQueue;
-
-        const foundWord = allWordsMap.get(pickedItem.wordId);
-        chosenWord = foundWord || uncompleted[0].word;
-
-        if (pickedItem.isBuffer) {
-          questionType = 'choice';
-          isRefresher = true;
-        } else {
-          const targetItem = list.find(i => i.word.id === chosenWord.id);
-          if (!targetItem || !targetItem.choicePassed) {
-            questionType = 'choice';
-          } else {
-            // Şıkkı geçmiş kelime için klavye sırası
-            const canType =
-              targetItem.choicePassedAtStep === null ||
-              currentStep - targetItem.choicePassedAtStep >= MIN_QUESTION_GAP;
-            if (canType) {
-              questionType = 'typing';
-            } else {
-              questionType = 'choice';
-            }
-          }
-        }
-      } else {
-        // uncompleted.length > 4 olduğunda standart seçim
+      if (!result) {
         poolQueueRef.current = [];
-        const needChoice = uncompleted.filter(item => !item.choicePassed);
-        const eligibleForTyping = uncompleted.filter(
-          item =>
-            item.choicePassed &&
-            !item.typingPassed &&
-            item.choicePassedAtStep !== null &&
-            currentStep - item.choicePassedAtStep >= MIN_QUESTION_GAP
-        );
-
-        let availableChoice = needChoice;
-        if (needChoice.length > 1 && excludeWordId !== null) {
-          availableChoice = needChoice.filter(i => i.word.id !== excludeWordId);
-          if (availableChoice.length === 0) availableChoice = needChoice;
-        }
-
-        let availableTyping = eligibleForTyping;
-        if (eligibleForTyping.length > 1 && excludeWordId !== null) {
-          availableTyping = eligibleForTyping.filter(i => i.word.id !== excludeWordId);
-          if (availableTyping.length === 0) availableTyping = eligibleForTyping;
-        }
-
-        if (availableTyping.length > 0 && (availableChoice.length === 0 || Math.random() < 0.45)) {
-          const picked = availableTyping[Math.floor(Math.random() * availableTyping.length)];
-          chosenWord = picked.word;
-          questionType = 'typing';
-        } else if (availableChoice.length > 0) {
-          const picked = availableChoice[Math.floor(Math.random() * availableChoice.length)];
-          chosenWord = picked.word;
-          questionType = 'choice';
-        } else {
-          // Nadir durum: bekleme aralığında bildiği önceki tekrar kelimesi sor
-          const prevWords = getPreviouslyReviewedWords().filter(
-            w => !uncompleted.some(u => u.word.id === w.id) && w.id !== excludeWordId
-          );
-          if (prevWords.length > 0) {
-            chosenWord = prevWords[Math.floor(Math.random() * prevWords.length)];
-            questionType = 'choice';
-            isRefresher = true;
-          } else {
-            const allWordsArr = Array.from(allWordsMap.values());
-            chosenWord = allWordsArr[Math.floor(Math.random() * allWordsArr.length)];
-            questionType = 'choice';
-            isFiller = true;
-          }
-        }
+        setPhase('summary');
+        return;
       }
+
+      poolQueueRef.current = result.nextQueue;
+      const chosenWord = result.chosenWord;
+      const questionType = result.questionType;
+      const isRefresher = result.isBuffer;
+      const isFiller = false;
 
       lastWordIdRef.current = chosenWord.id;
       setCurrentQuestion({ word: chosenWord, type: questionType, isFiller, isRefresher });
@@ -390,7 +285,8 @@ export const ReviewView: React.FC<Props> = ({
               choicePassed: false,
               typingPassed: false,
               failedAny: false,
-              choicePassedAtStep: null
+              choicePassedAtStep: null,
+              lastAskedStep: null
             });
           }
         });
@@ -456,10 +352,12 @@ export const ReviewView: React.FC<Props> = ({
       if (!isRefresherOrFiller) {
         updatedList = sessionList.map(item =>
           item.word.id === targetWord.id
-            ? { ...item, choicePassed: true, choicePassedAtStep: globalStep }
+            ? { ...item, choicePassed: true, choicePassedAtStep: globalStep, lastAskedStep: globalStep }
             : item
         );
         setSessionList(updatedList);
+      } else {
+        bufferLastAskedRef.current.set(targetWord.id, globalStep);
       }
 
       setInlineFeedback({ status: 'correct', correctAnswer: targetWord.tr });
@@ -473,11 +371,16 @@ export const ReviewView: React.FC<Props> = ({
       sound.playWrong();
       setCombo(0);
 
+      let updatedList = sessionList;
       if (!isRefresherOrFiller) {
-        const updatedList = sessionList.map(item =>
-          item.word.id === targetWord.id ? { ...item, failedAny: true } : item
+        updatedList = sessionList.map(item =>
+          item.word.id === targetWord.id
+            ? { ...item, failedAny: true, choicePassed: false, choicePassedAtStep: null, lastAskedStep: globalStep }
+            : item
         );
         setSessionList(updatedList);
+      } else {
+        bufferLastAskedRef.current.set(targetWord.id, globalStep);
       }
 
       // Increment wrong count for hints logic
@@ -517,7 +420,7 @@ export const ReviewView: React.FC<Props> = ({
       const hadFailed = targetItem?.failedAny ?? false;
 
       const updatedList = sessionList.map(item =>
-        item.word.id === targetWord.id ? { ...item, typingPassed: true } : item
+        item.word.id === targetWord.id ? { ...item, typingPassed: true, lastAskedStep: globalStep } : item
       );
       setSessionList(updatedList);
 
@@ -536,7 +439,7 @@ export const ReviewView: React.FC<Props> = ({
 
       const updatedList = sessionList.map(item =>
         item.word.id === targetWord.id
-          ? { ...item, failedAny: true, choicePassedAtStep: globalStep }
+          ? { ...item, failedAny: true, choicePassed: false, choicePassedAtStep: null, lastAskedStep: globalStep }
           : item
       );
       setSessionList(updatedList);

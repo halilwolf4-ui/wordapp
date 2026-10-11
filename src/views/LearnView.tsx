@@ -25,6 +25,7 @@ import { DailyStreakCompletion } from '../components/DailyStreakCompletion';
 import { QuizOptionButton } from '../components/QuizOptionButton';
 import { WordHintsList } from '../components/WordHintsList';
 import { getWordHints, prefetchHints, getMaxAllowedHints, WordHint } from '../services/hintService';
+import { syncAndSelectNextQuestion, PoolQueueItem, MIN_QUESTION_GAP } from '../utils/sessionQueue';
 
 interface Props {
   wordsQueue: Word[];
@@ -49,6 +50,7 @@ interface WordSessionState {
   choicePassed: boolean;
   typingPassed: boolean;
   choicePassedAtStep: number | null;
+  lastAskedStep: number | null;
 }
 
 interface PersistedState {
@@ -57,12 +59,12 @@ interface PersistedState {
     choicePassed: boolean;
     typingPassed: boolean;
     choicePassedAtStep: number | null;
+    lastAskedStep: number | null;
   }[];
   globalStep: number;
   hintStats?: Record<number, { encounters: number; wrongCount: number; revealedCount: number }>;
 }
 
-const MIN_QUESTION_GAP = 5;
 const STORAGE_LEARN_SESSION = 'kelime_avi_active_learn_session';
 const STORAGE_BASKET = 'kelime_avi_learn_unknown_basket';
 
@@ -126,6 +128,8 @@ export const LearnView: React.FC<Props> = ({
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initializedRef = useRef(false);
   const typingInputRef = useRef<HTMLInputElement>(null);
+  const poolQueueRef = useRef<PoolQueueItem[]>([]);
+  const bufferLastAskedRef = useRef<Map<number, number>>(new Map());
 
   // Auto-focus and center typing input when keyboard appears
   useEffect(() => {
@@ -155,7 +159,8 @@ export const LearnView: React.FC<Props> = ({
         wordId: i.word.id,
         choicePassed: i.choicePassed,
         typingPassed: i.typingPassed,
-        choicePassedAtStep: i.choicePassedAtStep
+        choicePassedAtStep: i.choicePassedAtStep,
+        lastAskedStep: i.lastAskedStep
       })),
       globalStep: step,
       hintStats: stats
@@ -176,6 +181,56 @@ export const LearnView: React.FC<Props> = ({
     }
   };
 
+  // Tampon / Pekiştirme kelimeleri havuzu
+  const getBufferWords = useCallback((): Word[] => {
+    const result: Word[] = [];
+    const addedIds = new Set<number>();
+
+    // 1. Bu oturumda zaten tamamlanmış kelimeler
+    sessionList.forEach(item => {
+      if (item.typingPassed && !addedIds.has(item.word.id)) {
+        result.push(item.word);
+        addedIds.add(item.word.id);
+      }
+    });
+
+    // 2. Geçmişte öğrenilmiş/mastered kelimeler
+    if (allProgress && allProgress.length > 0) {
+      allProgress.forEach(p => {
+        if ((!!p.lastReviewDate || p.status === 'mastered' || p.step > 0) && !addedIds.has(p.wordId)) {
+          const w = allWordsMap.get(p.wordId);
+          if (w) {
+            result.push(w);
+            addedIds.add(w.id);
+          }
+        }
+      });
+    }
+
+    // 3. Sıradaki diğer aday kelimeler
+    if (wordsQueue && wordsQueue.length > 0) {
+      wordsQueue.forEach(w => {
+        if (!addedIds.has(w.id)) {
+          result.push(w);
+          addedIds.add(w.id);
+        }
+      });
+    }
+
+    // 4. Genel sözlük fallback
+    if (result.length < 10 && allWordsMap.size > 0) {
+      for (const w of allWordsMap.values()) {
+        if (!addedIds.has(w.id)) {
+          result.push(w);
+          addedIds.add(w.id);
+          if (result.length >= 15) break;
+        }
+      }
+    }
+
+    return result;
+  }, [sessionList, allProgress, wordsQueue, allWordsMap]);
+
   // Pick Next Question
   const pickNextQuestion = useCallback(
     (list: WordSessionState[], currentStep: number, excludeWordId: number | null) => {
@@ -187,9 +242,9 @@ export const LearnView: React.FC<Props> = ({
       const uncompleted = list.filter(item => !item.typingPassed);
       const learned = list.filter(item => item.typingPassed).length;
 
-      // Hedef tamamlandıysa veya tüm kelimeler bittiyse oturumu tamamla:
-      // "yukarıdaki bar dolunca bitsin diğerlerini bitirmesine gerek kalmasın"
+      // 1. Hedef tamamlandıysa veya tüm kelimeler bittiyse oturumu tamamla
       if (learned >= targetWordsCount || uncompleted.length === 0) {
+        poolQueueRef.current = [];
         localStorage.removeItem(STORAGE_LEARN_SESSION);
         localStorage.removeItem(STORAGE_BASKET);
         if (todayStr) {
@@ -206,70 +261,35 @@ export const LearnView: React.FC<Props> = ({
         return;
       }
 
-      // KULLANICI İSTEĞİ:
-      // "öğren kısmında 4 tane öğrenmesi kaldıysa kullanıcının biliyorum bilmiyorum kartları çıksın arada 5e çıkınca devam etsin öğrenmeye ama yukarıdaki bar dolunca bitsin diğerlerini bitirmesine gerek kalmasın sadece sonda 4 taneyi sürekli sormasın"
-      if (uncompleted.length <= 4) {
-        const inSessionIds = new Set(list.map(i => i.word.id));
-        const availableCandidates = wordsQueue.filter(w => !inSessionIds.has(w.id));
-        if (availableCandidates.length > 0) {
-          setCandidateList(availableCandidates);
-          setCandidateIndex(0);
-          setIsFlipped(false);
-          setPhase('discovery');
-          return;
-        }
+      // 2. KULLANICI KURALI:
+      // Aktif döngüde daima en az 5 kelime bulunur.
+      // Sonda 1 kelime kalsa bile araya 4 farklı kelime girer (toplam en az 5 kelime döngüsü).
+      // Bir kelime sorulduktan veya yanlış yapıldıktan sonra araya en az 5 soru girmeden tekrar sorulamaz.
+      const candidateBuffers = getBufferWords();
+
+      const result = syncAndSelectNextQuestion({
+        list,
+        currentStep,
+        excludeWordId,
+        currentQueue: poolQueueRef.current,
+        candidateBuffers,
+        allWordsMap,
+        bufferLastAskedMap: bufferLastAskedRef.current,
+        minGap: MIN_QUESTION_GAP
+      });
+
+      if (!result) {
+        poolQueueRef.current = [];
+        localStorage.removeItem(STORAGE_LEARN_SESSION);
+        localStorage.removeItem(STORAGE_BASKET);
+        setPhase('summary');
+        return;
       }
 
-      const needChoice = uncompleted.filter(item => !item.choicePassed);
-      const eligibleForTyping = uncompleted.filter(
-        item =>
-          item.choicePassed &&
-          !item.typingPassed &&
-          item.choicePassedAtStep !== null &&
-          currentStep - item.choicePassedAtStep >= MIN_QUESTION_GAP
-      );
-
-      let availableChoice = needChoice;
-      if (needChoice.length > 1 && excludeWordId !== null) {
-        availableChoice = needChoice.filter(i => i.word.id !== excludeWordId);
-        if (availableChoice.length === 0) availableChoice = needChoice;
-      }
-
-      let availableTyping = eligibleForTyping;
-      if (eligibleForTyping.length > 1 && excludeWordId !== null) {
-        availableTyping = eligibleForTyping.filter(i => i.word.id !== excludeWordId);
-        if (availableTyping.length === 0) availableTyping = eligibleForTyping;
-      }
-
-      let chosenWord: Word;
-      let questionType: 'choice' | 'typing';
-      let isFiller = false;
-
-      if (availableTyping.length > 0 && (availableChoice.length === 0 || Math.random() < 0.45)) {
-        const picked = availableTyping[Math.floor(Math.random() * availableTyping.length)];
-        chosenWord = picked.word;
-        questionType = 'typing';
-      } else if (availableChoice.length > 0) {
-        const picked = availableChoice[Math.floor(Math.random() * availableChoice.length)];
-        chosenWord = picked.word;
-        questionType = 'choice';
-      } else {
-        // Cooldown filler question: prefer words already learned in this session for real reinforcement
-        const learnedWordsInSession = list.filter(i => i.typingPassed).map(i => i.word);
-        if (learnedWordsInSession.length > 0 && Math.random() < 0.8) {
-          chosenWord = learnedWordsInSession[Math.floor(Math.random() * learnedWordsInSession.length)];
-        } else {
-          const allWordsArr = Array.from(allWordsMap.values());
-          const nonActiveWords = allWordsArr.filter(
-            w => !uncompleted.some(u => u.word.id === w.id) && w.id !== excludeWordId
-          );
-          chosenWord =
-            nonActiveWords[Math.floor(Math.random() * nonActiveWords.length)] ||
-            allWordsArr[Math.floor(Math.random() * allWordsArr.length)];
-        }
-        questionType = 'choice';
-        isFiller = true;
-      }
+      poolQueueRef.current = result.nextQueue;
+      const chosenWord = result.chosenWord;
+      const questionType = result.questionType;
+      const isFiller = result.isBuffer;
 
       lastWordIdRef.current = chosenWord.id;
       setCurrentQuestion({ word: chosenWord, type: questionType, isFiller });
@@ -302,7 +322,7 @@ export const LearnView: React.FC<Props> = ({
         setChoiceOptions(opts);
       }
     },
-    [allWordsMap, onSessionCompleted, targetWordsCount, wordsQueue, todayStr]
+    [allWordsMap, onSessionCompleted, targetWordsCount, getBufferWords, todayStr]
   );
 
   // Start study with given words
@@ -312,9 +332,11 @@ export const LearnView: React.FC<Props> = ({
         word: w,
         choicePassed: false,
         typingPassed: false,
-        choicePassedAtStep: null
+        choicePassedAtStep: null,
+        lastAskedStep: null
       }));
 
+      poolQueueRef.current = [];
       setSessionList(list);
       setPhase('study');
       setGlobalStep(1);
@@ -356,7 +378,8 @@ export const LearnView: React.FC<Props> = ({
                 word,
                 choicePassed: item.choicePassed,
                 typingPassed: item.typingPassed,
-                choicePassedAtStep: item.choicePassedAtStep
+                choicePassedAtStep: item.choicePassedAtStep,
+                lastAskedStep: item.lastAskedStep ?? null
               });
             }
           }
@@ -497,7 +520,8 @@ export const LearnView: React.FC<Props> = ({
           word: currentCandidate,
           choicePassed: false,
           typingPassed: false,
-          choicePassedAtStep: null
+          choicePassedAtStep: null,
+          lastAskedStep: null
         };
         const updatedList = [...sessionList, newItem];
         setSessionList(updatedList);
@@ -617,11 +641,13 @@ export const LearnView: React.FC<Props> = ({
       if (!currentQuestion.isFiller) {
         updatedList = sessionList.map(item =>
           item.word.id === targetWord.id
-            ? { ...item, choicePassed: true, choicePassedAtStep: globalStep }
+            ? { ...item, choicePassed: true, choicePassedAtStep: globalStep, lastAskedStep: globalStep }
             : item
         );
         setSessionList(updatedList);
         saveSession(updatedList, globalStep + 1);
+      } else {
+        bufferLastAskedRef.current.set(targetWord.id, globalStep);
       }
 
       setInlineFeedback({ status: 'correct', correctAnswer: targetWord.tr });
@@ -635,10 +661,23 @@ export const LearnView: React.FC<Props> = ({
       sound.playWrong();
       setCombo(0);
 
-      setInlineFeedback({ status: 'wrong', correctAnswer: targetWord.tr });
-
       const nextStep = globalStep + 1;
       setGlobalStep(nextStep);
+
+      let updatedList = sessionList;
+      if (!currentQuestion.isFiller) {
+        updatedList = sessionList.map(item =>
+          item.word.id === targetWord.id
+            ? { ...item, choicePassed: false, choicePassedAtStep: null, lastAskedStep: globalStep }
+            : item
+        );
+        setSessionList(updatedList);
+        saveSession(updatedList, nextStep);
+      } else {
+        bufferLastAskedRef.current.set(targetWord.id, globalStep);
+      }
+
+      setInlineFeedback({ status: 'wrong', correctAnswer: targetWord.tr });
 
       // Increment wrong count for hints logic
       setHintStats(prev => {
@@ -671,7 +710,7 @@ export const LearnView: React.FC<Props> = ({
 
       // Mark typingPassed = true -> OFFICIALLY LEARNED!
       const updatedList = sessionList.map(item =>
-        item.word.id === targetWord.id ? { ...item, typingPassed: true } : item
+        item.word.id === targetWord.id ? { ...item, typingPassed: true, lastAskedStep: globalStep } : item
       );
       setSessionList(updatedList);
 
@@ -690,10 +729,18 @@ export const LearnView: React.FC<Props> = ({
       sound.playWrong();
       setCombo(0);
 
-      setInlineFeedback({ status: 'wrong', correctAnswer: targetWord.tr });
-
       const nextStep = globalStep + 1;
       setGlobalStep(nextStep);
+
+      const updatedList = sessionList.map(item =>
+        item.word.id === targetWord.id
+          ? { ...item, choicePassed: false, choicePassedAtStep: null, lastAskedStep: globalStep }
+          : item
+      );
+      setSessionList(updatedList);
+      saveSession(updatedList, nextStep);
+
+      setInlineFeedback({ status: 'wrong', correctAnswer: targetWord.tr });
 
       // Increment wrong count for hints logic
       setHintStats(prev => {
