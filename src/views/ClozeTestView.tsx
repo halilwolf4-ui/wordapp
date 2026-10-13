@@ -82,7 +82,8 @@ export const ClozeTestView: React.FC<Props> = ({
 
   // Floating Word Popup State
   const [activePopup, setActivePopup] = useState<ActiveWordPopup | null>(null);
-  const lastTapRef = useRef<{ word: string; time: number } | null>(null);
+  const activePopupRef = useRef<ActiveWordPopup | null>(null);
+  activePopupRef.current = activePopup;
   const popupRef = useRef<HTMLDivElement | null>(null);
 
   // Scoring & Stats
@@ -100,11 +101,17 @@ export const ClozeTestView: React.FC<Props> = ({
   // Cooldown timestamp ref to prevent ghost clicks / touch bleeds between questions
   const questionLoadedTimeRef = useRef<number>(Date.now());
 
-  // Trigger word lookup when double-clicked or double-tapped
+  // Trigger word lookup when clicked
   const handleWordTrigger = useCallback(
     async (rawWord: string, element: HTMLElement) => {
       const clean = rawWord.trim().replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '');
       if (!clean || clean.length < 1) return;
+
+      // Toggle off if clicking the already active word
+      if (activePopupRef.current && activePopupRef.current.word.toLowerCase() === clean.toLowerCase()) {
+        setActivePopup(null);
+        return;
+      }
 
       const rect = element.getBoundingClientRect();
       const isAlreadyCustom = allWords.some(
@@ -152,22 +159,6 @@ export const ClozeTestView: React.FC<Props> = ({
     [allWords]
   );
 
-  // Mobile double-tap detector
-  const handleTouchWord = useCallback(
-    (rawWord: string, e: React.TouchEvent<HTMLSpanElement>) => {
-      const now = Date.now();
-      const target = e.currentTarget;
-      if (lastTapRef.current && lastTapRef.current.word === rawWord && now - lastTapRef.current.time < 350) {
-        e.preventDefault();
-        handleWordTrigger(rawWord, target);
-        lastTapRef.current = null;
-      } else {
-        lastTapRef.current = { word: rawWord, time: now };
-      }
-    },
-    [handleWordTrigger]
-  );
-
   // Add word to custom words list
   const handleAddWordToCustom = async (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -211,6 +202,10 @@ export const ClozeTestView: React.FC<Props> = ({
   // Click outside and escape listeners for word popup
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest?.('[data-interactive-word]')) {
+        return;
+      }
       if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
         setActivePopup(null);
       }
@@ -777,7 +772,7 @@ export const ClozeTestView: React.FC<Props> = ({
   const progressPercent = Math.round(((currentIndex + 1) / questions.length) * 100);
   const isAnswerCorrect = selectedOption?.trim().toLowerCase() === currentQ.answer.trim().toLowerCase();
 
-  // Helper to render sentence with interactive double-clickable words
+  // Helper to render sentence with interactive clickable words
   const renderInteractiveSentence = (text: string) => {
     if (!text) return null;
     const parts = text.split(/([a-zA-Z0-9'-]+)/g);
@@ -791,13 +786,14 @@ export const ClozeTestView: React.FC<Props> = ({
       return (
         <span
           key={idx}
-          onDoubleClick={e => {
+          data-interactive-word="true"
+          onClick={e => {
             e.stopPropagation();
             handleWordTrigger(part, e.currentTarget);
           }}
-          onTouchEnd={e => handleTouchWord(part, e)}
-          title="Çift tıklayarak anlamına bakın ve kelimelerinize ekleyin"
-          className="cursor-pointer hover:text-indigo-300 hover:bg-indigo-500/15 rounded px-0.5 transition-colors select-text inline-block active:text-indigo-400"
+          title="Tıklayarak anlamına bakın ve kelimelerinize ekleyin"
+          className="cursor-pointer hover:text-indigo-300 hover:bg-indigo-500/15 rounded px-0.5 transition-colors select-none inline-block active:text-indigo-400 active:scale-95"
+          style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
         >
           {part}
         </span>
@@ -853,7 +849,7 @@ export const ClozeTestView: React.FC<Props> = ({
               <span>Boşluğu Doldurun</span>
             </span>
             <span className="text-[10px] text-indigo-400/90 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full font-medium">
-              ✨ Çift Tıkla: Anlam & +Ekle
+              ✨ Tıkla: Anlam & +Ekle
             </span>
           </div>
 
@@ -867,7 +863,10 @@ export const ClozeTestView: React.FC<Props> = ({
         </div>
 
         {/* Sentence Text with styled [MASK] slot */}
-        <div className="text-base sm:text-lg font-medium text-slate-100 leading-relaxed my-auto select-text">
+        <div
+          className="text-base sm:text-lg font-medium text-slate-100 leading-relaxed my-auto select-none"
+          style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+        >
           {renderInteractiveSentence(currentQ.sentenceBefore)}
 
           {/* DYNAMIC BLANK CHIP */}
@@ -882,20 +881,19 @@ export const ClozeTestView: React.FC<Props> = ({
           >
             {hasFeedback ? (
               <span
-                onDoubleClick={e => {
+                data-interactive-word="true"
+                onClick={e => {
                   e.stopPropagation();
                   handleWordTrigger(isAnswerCorrect ? selectedOption! : currentQ.answer, e.currentTarget);
                 }}
-                onTouchEnd={e =>
-                  handleTouchWord(isAnswerCorrect ? selectedOption! : currentQ.answer, e)
-                }
-                className="cursor-pointer hover:underline"
-                title="Çift tıklayarak anlamına bakın ve listenize ekleyin"
+                className="cursor-pointer hover:underline select-none active:scale-95"
+                style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+                title="Tıklayarak anlamına bakın ve listenize ekleyin"
               >
                 {isAnswerCorrect ? selectedOption : currentQ.answer}
               </span>
             ) : (
-              <span className="text-indigo-400 text-sm tracking-widest">????</span>
+              <span className="text-indigo-400 text-sm tracking-widest select-none">????</span>
             )}
           </span>
 
@@ -944,7 +942,7 @@ export const ClozeTestView: React.FC<Props> = ({
       {/* Helper Tip */}
       <div className="text-[11px] text-slate-400 text-center mb-3 flex items-center justify-center space-x-1">
         <span>💡</span>
-        <span>Cümledeki herhangi bir kelimeye <strong>çift tıklayarak</strong> anlamını görebilir ve <strong>+</strong> ile Özel Kelimelerinize ekleyebilirsiniz.</span>
+        <span>Cümledeki herhangi bir kelimeye <strong>tıklayarak</strong> anlamını görebilir ve <strong>+</strong> ile Özel Kelimelerinize ekleyebilirsiniz.</span>
       </div>
 
       {/* 4 Choices Grid */}

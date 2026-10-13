@@ -310,6 +310,22 @@ export async function lookupWord(
   // 1. Local App Database (words.json / user custom words)
   const localResult = lookupLocalWord(query, allWords);
   if (localResult) {
+    // If local word has no example sentence, try to enrich from online if allowed
+    if (allowOnline && !localResult.exampleEn) {
+      try {
+        const onlineResult = await lookupOnlineWord(query);
+        if (onlineResult && onlineResult.exampleEn) {
+          return {
+            ...localResult,
+            exampleEn: onlineResult.exampleEn,
+            exampleTr: onlineResult.exampleTr,
+            ipa: localResult.ipa || onlineResult.ipa
+          };
+        }
+      } catch {
+        // Fallback to local result
+      }
+    }
     return localResult;
   }
 
@@ -319,6 +335,23 @@ export async function lookupWord(
     if (kaikkiDict) {
       const kaikkiResult = lookupKaikkiWord(query, kaikkiDict);
       if (kaikkiResult) {
+        // Kaikki has no example sentences. If allowOnline is true, try to enrich with example sentence from online
+        if (allowOnline && !kaikkiResult.exampleEn) {
+          try {
+            const onlineResult = await lookupOnlineWord(query);
+            if (onlineResult && onlineResult.exampleEn) {
+              return {
+                ...kaikkiResult,
+                exampleEn: onlineResult.exampleEn,
+                exampleTr: onlineResult.exampleTr,
+                ipa: kaikkiResult.ipa || onlineResult.ipa,
+                source: 'online'
+              };
+            }
+          } catch {
+            // Fallback to Kaikki result
+          }
+        }
         return kaikkiResult;
       }
     }

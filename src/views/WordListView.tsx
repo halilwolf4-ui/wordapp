@@ -2,13 +2,15 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Word, Progress } from '../types';
 import { AudioButton } from '../components/AudioButton';
 import { HighlightedText } from '../components/HighlightedText';
-import { Plus, Search, RotateCcw, CheckCircle, Sparkles, X, Loader2, BookOpen, Wand2 } from 'lucide-react';
+import { Plus, Search, RotateCcw, CheckCircle, Sparkles, X, Loader2, BookOpen, Wand2, Trash2, Edit2 } from 'lucide-react';
 import { lookupWord } from '../services/dictionaryService';
 
 interface Props {
   allWords: Word[];
   progressMap: Map<number, Progress>;
   onAddCustomWord: (word: Omit<Word, 'id'>) => Promise<void>;
+  onUpdateCustomWord?: (word: Word) => Promise<void>;
+  onDeleteCustomWord?: (wordId: number) => Promise<void>;
   onRestoreMasteredWord: (wordId: number) => Promise<void>;
 }
 
@@ -16,13 +18,16 @@ export const WordListView: React.FC<Props> = ({
   allWords,
   progressMap,
   onAddCustomWord,
+  onUpdateCustomWord,
+  onDeleteCustomWord,
   onRestoreMasteredWord
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'custom' | 'mastered' | 'learning'>('custom');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // New Word Form State
+  // New / Edit Word Form State
+  const [editingWord, setEditingWord] = useState<Word | null>(null);
   const [newEn, setNewEn] = useState('');
   const [newTr, setNewTr] = useState('');
   const [newIpa, setNewIpa] = useState('');
@@ -37,6 +42,38 @@ export const WordListView: React.FC<Props> = ({
     source: 'local' | 'online' | 'none';
   } | null>(null);
 
+  // Form Reset / Open / Close Helpers
+  const resetForm = () => {
+    setEditingWord(null);
+    setNewEn('');
+    setNewTr('');
+    setNewIpa('');
+    setNewExampleEn('');
+    setNewExampleTr('');
+    setDictStatus(null);
+  };
+
+  const handleOpenAddModal = () => {
+    resetForm();
+    setIsAddModalOpen(true);
+  };
+
+  const handleOpenEditModal = (w: Word) => {
+    setEditingWord(w);
+    setNewEn(w.en);
+    setNewTr(w.tr);
+    setNewIpa(w.ipa || '');
+    setNewExampleEn(w.examples?.[0]?.en || '');
+    setNewExampleTr(w.examples?.[0]?.tr || '');
+    setDictStatus(null);
+    setIsAddModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    resetForm();
+    setIsAddModalOpen(false);
+  };
+
   // Trigger dictionary lookup
   const performLookup = async (englishWord: string, allowOnline = true) => {
     const q = englishWord.trim();
@@ -45,13 +82,19 @@ export const WordListView: React.FC<Props> = ({
     setIsSearchingDict(true);
     setDictStatus(null);
 
+    // Her "Sözlükten Getir" tuşuna basıldığında alttaki tüm alanları temizle
+    setNewTr('');
+    setNewIpa('');
+    setNewExampleEn('');
+    setNewExampleTr('');
+
     try {
       const result = await lookupWord(q, allWords, allowOnline);
       if (result) {
         setNewTr(result.tr || '');
-        if (result.ipa) setNewIpa(result.ipa);
-        if (result.exampleEn) setNewExampleEn(result.exampleEn);
-        if (result.exampleTr) setNewExampleTr(result.exampleTr);
+        setNewIpa(result.ipa || '');
+        setNewExampleEn(result.exampleEn || '');
+        setNewExampleTr(result.exampleTr || '');
 
         setDictStatus({
           text: result.source === 'local'
@@ -80,6 +123,12 @@ export const WordListView: React.FC<Props> = ({
     const trimmed = newEn.trim();
     if (!trimmed || trimmed.length < 2 || !isAddModalOpen) {
       setDictStatus(null);
+      if (!trimmed) {
+        setNewTr('');
+        setNewIpa('');
+        setNewExampleEn('');
+        setNewExampleTr('');
+      }
       return;
     }
 
@@ -87,11 +136,11 @@ export const WordListView: React.FC<Props> = ({
       // Auto-lookup locally first silently (fast offline experience)
       lookupWord(trimmed, allWords, false).then(result => {
         if (result) {
-          // If found in local words and user hasn't typed Turkish translation yet
-          setNewTr(prev => (prev ? prev : result.tr));
-          setNewIpa(prev => (prev ? prev : (result.ipa || '')));
-          setNewExampleEn(prev => (prev ? prev : (result.exampleEn || '')));
-          setNewExampleTr(prev => (prev ? prev : (result.exampleTr || '')));
+          // If found in local words, update fields
+          setNewTr(result.tr || '');
+          setNewIpa(result.ipa || '');
+          setNewExampleEn(result.exampleEn || '');
+          setNewExampleTr(result.exampleTr || '');
           setDictStatus({
             text: '✓ Yerel sözlükte bulundu ve otomatik dolduruldu!',
             source: 'local'
@@ -125,7 +174,7 @@ export const WordListView: React.FC<Props> = ({
     return list.slice(0, 100); // paginate / limit to 100 for render speed
   }, [allWords, progressMap, activeFilter, searchTerm]);
 
-  const handleCreateWord = async (e: React.FormEvent) => {
+  const handleSaveWord = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEn.trim() || !newTr.trim()) return;
 
@@ -135,24 +184,27 @@ export const WordListView: React.FC<Props> = ({
         ? [{ en: newExampleEn.trim(), tr: newExampleTr.trim() }]
         : [];
 
-      await onAddCustomWord({
-        en: newEn.trim(),
-        tr: newTr.trim(),
-        ipa: newIpa.trim() || undefined,
-        examples,
-        categories: ['custom'],
-        isCustom: true,
-        createdAt: Date.now()
-      });
+      if (editingWord && onUpdateCustomWord) {
+        await onUpdateCustomWord({
+          ...editingWord,
+          en: newEn.trim(),
+          tr: newTr.trim(),
+          ipa: newIpa.trim() || undefined,
+          examples
+        });
+      } else {
+        await onAddCustomWord({
+          en: newEn.trim(),
+          tr: newTr.trim(),
+          ipa: newIpa.trim() || undefined,
+          examples,
+          categories: ['custom'],
+          isCustom: true,
+          createdAt: Date.now()
+        });
+      }
 
-      // Reset
-      setNewEn('');
-      setNewTr('');
-      setNewIpa('');
-      setNewExampleEn('');
-      setNewExampleTr('');
-      setDictStatus(null);
-      setIsAddModalOpen(false);
+      handleCloseModal();
       setActiveFilter('custom');
     } finally {
       setIsSubmitting(false);
@@ -171,7 +223,7 @@ export const WordListView: React.FC<Props> = ({
         </div>
 
         <button
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={handleOpenAddModal}
           className="flex items-center space-x-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
         >
           <Plus size={16} />
@@ -274,25 +326,51 @@ export const WordListView: React.FC<Props> = ({
                     )}
                   </div>
 
-                  {/* Status Indicator / Action */}
-                  {isMastered ? (
-                    <button
-                      onClick={() => onRestoreMasteredWord(w.id)}
-                      className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-xs font-semibold border border-emerald-500/30 active:scale-95 transition-all"
-                      title="Tekrar havuzuna geri al"
-                    >
-                      <RotateCcw size={12} />
-                      <span>Tekrara Al</span>
-                    </button>
-                  ) : prog?.status === 'learning' ? (
-                    <span className="text-[11px] font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
-                      Adım {prog.step + 1}/6
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-slate-500 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-850">
-                      Yeni
-                    </span>
-                  )}
+                  {/* Actions & Status */}
+                  <div className="flex items-center space-x-1.5">
+                    {isCustom && (
+                      <div className="flex items-center space-x-1 mr-1">
+                        {onUpdateCustomWord && (
+                          <button
+                            onClick={() => handleOpenEditModal(w)}
+                            className="p-1 rounded-lg text-slate-400 hover:text-indigo-300 hover:bg-indigo-500/10 active:scale-95 transition-all"
+                            title="Kelimeyi düzenle"
+                          >
+                            <Edit2 size={13} />
+                          </button>
+                        )}
+                        {onDeleteCustomWord && (
+                          <button
+                            onClick={() => onDeleteCustomWord(w.id)}
+                            className="p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 active:scale-95 transition-all"
+                            title="Özel kelimeyi sil"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Status Indicator / Action */}
+                    {isMastered ? (
+                      <button
+                        onClick={() => onRestoreMasteredWord(w.id)}
+                        className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-xs font-semibold border border-emerald-500/30 active:scale-95 transition-all"
+                        title="Tekrar havuzuna geri al"
+                      >
+                        <RotateCcw size={12} />
+                        <span>Tekrara Al</span>
+                      </button>
+                    ) : prog?.status === 'learning' ? (
+                      <span className="text-[11px] font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
+                        Adım {prog.step + 1}/6
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-slate-500 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-850">
+                        Yeni
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="text-sm font-semibold text-emerald-400">
@@ -328,17 +406,17 @@ export const WordListView: React.FC<Props> = ({
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <h3 className="text-lg font-bold text-white flex items-center space-x-2">
                 <Sparkles size={18} className="text-purple-400" />
-                <span>Kendi Kelimeni Ekle</span>
+                <span>{editingWord ? 'Kelimeyi Düzenle' : 'Kendi Kelimeni Ekle'}</span>
               </h3>
               <button
-                onClick={() => setIsAddModalOpen(false)}
+                onClick={handleCloseModal}
                 className="text-slate-400 hover:text-white"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleCreateWord} className="space-y-3.5 text-sm">
+            <form onSubmit={handleSaveWord} className="space-y-3.5 text-sm">
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-bold text-slate-300">
@@ -459,7 +537,7 @@ export const WordListView: React.FC<Props> = ({
               <div className="pt-2 flex space-x-3">
                 <button
                   type="button"
-                  onClick={() => setIsAddModalOpen(false)}
+                  onClick={handleCloseModal}
                   className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold"
                 >
                   İptal
@@ -469,7 +547,7 @@ export const WordListView: React.FC<Props> = ({
                   disabled={isSubmitting}
                   className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold shadow-lg"
                 >
-                  {isSubmitting ? 'Ekleniyor...' : 'Kaydet'}
+                  {isSubmitting ? 'Kaydediliyor...' : editingWord ? 'Güncelle' : 'Kaydet'}
                 </button>
               </div>
             </form>

@@ -510,6 +510,25 @@ export const App: React.FC = () => {
     }
   };
 
+  // Update Custom Word
+  const handleUpdateCustomWord = async (updatedWord: Word) => {
+    await db.words.put(updatedWord);
+    setAllWords(prev => prev.map(w => w.id === updatedWord.id ? updatedWord : w));
+  };
+
+  // Delete Custom Word
+  const handleDeleteCustomWord = async (wordId: number) => {
+    const wordToDelete = allWords.find(w => w.id === wordId);
+    const wordName = wordToDelete?.en || 'Bu kelime';
+    if (!window.confirm(`"${wordName}" kelimesini silmek istediğinize emin misiniz?`)) {
+      return;
+    }
+    await db.words.delete(wordId);
+    await db.progress.delete(wordId);
+    setAllWords(prev => prev.filter(w => w.id !== wordId));
+    setAllProgress(prev => prev.filter(p => p.wordId !== wordId));
+  };
+
   // Restore mastered word to review pool
   const handleRestoreMasteredWord = async (wordId: number) => {
     const existing = await db.progress.get(wordId);
@@ -752,6 +771,8 @@ export const App: React.FC = () => {
                 allWords={allWords}
                 progressMap={progressMap}
                 onAddCustomWord={handleAddCustomWord}
+                onUpdateCustomWord={handleUpdateCustomWord}
+                onDeleteCustomWord={handleDeleteCustomWord}
                 onRestoreMasteredWord={handleRestoreMasteredWord}
               />
             </div>
