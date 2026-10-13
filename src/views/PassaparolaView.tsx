@@ -85,8 +85,6 @@ export const PassaparolaView: React.FC<Props> = ({
 
   const currentQ = questions[currentIndex];
 
-  // Helper to find next target question:
-  // First searches for 'unvisited', then loops to 'pass'
   const getNextIndex = (fromIndex: number, currentList: PassaparolaQuestion[]): number | null => {
     const total = currentList.length;
     if (total === 0) return null;
@@ -116,14 +114,12 @@ export const PassaparolaView: React.FC<Props> = ({
     sound.playLevelUp();
     fireCelebration();
 
-    // Reward XP for correct answers
     const totalCorrect = questions.filter(q => q.state === 'correct').length;
     if (totalCorrect > 0 && onAddXp) {
       await onAddXp(totalCorrect * 15);
     }
   };
 
-  // Answer submit
   const handleAnswerSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!currentQ || gameState !== 'playing') return;
@@ -135,13 +131,12 @@ export const PassaparolaView: React.FC<Props> = ({
 
     if (isCorrect) {
       sound.playCorrect(score.correct + 1);
-      setLastFeedback({ isCorrect: true, text: 'Doğru!', correctTr: currentQ.word.tr });
+      setLastFeedback({ isCorrect: true, text: 'DOĞRU!', correctTr: currentQ.word.tr });
     } else {
       sound.playWrong();
-      setLastFeedback({ isCorrect: false, text: 'Yanlış!', correctTr: currentQ.word.tr });
+      setLastFeedback({ isCorrect: false, text: 'YANLIŞ!', correctTr: currentQ.word.tr });
     }
 
-    // Update current question state
     const updated = [...questions];
     updated[currentIndex] = {
       ...currentQ,
@@ -152,7 +147,6 @@ export const PassaparolaView: React.FC<Props> = ({
     setQuestions(updated);
     setInputVal('');
 
-    // Advance to next index
     const nextIdx = getNextIndex(currentIndex, updated);
     if (nextIdx !== null) {
       setCurrentIndex(nextIdx);
@@ -161,7 +155,6 @@ export const PassaparolaView: React.FC<Props> = ({
     }
   };
 
-  // Pass (Skip)
   const handlePass = () => {
     if (!currentQ || gameState !== 'playing') return;
 
@@ -184,106 +177,106 @@ export const PassaparolaView: React.FC<Props> = ({
     }
   };
 
-  // Compact circular letter wheel geometry
+  // Circular letter wheel geometry
   const centerCoord = 115;
   const circleRadius = 94;
 
   return (
     <div className="flex flex-col justify-between max-w-md mx-auto select-none min-h-[calc(100dvh-5rem)]">
       {/* Top Header */}
-      <div className="flex items-center justify-between py-1 px-1 border-b border-slate-800/80 mb-2">
+      <div className="flex items-center justify-between py-2 px-1 border-b-3 border-black mb-3">
         <button
           onClick={onClose}
-          className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          className="p-1.5 bg-white border-2 border-black font-black uppercase text-xs shadow-[2px_2px_0px_0px_#000] hover:bg-zinc-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center space-x-1"
           title="Çıkış"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={16} strokeWidth={2.5} />
+          <span>GERİ</span>
         </button>
 
         <div className="flex items-center space-x-2">
-          <span className="text-xs font-black bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 bg-clip-text text-transparent">
+          <span className="text-xs font-black uppercase tracking-wider bg-[#FFE600] text-black px-2.5 py-1 border-2 border-black shadow-[2px_2px_0px_0px_#000]">
             PASSAPAROLA
           </span>
           {gameState === 'playing' && (
-            <div className="flex items-center space-x-1 bg-slate-800/90 border border-slate-700/80 px-2 py-0.5 rounded-lg text-xs font-mono font-black">
-              <Clock size={12} className="text-amber-400" />
-              <span className={timeLeft <= 20 ? 'text-rose-400 animate-pulse' : 'text-white'}>
-                {timeLeft}s
-              </span>
+            <div className={`flex items-center space-x-1 border-2 border-black px-2 py-0.5 text-xs font-mono font-black shadow-[2px_2px_0px_0px_#000] ${
+              timeLeft <= 20 ? 'bg-[#FF5588] text-white animate-pulse' : 'bg-white text-black'
+            }`}>
+              <Clock size={12} strokeWidth={2.5} />
+              <span>{timeLeft}s</span>
             </div>
           )}
         </div>
 
         {gameState === 'playing' ? (
-          <div className="flex items-center space-x-2 text-[11px] font-black">
-            <span className="text-emerald-400 flex items-center space-x-0.5">
-              <Check size={12} />
+          <div className="flex items-center space-x-1.5 text-[11px] font-black">
+            <span className="bg-[#4ADE80] text-black px-1.5 py-0.5 border border-black shadow-[1px_1px_0px_0px_#000] flex items-center space-x-0.5">
+              <Check size={12} strokeWidth={3} />
               <span>{score.correct}</span>
             </span>
-            <span className="text-rose-400 flex items-center space-x-0.5">
-              <XIcon size={12} />
+            <span className="bg-[#FF5588] text-white px-1.5 py-0.5 border border-black shadow-[1px_1px_0px_0px_#000] flex items-center space-x-0.5">
+              <XIcon size={12} strokeWidth={3} />
               <span>{score.wrong}</span>
             </span>
-            <span className="text-amber-400 flex items-center space-x-0.5">
-              <HelpCircle size={12} />
+            <span className="bg-[#00F0FF] text-black px-1.5 py-0.5 border border-black shadow-[1px_1px_0px_0px_#000] flex items-center space-x-0.5">
+              <HelpCircle size={12} strokeWidth={3} />
               <span>{score.pass}</span>
             </span>
           </div>
         ) : (
-          <div className="w-8" />
+          <div className="w-10" />
         )}
       </div>
 
       {/* 1. READY SCREEN */}
       {gameState === 'ready' && (
-        <div className="my-auto bg-gradient-to-b from-slate-800/90 to-slate-900 border border-slate-700/80 rounded-3xl p-5 text-center space-y-4 shadow-xl">
-          <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 p-1 shadow-lg shadow-orange-500/20">
-            <div className="w-full h-full bg-slate-950 rounded-full flex items-center justify-center">
-              <span className="text-3xl font-black text-amber-400">P</span>
-            </div>
+        <div className="my-auto bg-white border-3 border-black p-5 text-center space-y-4 shadow-[5px_5px_0px_0px_#000]">
+          <div className="w-20 h-20 mx-auto bg-[#FFE600] border-3 border-black flex items-center justify-center shadow-[4px_4px_0px_0px_#000]">
+            <span className="text-4xl font-black text-black">P</span>
           </div>
 
           <div className="space-y-1.5">
-            <h2 className="text-xl font-black text-white">Passaparola Çarkı</h2>
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <h2 className="text-2xl font-black uppercase text-black">PASSAPAROLA ÇARKI</h2>
+            <p className="text-xs font-bold text-zinc-700 leading-relaxed border-y-2 border-dashed border-black py-2">
               120 saniyede A'dan Z'ye kelimelerin Türkçesini yaz!
             </p>
+
             {/* Color Rules Legend */}
             <div className="grid grid-cols-3 gap-2 pt-2 text-xs">
-              <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800 text-center">
-                <span className="block text-emerald-400 font-bold text-xs">Doğru</span>
-                <span className="text-[10px] text-slate-400">Yeşil yanar</span>
+              <div className="bg-[#4ADE80] p-2 border-2 border-black text-center shadow-[2px_2px_0px_0px_#000]">
+                <span className="block text-black font-black text-xs uppercase">DOĞRU</span>
+                <span className="text-[10px] font-bold text-black">Yeşil</span>
               </div>
-              <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800 text-center">
-                <span className="block text-rose-400 font-bold text-xs">Yanlış</span>
-                <span className="text-[10px] text-slate-400">Kırmızı yanar</span>
+              <div className="bg-[#FF5588] p-2 border-2 border-black text-center text-white shadow-[2px_2px_0px_0px_#000]">
+                <span className="block font-black text-xs uppercase">YANLIŞ</span>
+                <span className="text-[10px] font-bold">Kırmızı</span>
               </div>
-              <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800 text-center">
-                <span className="block text-amber-400 font-bold text-xs">Pas</span>
-                <span className="text-[10px] text-slate-400">Sarı yanar</span>
+              <div className="bg-[#00F0FF] p-2 border-2 border-black text-center shadow-[2px_2px_0px_0px_#000]">
+                <span className="block text-black font-black text-xs uppercase">PAS</span>
+                <span className="text-[10px] font-bold text-black">Mavi</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-2.5 text-[11px] text-indigo-300">
-            💡 <strong>İpucu:</strong> Fiiller "to" olmadan sorulur. Başlangıçta tüm harfler saydamdır!
+          <div className="bg-[#FFE600] border-2 border-black p-2.5 text-[11px] font-black uppercase text-black shadow-[2px_2px_0px_0px_#000]">
+            💡 İPUCU: Fiiller "to" olmadan sorulur. Pas geçtiklerine çark tekrar döner!
           </div>
 
           <button
             onClick={startGame}
-            className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-slate-950 font-bold text-sm rounded-2xl shadow-sm transition-all flex items-center justify-center space-x-2"
+            className="w-full py-4 bg-[#FFE600] hover:bg-[#FFD600] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none text-black font-black text-sm uppercase tracking-wider border-3 border-black shadow-[4px_4px_0px_0px_#000] transition-all flex items-center justify-center space-x-2"
           >
-            <Play size={16} className="fill-slate-950" />
-            <span>Çarkı Başlat (120s)</span>
+            <Play size={18} className="fill-black" />
+            <span>ÇARKI BAŞLAT (120S)</span>
           </button>
         </div>
       )}
 
-      {/* 2. PLAYING SCREEN (KEYBOARD SAFE & COMPACT) */}
+      {/* 2. PLAYING SCREEN */}
       {gameState === 'playing' && currentQ && (
         <div className="flex-1 flex flex-col justify-between space-y-2 py-1">
           {/* Circular Wheel */}
-          <div className="relative w-[230px] h-[230px] mx-auto select-none shrink-0 my-auto">
+          <div className="relative w-[230px] h-[230px] mx-auto select-none shrink-0 my-auto bg-white border-3 border-black rounded-full shadow-[5px_5px_0px_0px_#000]">
             {/* SVG backdrop for ring */}
             <svg className="w-full h-full pointer-events-none absolute inset-0">
               <circle
@@ -291,7 +284,7 @@ export const PassaparolaView: React.FC<Props> = ({
                 cy={centerCoord}
                 r={circleRadius}
                 fill="none"
-                stroke="rgba(51, 65, 85, 0.4)"
+                stroke="#000"
                 strokeWidth="2"
                 strokeDasharray="4 4"
               />
@@ -305,18 +298,13 @@ export const PassaparolaView: React.FC<Props> = ({
               const y = centerCoord + circleRadius * Math.sin(angle);
               const isCurrent = idx === currentIndex;
 
-              // Letter styling requirement:
-              // Unvisited -> slate-900 border border-slate-800
-              // Pass -> sarı (yellow)
-              // Correct -> yeşil (green)
-              // Wrong -> kırmızı (red)
-              let nodeStyle = 'bg-slate-900 text-slate-400 border border-slate-800';
+              let nodeStyle = 'bg-white text-black border-2 border-black shadow-[1px_1px_0px_0px_#000]';
               if (q.state === 'correct') {
-                nodeStyle = 'bg-emerald-500 text-white font-black border border-emerald-400 shadow-sm';
+                nodeStyle = 'bg-[#4ADE80] text-black font-black border-2 border-black shadow-[1px_1px_0px_0px_#000]';
               } else if (q.state === 'wrong') {
-                nodeStyle = 'bg-rose-500 text-white font-black border border-rose-400 shadow-sm';
+                nodeStyle = 'bg-[#FF5588] text-white font-black border-2 border-black shadow-[1px_1px_0px_0px_#000]';
               } else if (q.state === 'pass') {
-                nodeStyle = 'bg-amber-400 text-slate-950 font-black border border-amber-300 shadow-sm';
+                nodeStyle = 'bg-[#00F0FF] text-black font-black border-2 border-black shadow-[1px_1px_0px_0px_#000]';
               }
 
               return (
@@ -328,9 +316,9 @@ export const PassaparolaView: React.FC<Props> = ({
                     top: `${y}px`,
                     transform: 'translate(-50%, -50%)'
                   }}
-                  className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] transition-all duration-200 ${nodeStyle} ${
+                  className={`w-6 h-6 rounded-none flex items-center justify-center font-black text-[11px] transition-all duration-200 ${nodeStyle} ${
                     isCurrent
-                      ? 'ring-2 ring-indigo-400 bg-indigo-600 text-white border-indigo-300 scale-125 z-30 font-black shadow-md'
+                      ? 'bg-[#FFE600] text-black border-3 border-black scale-125 z-30 shadow-[2px_2px_0px_0px_#000]'
                       : ''
                   }`}
                 >
@@ -341,19 +329,19 @@ export const PassaparolaView: React.FC<Props> = ({
 
             {/* Center Area: Big Letter & English Word */}
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-auto px-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center shadow-md shadow-orange-500/25 mb-0.5 animate-scaleUp">
-                <span className="text-xl font-black text-slate-950">{currentQ.letter}</span>
+              <div className="w-10 h-10 bg-[#FFE600] border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_0px_#000] mb-0.5">
+                <span className="text-xl font-black text-black">{currentQ.letter}</span>
               </div>
 
               <div className="flex items-center space-x-1 mt-0.5">
-                <span className="text-base sm:text-lg font-black text-white tracking-wide truncate max-w-[150px]">
+                <span className="text-base sm:text-lg font-black text-black uppercase tracking-wide truncate max-w-[150px]">
                   {currentQ.displayWord}
                 </span>
                 <AudioButton text={currentQ.displayWord} size={15} />
               </div>
 
               {currentQ.word.ipa && (
-                <span className="text-[10px] text-slate-400 font-mono">
+                <span className="text-[10px] text-zinc-600 font-mono font-bold">
                   {currentQ.word.ipa}
                 </span>
               )}
@@ -361,19 +349,19 @@ export const PassaparolaView: React.FC<Props> = ({
               {/* Feedback inline under word */}
               {lastFeedback && (
                 <div
-                  className={`mt-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border animate-fadeIn max-w-[170px] truncate ${
+                  className={`mt-1 px-2 py-0.5 text-[10px] font-black uppercase border-2 border-black max-w-[170px] truncate shadow-[2px_2px_0px_0px_#000] ${
                     lastFeedback.isCorrect
-                      ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
-                      : 'bg-rose-500/20 border-rose-500/40 text-rose-300'
+                      ? 'bg-[#4ADE80] text-black'
+                      : 'bg-[#FF5588] text-white'
                   }`}
                 >
-                  {lastFeedback.isCorrect ? 'Doğru! 🎉' : `Cevap: ${lastFeedback.correctTr}`}
+                  {lastFeedback.isCorrect ? 'DOĞRU! 🎉' : `CEVAP: ${lastFeedback.correctTr}`}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Input & Action Form (Stays cleanly above the keyboard) */}
+          {/* Input & Action Form */}
           <form onSubmit={handleAnswerSubmit} className="space-y-2 pt-1">
             <input
               ref={inputRef}
@@ -382,14 +370,14 @@ export const PassaparolaView: React.FC<Props> = ({
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
               placeholder="Türkçe karşılığını yaz..."
-              className="w-full px-3 py-2.5 bg-slate-900 border-2 border-slate-700 focus:border-amber-400 rounded-xl text-white placeholder-slate-500 text-center font-bold text-sm focus:outline-none transition-all shadow-inner"
+              className="w-full px-3 py-2.5 bg-white border-3 border-black text-black placeholder-zinc-400 text-center font-black text-sm uppercase focus:outline-none shadow-[3px_3px_0px_0px_#000]"
             />
 
             <div className="flex space-x-2">
               <button
                 type="button"
                 onClick={handlePass}
-                className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-850 active:scale-95 text-amber-400 border border-slate-800 font-bold text-xs rounded-xl transition-all"
+                className="flex-1 py-3 bg-white hover:bg-zinc-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-black border-2 border-black font-black uppercase text-xs shadow-[3px_3px_0px_0px_#000] transition-all"
               >
                 PAS GEÇ
               </button>
@@ -397,7 +385,7 @@ export const PassaparolaView: React.FC<Props> = ({
               <button
                 type="submit"
                 disabled={!inputVal.trim()}
-                className="flex-[2] py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-40 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
+                className="flex-[2] py-3 bg-[#FFE600] hover:bg-[#FFD600] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none disabled:opacity-40 text-black font-black uppercase text-xs border-3 border-black shadow-[3px_3px_0px_0px_#000] transition-all"
               >
                 CEVAPLA
               </button>
@@ -408,52 +396,52 @@ export const PassaparolaView: React.FC<Props> = ({
 
       {/* 3. GAME OVER SUMMARY SCREEN */}
       {gameState === 'gameover' && (
-        <div className="my-auto bg-slate-900 border border-slate-700/80 rounded-3xl p-5 space-y-4 shadow-2xl animate-scaleUp">
+        <div className="my-auto bg-white border-3 border-black p-5 space-y-4 shadow-[5px_5px_0px_0px_#000]">
           <div className="text-center space-y-1">
-            <div className="w-14 h-14 rounded-full bg-amber-500/20 text-amber-400 mx-auto flex items-center justify-center">
-              <Award size={30} />
+            <div className="w-14 h-14 bg-[#FFE600] border-2 border-black text-black mx-auto flex items-center justify-center shadow-[3px_3px_0px_0px_#000]">
+              <Award size={30} strokeWidth={2.5} />
             </div>
-            <h3 className="text-lg font-black text-white">Tur Tamamlandı!</h3>
-            <p className="text-xs text-slate-400">
+            <h3 className="text-xl font-black uppercase text-black">TUR TAMAMLANDI!</h3>
+            <p className="text-xs font-bold text-zinc-600 uppercase">
               Passaparola turu başarıyla bitti:
             </p>
           </div>
 
           {/* Scoreboard Cards */}
           <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-2.5">
-              <span className="block text-xl font-black text-emerald-400">{score.correct}</span>
-              <span className="text-[10px] font-bold text-emerald-300/80 uppercase">Doğru</span>
+            <div className="bg-[#4ADE80] border-2 border-black p-2.5 shadow-[2px_2px_0px_0px_#000]">
+              <span className="block text-2xl font-black text-black font-mono">{score.correct}</span>
+              <span className="text-[10px] font-black text-black uppercase">DOĞRU</span>
             </div>
-            <div className="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-2.5">
-              <span className="block text-xl font-black text-rose-400">{score.wrong}</span>
-              <span className="text-[10px] font-bold text-rose-300/80 uppercase">Yanlış</span>
+            <div className="bg-[#FF5588] border-2 border-black p-2.5 text-white shadow-[2px_2px_0px_0px_#000]">
+              <span className="block text-2xl font-black font-mono">{score.wrong}</span>
+              <span className="text-[10px] font-black uppercase">YANLIŞ</span>
             </div>
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-2.5">
-              <span className="block text-xl font-black text-amber-400">{score.pass}</span>
-              <span className="text-[10px] font-bold text-amber-300/80 uppercase">Pas</span>
+            <div className="bg-[#00F0FF] border-2 border-black p-2.5 shadow-[2px_2px_0px_0px_#000]">
+              <span className="block text-2xl font-black text-black font-mono">{score.pass}</span>
+              <span className="text-[10px] font-black text-black uppercase">PAS</span>
             </div>
           </div>
 
-          <div className="bg-slate-800/80 rounded-xl p-2 text-center border border-slate-700 text-xs">
-            <span className="text-slate-400">Kazanılan XP: </span>
-            <span className="font-black text-amber-400">+{score.correct * 15} XP</span>
+          <div className="bg-[#FFE600] p-2 text-center border-2 border-black text-xs font-black uppercase shadow-[2px_2px_0px_0px_#000]">
+            <span>KAZANILAN ÖDÜL: </span>
+            <span className="text-black underline">+{score.correct * 15} XP</span>
           </div>
 
           {/* Question List Review */}
-          <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1 no-scrollbar">
+          <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1 no-scrollbar border-y-2 border-black py-2">
             {questions.map((q) => (
               <div
                 key={q.letter}
-                className="flex items-center justify-between p-2 rounded-xl bg-slate-800/50 border border-slate-700/60 text-xs"
+                className="flex items-center justify-between p-2 bg-[#FDFBF7] border-2 border-black text-xs shadow-[1px_1px_0px_0px_#000]"
               >
                 <div className="flex items-center space-x-2">
-                  <span className="w-5 h-5 rounded-lg bg-slate-700 font-bold text-center flex items-center justify-center text-[10px] text-white shrink-0">
+                  <span className="w-5 h-5 bg-black font-black text-center flex items-center justify-center text-[10px] text-[#FFE600] shrink-0 border border-black">
                     {q.letter}
                   </span>
                   <div>
-                    <span className="font-bold text-white text-[11px]">{q.displayWord}</span>
-                    <span className="text-slate-400 block text-[10px] truncate max-w-[140px]">
+                    <span className="font-black text-black text-[11px] uppercase">{q.displayWord}</span>
+                    <span className="text-zinc-600 block text-[10px] font-bold truncate max-w-[140px]">
                       {q.word.tr}
                     </span>
                   </div>
@@ -461,19 +449,19 @@ export const PassaparolaView: React.FC<Props> = ({
 
                 <div className="text-right">
                   {q.state === 'correct' ? (
-                    <span className="text-emerald-400 font-bold flex items-center space-x-1">
-                      <Check size={12} />
-                      <span className="text-[10px]">Doğru</span>
+                    <span className="bg-[#4ADE80] text-black font-black px-1.5 py-0.5 border border-black text-[10px] flex items-center space-x-1">
+                      <Check size={12} strokeWidth={3} />
+                      <span>DOĞRU</span>
                     </span>
                   ) : q.state === 'wrong' ? (
-                    <span className="text-rose-400 font-bold flex items-center space-x-1">
-                      <XIcon size={12} />
-                      <span className="text-[10px]">Yanlış</span>
+                    <span className="bg-[#FF5588] text-white font-black px-1.5 py-0.5 border border-black text-[10px] flex items-center space-x-1">
+                      <XIcon size={12} strokeWidth={3} />
+                      <span>YANLIŞ</span>
                     </span>
                   ) : (
-                    <span className="text-amber-400 font-bold flex items-center space-x-1">
-                      <HelpCircle size={12} />
-                      <span className="text-[10px]">Pas</span>
+                    <span className="bg-[#00F0FF] text-black font-black px-1.5 py-0.5 border border-black text-[10px] flex items-center space-x-1">
+                      <HelpCircle size={12} strokeWidth={3} />
+                      <span>PAS</span>
                     </span>
                   )}
                 </div>
@@ -485,16 +473,16 @@ export const PassaparolaView: React.FC<Props> = ({
           <div className="flex space-x-2 pt-1">
             <button
               onClick={onClose}
-              className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl"
+              className="flex-1 py-3 bg-white hover:bg-zinc-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-black font-black uppercase text-xs border-2 border-black shadow-[2px_2px_0px_0px_#000] transition-all"
             >
-              Kapat
+              KAPAT
             </button>
             <button
               onClick={startGame}
-              className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-slate-950 font-black text-xs rounded-xl shadow-lg flex items-center justify-center space-x-1.5"
+              className="flex-1 py-3 bg-[#FFE600] hover:bg-[#FFD600] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-black font-black uppercase text-xs border-3 border-black shadow-[3px_3px_0px_0px_#000] flex items-center justify-center space-x-1.5 transition-all"
             >
-              <RotateCcw size={14} />
-              <span>Tekrar Oyna</span>
+              <RotateCcw size={14} strokeWidth={2.5} />
+              <span>TEKRAR OYNA</span>
             </button>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertCircle, X, Download } from 'lucide-react';
+import { AlertTriangle, X, Download } from 'lucide-react';
 import { exportBackupFile } from '../services/backup';
 
 interface Props {
@@ -41,25 +41,28 @@ export const BackupReminderBanner: React.FC<Props> = ({
   };
 
   return (
-    <div className="bg-gradient-to-r from-amber-500/15 to-orange-500/15 border-b border-amber-500/30 px-4 py-2.5 flex items-center justify-between text-xs text-amber-200">
+    <div className="bg-[#FFE600] border-b-[3px] border-black px-3.5 py-2 flex items-center justify-between text-xs text-black font-black select-none shadow-[0_2px_0px_0px_#000]">
       <div className="flex items-center space-x-2 flex-1 pr-2">
-        <AlertCircle size={16} className="text-amber-400 shrink-0" />
-        <span>İlerlemenizi kaybetmemek için düzenli yedek alın!</span>
+        <div className="bg-black text-[#FFE600] p-1 border border-black shrink-0">
+          <AlertTriangle size={14} strokeWidth={3} />
+        </div>
+        <span className="tracking-tight uppercase">DİKKAT: Verilerini kaybetmemek için düzenli yedek al!</span>
       </div>
       <div className="flex items-center space-x-2 shrink-0">
         <button
           onClick={handleQuickBackup}
           disabled={exporting}
-          className="flex items-center space-x-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-2.5 py-1 rounded-md text-[11px] transition-all"
+          className="flex items-center space-x-1 bg-black text-white hover:bg-zinc-800 font-black px-3 py-1 border-2 border-black text-[11px] shadow-[2px_2px_0px_0px_#fff] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all uppercase"
         >
-          <Download size={12} />
-          <span>{exporting ? 'Alınıyor...' : 'Yedekle'}</span>
+          <Download size={13} strokeWidth={3} />
+          <span>{exporting ? 'Yedekleniyor' : 'Yedek Al'}</span>
         </button>
         <button
           onClick={() => setDismissed(true)}
-          className="p-1 text-slate-400 hover:text-slate-200"
+          className="w-6 h-6 bg-white border border-black flex items-center justify-center text-black hover:bg-zinc-100"
+          title="Kapat"
         >
-          <X size={14} />
+          <X size={14} strokeWidth={3} />
         </button>
       </div>
     </div>

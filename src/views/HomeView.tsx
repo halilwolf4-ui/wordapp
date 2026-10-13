@@ -42,83 +42,83 @@ export const HomeView: React.FC<Props> = ({
 }) => {
   // Goal ring percentage
   const goalPercent = Math.min(100, Math.round((todayCorrect / Math.max(1, dailyGoal)) * 100));
-  // Circle geometry for 68px diameter
-  const circumference = 176;
+  // Circle geometry for 72px diameter
+  const circumference = 188;
   const strokeDashoffset = circumference - (circumference * goalPercent) / 100;
 
   return (
-    <div className="flex flex-col gap-3 select-none pb-2">
-      {/* 1. HERO: Clean Daily Goal & Progress */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+    <div className="flex flex-col gap-3.5 select-none pb-2 text-black">
+      {/* 1. HERO: Neo-Brutalist Daily Goal */}
+      <div className="bg-white border-[3px] border-black p-4 shadow-[5px_5px_0px_0px_#000] flex items-center justify-between">
         {/* Left Side: Stats & Motivation */}
-        <div className="space-y-1.5 flex-1 min-w-0 pr-3">
+        <div className="space-y-2 flex-1 min-w-0 pr-3">
           <div className="flex items-center space-x-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-400">
-              Bugünkü Hedef
+            <span className="bg-[#FFE600] border-2 border-black px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-black shadow-[1.5px_1.5px_0px_0px_#000]">
+              BUGÜNKÜ HEDEF
             </span>
-            <span className="text-slate-600">•</span>
-            <span className={`text-[11px] font-bold ${goalPercent >= 100 ? 'text-emerald-400' : 'text-slate-300'}`}>
+            <span className="text-black font-black text-xs">•</span>
+            <span className="text-xs font-black bg-black text-white px-2 py-0.5 border border-black">
               %{goalPercent}
             </span>
           </div>
 
-          <h2 className="text-base sm:text-lg font-bold text-white truncate">
-            {todayCorrect >= dailyGoal ? '🎉 Hedef Tamamlandı!' : 'Öğrenmeye Devam Et'}
+          <h2 className="text-base sm:text-lg font-black text-black uppercase tracking-tight truncate">
+            {todayCorrect >= dailyGoal ? '⚡ HEDEF TAMAMLANDI!' : 'DEVAM ET, HIZ KESME!'}
           </h2>
 
-          <div className="flex items-center space-x-2 pt-0.5">
-            <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-slate-850 border border-slate-800 text-amber-400 text-[11px] font-semibold">
-              <Flame size={13} className="text-amber-500 fill-amber-500" />
-              <span>{profile.streak} Gün Seri</span>
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+            <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-[#FF69B4] border-2 border-black text-black text-[11px] font-black shadow-[1.5px_1.5px_0px_0px_#000]">
+              <Flame size={13} className="text-[#FF5722] fill-[#FF5722]" />
+              <span>{profile.streak} GÜN SERİ</span>
             </div>
             {profile.streakFreezes !== undefined && profile.streakFreezes > 0 && (
               <div
-                className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl bg-slate-850 border border-slate-800 text-sky-400 text-[11px] font-semibold"
+                className="inline-flex items-center space-x-1 px-2 py-1 bg-[#00F0FF] border-2 border-black text-black text-[11px] font-black shadow-[1.5px_1.5px_0px_0px_#000]"
                 title={`${profile.streakFreezes} Seri Dondurma Hakkı`}
               >
                 <span>🧊</span>
-                <span>{profile.streakFreezes} Hak</span>
+                <span>{profile.streakFreezes} HAK</span>
               </div>
             )}
             {customWordsCount > 0 && (
-              <div className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl bg-slate-850 border border-slate-800 text-purple-300 text-[11px] font-semibold">
-                <Sparkles size={12} />
-                <span>{customWordsCount} Özel</span>
+              <div className="inline-flex items-center space-x-1 px-2 py-1 bg-[#C084FC] border-2 border-black text-black text-[11px] font-black shadow-[1.5px_1.5px_0px_0px_#000]">
+                <Sparkles size={12} strokeWidth={2.5} />
+                <span>{customWordsCount} ÖZEL</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Side: Circular Gauge */}
+        {/* Right Side: Brutalist Circular Gauge */}
         <div className="relative shrink-0 flex items-center justify-center">
-          <svg className="w-[68px] h-[68px] transform -rotate-90">
+          <svg className="w-[72px] h-[72px] transform -rotate-90">
             <circle
-              cx="34"
-              cy="34"
-              r="28"
+              cx="36"
+              cy="36"
+              r="30"
               stroke="currentColor"
-              strokeWidth="5"
+              strokeWidth="6"
               fill="transparent"
-              className="text-slate-800"
+              className="text-[#E5E0D8] dark:text-zinc-800"
             />
             <circle
-              cx="34"
-              cy="34"
-              r="28"
+              cx="36"
+              cy="36"
+              r="30"
               stroke="currentColor"
-              strokeWidth="5"
+              strokeWidth="6"
               fill="transparent"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              className="text-indigo-500 transition-all duration-700 ease-out"
+              strokeLinecap="butt"
+              className="circular-progress-stroke transition-all duration-500 ease-out"
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-base font-bold text-white leading-tight">
+            <span className="text-base font-black text-black dark:text-white leading-tight">
               {todayCorrect}
             </span>
-            <span className="text-[10px] font-medium text-slate-400">
+            <span className="text-[10px] font-black text-zinc-600 dark:text-zinc-400">
               /{dailyGoal}
             </span>
           </div>
@@ -126,46 +126,34 @@ export const HomeView: React.FC<Props> = ({
       </div>
 
       {/* 2. MAIN ACTIONS: Günlük Tekrar & Yeni Kelimeler */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3.5">
         {/* Tekrar Card */}
         <button
           onClick={onStartReview}
           disabled={!isReviewCompletedToday && dueCount === 0}
-          className={`flex flex-col justify-between p-4 rounded-2xl border text-left transition-all active:scale-[0.98] ${
+          className={`flex flex-col justify-between p-4 border-[3px] border-black text-left transition-all active:translate-x-[2px] active:translate-y-[2px] ${
             isReviewCompletedToday
-              ? 'bg-slate-900 hover:bg-slate-850 border-indigo-500/40 shadow-sm cursor-pointer'
+              ? 'bg-[#DDD6FE] shadow-[4px_4px_0px_0px_#000] active:shadow-[1px_1px_0px_0px_#000] cursor-pointer'
               : dueCount > 0
-              ? 'bg-slate-900 hover:bg-slate-850 border-slate-800 hover:border-indigo-500/50 shadow-sm cursor-pointer'
-              : 'bg-slate-900/50 border-slate-850 opacity-50 cursor-not-allowed'
+              ? 'bg-[#C084FC] shadow-[5px_5px_0px_0px_#000] active:shadow-[1px_1px_0px_0px_#000] cursor-pointer'
+              : 'bg-zinc-200 opacity-60 cursor-not-allowed shadow-[2px_2px_0px_0px_#000]'
           }`}
         >
           <div className="flex items-center justify-between w-full mb-3">
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-              isReviewCompletedToday
-                ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
-                : 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400'
-            }`}>
-              {isReviewCompletedToday ? <CheckCircle2 size={18} /> : <Repeat size={18} />}
+            <div className="w-9 h-9 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] text-black flex items-center justify-center font-black">
+              {isReviewCompletedToday ? <CheckCircle2 size={19} strokeWidth={2.5} /> : <Repeat size={19} strokeWidth={2.5} />}
             </div>
-            <span
-              className={`px-2.5 py-0.5 text-xs font-bold rounded-lg ${
-                isReviewCompletedToday
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                  : dueCount > 0
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-800 text-slate-400'
-              }`}
-            >
-              {isReviewCompletedToday ? '✓ Tamam' : dueCount}
+            <span className="px-2.5 py-0.5 text-xs font-black bg-black text-[#FFE600] border-2 border-black shadow-[1.5px_1.5px_0px_0px_#000] uppercase">
+              {isReviewCompletedToday ? '✓ TAMAM' : `${dueCount}`}
             </span>
           </div>
           <div>
-            <h3 className="font-bold text-sm text-white">Günlük Tekrar</h3>
-            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+            <h3 className="font-black text-sm uppercase text-black tracking-tight">GÜNLÜK TEKRAR</h3>
+            <p className="text-[11px] font-bold text-zinc-900 mt-0.5 truncate">
               {isReviewCompletedToday
-                ? 'Bugün bitti (Özeti Gör)'
+                ? 'ÖZETİ GÖRÜNTÜLE'
                 : dueCount > 0
-                ? `${dueCount} kelime bekliyor`
+                ? `${dueCount} kelime hazır`
                 : 'Tekrarlar bitti'}
             </p>
           </div>
@@ -175,35 +163,27 @@ export const HomeView: React.FC<Props> = ({
         <button
           onClick={onStartLearn}
           disabled={!isLearnCompletedToday && newCount === 0}
-          className={`flex flex-col justify-between p-4 rounded-2xl border text-left transition-all active:scale-[0.98] ${
+          className={`flex flex-col justify-between p-4 border-[3px] border-black text-left transition-all active:translate-x-[2px] active:translate-y-[2px] ${
             isLearnCompletedToday
-              ? 'bg-slate-900 hover:bg-slate-850 border-emerald-500/40 shadow-sm cursor-pointer'
+              ? 'bg-[#BBF7D0] shadow-[4px_4px_0px_0px_#000] active:shadow-[1px_1px_0px_0px_#000] cursor-pointer'
               : newCount > 0
-              ? 'bg-slate-900 hover:bg-slate-850 border-slate-800 hover:border-emerald-500/50 shadow-sm cursor-pointer'
-              : 'bg-slate-900/50 border-slate-850 opacity-50 cursor-not-allowed'
+              ? 'bg-[#86EFAC] shadow-[5px_5px_0px_0px_#000] active:shadow-[1px_1px_0px_0px_#000] cursor-pointer'
+              : 'bg-zinc-200 opacity-60 cursor-not-allowed shadow-[2px_2px_0px_0px_#000]'
           }`}
         >
           <div className="flex items-center justify-between w-full mb-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
-              {isLearnCompletedToday ? <CheckCircle2 size={18} /> : <BookOpen size={18} />}
+            <div className="w-9 h-9 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] text-black flex items-center justify-center font-black">
+              {isLearnCompletedToday ? <CheckCircle2 size={19} strokeWidth={2.5} /> : <BookOpen size={19} strokeWidth={2.5} />}
             </div>
-            <span
-              className={`px-2.5 py-0.5 text-xs font-bold rounded-lg ${
-                isLearnCompletedToday
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                  : newCount > 0
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-slate-800 text-slate-400'
-              }`}
-            >
-              {isLearnCompletedToday ? '✓ Tamam' : newCount}
+            <span className="px-2.5 py-0.5 text-xs font-black bg-black text-[#86EFAC] border-2 border-black shadow-[1.5px_1.5px_0px_0px_#000] uppercase">
+              {isLearnCompletedToday ? '✓ TAMAM' : `${newCount}`}
             </span>
           </div>
           <div>
-            <h3 className="font-bold text-sm text-white">Yeni Kelimeler</h3>
-            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+            <h3 className="font-black text-sm uppercase text-black tracking-tight">YENİ KELİMELER</h3>
+            <p className="text-[11px] font-bold text-zinc-900 mt-0.5 truncate">
               {isLearnCompletedToday
-                ? 'Bugün bitti (Özeti Gör)'
+                ? 'ÖZETİ GÖRÜNTÜLE'
                 : newCount > 0
                 ? `${newCount} yeni kelime`
                 : 'Hepsi öğrenildi'}
@@ -213,27 +193,27 @@ export const HomeView: React.FC<Props> = ({
       </div>
 
       {/* 3. MINI GAMES: Passaparola & Hızlı Tur */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3.5">
         {/* Passaparola Game */}
         <button
           onClick={onStartPassaparola}
-          className="bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-purple-500/50 rounded-2xl p-3.5 text-left transition-all active:scale-[0.98] shadow-sm group"
+          className="bg-[#00F0FF] border-[3px] border-black p-3.5 text-left transition-all active:translate-x-[2px] active:translate-y-[2px] shadow-[4px_4px_0px_0px_#000] active:shadow-[1px_1px_0px_0px_#000] group"
         >
-          <div className="flex items-center justify-between mb-2.5">
-            <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 font-black text-xs">
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-8 h-8 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center justify-center text-black font-black text-xs">
               P
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-slate-850 border border-slate-800 text-purple-300">
+            <span className="text-[10px] font-black px-2 py-0.5 bg-black text-white border border-black uppercase tracking-wider">
               120s
             </span>
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">Passaparola</h4>
-              <p className="text-[10px] text-slate-400 mt-0.5">Kelime Çarkı</p>
+              <h4 className="text-xs sm:text-sm font-black uppercase text-black tracking-tight">PASSAPAROLA</h4>
+              <p className="text-[10px] font-bold text-zinc-900 mt-0.5">Kelime Çarkı</p>
             </div>
-            <div className="w-6 h-6 rounded-lg bg-slate-850 border border-slate-800 text-slate-400 flex items-center justify-center group-hover:text-white transition-colors">
-              <Play size={10} className="fill-current ml-0.5" />
+            <div className="w-7 h-7 bg-white border-2 border-black text-black flex items-center justify-center shadow-[1.5px_1.5px_0px_0px_#000] group-hover:bg-[#FFE600] transition-colors">
+              <Play size={11} className="fill-black ml-0.5" />
             </div>
           </div>
         </button>
@@ -241,25 +221,25 @@ export const HomeView: React.FC<Props> = ({
         {/* 60s Hızlı Tur Game */}
         <button
           onClick={onStartSpeedRound}
-          className="bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-amber-500/50 rounded-2xl p-3.5 text-left transition-all active:scale-[0.98] shadow-sm group"
+          className="bg-[#FB923C] border-[3px] border-black p-3.5 text-left transition-all active:translate-x-[2px] active:translate-y-[2px] shadow-[4px_4px_0px_0px_#000] active:shadow-[1px_1px_0px_0px_#000] group"
         >
-          <div className="flex items-center justify-between mb-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-              <Zap size={15} className="fill-amber-400" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-8 h-8 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center justify-center text-black font-black">
+              <Zap size={16} className="fill-black text-black" />
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-slate-850 border border-slate-800 text-amber-400">
-              60s Tur
+            <span className="text-[10px] font-black px-2 py-0.5 bg-black text-[#FFE600] border border-black uppercase tracking-wider">
+              60s TUR
             </span>
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">Hızlı Tur</h4>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                Rekor: <span className="font-semibold text-white">{profile.highScoreSpeedRound}</span>
+              <h4 className="text-xs sm:text-sm font-black uppercase text-black tracking-tight">HIZLI TUR</h4>
+              <p className="text-[10px] font-bold text-zinc-900 mt-0.5">
+                Rekor: <span className="font-black text-black bg-white px-1 border border-black">{profile.highScoreSpeedRound}</span>
               </p>
             </div>
-            <div className="w-6 h-6 rounded-lg bg-slate-850 border border-slate-800 text-slate-400 flex items-center justify-center group-hover:text-white transition-colors">
-              <Play size={10} className="fill-current ml-0.5" />
+            <div className="w-7 h-7 bg-white border-2 border-black text-black flex items-center justify-center shadow-[1.5px_1.5px_0px_0px_#000] group-hover:bg-[#FFE600] transition-colors">
+              <Play size={11} className="fill-black ml-0.5" />
             </div>
           </div>
         </button>
@@ -268,47 +248,47 @@ export const HomeView: React.FC<Props> = ({
       {/* Cloze Test Card */}
       <button
         onClick={onStartClozeTest}
-        className="bg-gradient-to-r from-slate-900 via-indigo-950/30 to-slate-900 hover:from-slate-850 hover:to-slate-850 border border-slate-800 hover:border-indigo-500/40 rounded-2xl p-3.5 text-left transition-all active:scale-[0.98] shadow-sm group flex items-center justify-between"
+        className="bg-[#FFE600] border-[3px] border-black p-3.5 text-left transition-all active:translate-x-[2px] active:translate-y-[2px] shadow-[4px_4px_0px_0px_#000] active:shadow-[1px_1px_0px_0px_#000] group flex items-center justify-between"
       >
         <div className="flex items-center space-x-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform shrink-0">
-            <Sparkles size={18} />
+          <div className="w-9 h-9 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center justify-center text-black shrink-0">
+            <Sparkles size={18} strokeWidth={2.5} />
           </div>
           <div className="min-w-0">
             <div className="flex items-center space-x-2">
-              <h4 className="text-xs sm:text-sm font-bold text-white">Cloze Test</h4>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">
-                Boşluk Doldurma
+              <h4 className="text-xs sm:text-sm font-black uppercase text-black tracking-tight">CLOZE TEST</h4>
+              <span className="text-[10px] font-black px-2 py-0.5 bg-black text-white uppercase border border-black tracking-wider">
+                BOŞLUK DOLDURMA
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-              Kelime Tekrarı & Edatlar (Prepositions)
+            <p className="text-[11px] font-bold text-zinc-900 mt-0.5 truncate">
+              Cümle İçinde Kelime & Edatlar (Prepositions)
             </p>
           </div>
         </div>
-        <div className="w-6 h-6 rounded-lg bg-slate-850 border border-slate-800 text-slate-400 flex items-center justify-center group-hover:text-white transition-colors shrink-0 ml-2">
-          <Play size={10} className="fill-current ml-0.5" />
+        <div className="w-7 h-7 bg-white border-2 border-black text-black flex items-center justify-center shadow-[1.5px_1.5px_0px_0px_#000] shrink-0 ml-2 group-hover:bg-black group-hover:text-white transition-colors">
+          <Play size={11} className="fill-current ml-0.5" />
         </div>
       </button>
 
       {/* 4. OVERALL PROGRESS BAR & STATS CHIPS */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
+      <div className="bg-white border-[3px] border-black p-4 space-y-3.5 shadow-[5px_5px_0px_0px_#000]">
         <div className="flex items-center justify-between text-xs">
-          <span className="font-bold text-white text-[12px]">Genel İlerleme</span>
-          <span className="text-slate-400 font-mono text-[11px]">
+          <span className="font-black text-black text-xs uppercase tracking-wider">GENEL İLERLEME</span>
+          <span className="text-black font-black font-mono text-xs bg-[#FFE600] border border-black px-2 py-0.5 shadow-[1px_1px_0px_0px_#000]">
             {learningCount + masteredCount} / {totalWordsCount}
           </span>
         </div>
 
-        {/* Multi-segment clean progress bar */}
-        <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden flex">
+        {/* Multi-segment brutalist progress bar */}
+        <div className="h-4 w-full bg-zinc-100 border-2 border-black overflow-hidden flex">
           <div
-            className="bg-emerald-500 h-full transition-all duration-500"
+            className="bg-[#4ADE80] h-full border-r-2 border-black transition-all duration-500"
             style={{ width: `${(masteredCount / Math.max(1, totalWordsCount)) * 100}%` }}
             title="Öğrenildi"
           />
           <div
-            className="bg-indigo-500 h-full transition-all duration-500"
+            className="bg-[#00F0FF] h-full border-r-2 border-black transition-all duration-500"
             style={{ width: `${(learningCount / Math.max(1, totalWordsCount)) * 100}%` }}
             title="Öğrenilmekte"
           />
@@ -316,17 +296,17 @@ export const HomeView: React.FC<Props> = ({
 
         {/* Inline Chips */}
         <div className="grid grid-cols-3 gap-2 pt-0.5 text-center text-[11px]">
-          <div className="bg-slate-850 rounded-xl py-2 px-1 border border-slate-800 flex items-center justify-center space-x-1.5 text-emerald-400 font-semibold">
-            <CheckCircle2 size={13} />
-            <span>{masteredCount} Master</span>
+          <div className="bg-[#BBF7D0] py-2 px-1 border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center justify-center space-x-1.5 text-black font-black">
+            <CheckCircle2 size={13} strokeWidth={2.5} />
+            <span>{masteredCount} MASTER</span>
           </div>
-          <div className="bg-slate-850 rounded-xl py-2 px-1 border border-slate-800 flex items-center justify-center space-x-1.5 text-indigo-400 font-semibold">
-            <Repeat size={13} />
-            <span>{learningCount} Aktif</span>
+          <div className="bg-[#BAE6FD] py-2 px-1 border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center justify-center space-x-1.5 text-black font-black">
+            <Repeat size={13} strokeWidth={2.5} />
+            <span>{learningCount} AKTİF</span>
           </div>
-          <div className="bg-slate-850 rounded-xl py-2 px-1 border border-slate-800 flex items-center justify-center space-x-1.5 text-slate-300 font-semibold">
-            <BookOpen size={13} />
-            <span>{Math.max(0, totalWordsCount - learningCount - masteredCount)} Yeni</span>
+          <div className="bg-[#FEF08A] py-2 px-1 border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center justify-center space-x-1.5 text-black font-black">
+            <BookOpen size={13} strokeWidth={2.5} />
+            <span>{Math.max(0, totalWordsCount - learningCount - masteredCount)} YENİ</span>
           </div>
         </div>
       </div>

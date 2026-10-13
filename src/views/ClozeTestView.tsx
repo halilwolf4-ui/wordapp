@@ -43,7 +43,7 @@ interface Props {
 }
 
 type ClozeMode = 'select' | 'vocab' | 'prep';
-type RoundSize = 10 | 20 | 0; // 0 = all / endless
+type RoundSize = 10 | 20 | 0;
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D'];
 
@@ -98,7 +98,7 @@ export const ClozeTestView: React.FC<Props> = ({
 
   // Timer ref for auto-advancing
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Cooldown timestamp ref to prevent ghost clicks / touch bleeds between questions
+  // Cooldown timestamp ref to prevent ghost clicks
   const questionLoadedTimeRef = useRef<number>(Date.now());
 
   // Trigger word lookup when clicked
@@ -107,7 +107,6 @@ export const ClozeTestView: React.FC<Props> = ({
       const clean = rawWord.trim().replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '');
       if (!clean || clean.length < 1) return;
 
-      // Toggle off if clicking the already active word
       if (activePopupRef.current && activePopupRef.current.word.toLowerCase() === clean.toLowerCase()) {
         setActivePopup(null);
         return;
@@ -199,7 +198,6 @@ export const ClozeTestView: React.FC<Props> = ({
     }
   };
 
-  // Click outside and escape listeners for word popup
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       const target = e.target as HTMLElement | null;
@@ -228,13 +226,11 @@ export const ClozeTestView: React.FC<Props> = ({
     };
   }, [activePopup]);
 
-  // Close popup and reset cooldown whenever active question changes
   useEffect(() => {
     questionLoadedTimeRef.current = Date.now();
     setActivePopup(null);
   }, [currentIndex]);
 
-  // Extract due words for vocabulary mode
   const dueWordsList = useMemo(() => {
     const list: Word[] = [];
     dueQueue.forEach(p => {
@@ -244,7 +240,6 @@ export const ClozeTestView: React.FC<Props> = ({
     return list;
   }, [dueQueue, allWordsMap]);
 
-  // Fallback learning words if dueQueue is empty
   const learningWordsList = useMemo(() => {
     if (!allProgress) return [];
     const list: Word[] = [];
@@ -257,15 +252,12 @@ export const ClozeTestView: React.FC<Props> = ({
     return list;
   }, [allProgress, allWordsMap]);
 
-  // Preload data on mount
   useEffect(() => {
     loadClozeData().catch(err => console.warn('Cloze data preload error:', err));
   }, []);
 
-  // Current Question
   const currentQ: ClozeQuestion | undefined = questions[currentIndex];
 
-  // Auto-fetch sentence translation in background if not already present
   useEffect(() => {
     if (!currentQ || currentQ.translationTr) return;
     let isMounted = true;
@@ -285,7 +277,6 @@ export const ClozeTestView: React.FC<Props> = ({
     };
   }, [currentQ, currentIndex]);
 
-  // Start Vocabulary Cloze Session
   const startVocabularySession = async (size: RoundSize = 10) => {
     setIsLoading(true);
     setRoundSize(size);
@@ -322,7 +313,6 @@ export const ClozeTestView: React.FC<Props> = ({
     }
   };
 
-  // Start Prepositions Cloze Session
   const startPrepositionSession = async (size: RoundSize = 10) => {
     setIsLoading(true);
     setRoundSize(size);
@@ -356,14 +346,12 @@ export const ClozeTestView: React.FC<Props> = ({
     }
   };
 
-  // Advance to Next Question or Summary
   const advanceToNextQuestion = useCallback(() => {
     if (advanceTimerRef.current) {
       clearTimeout(advanceTimerRef.current);
       advanceTimerRef.current = null;
     }
 
-    // Blur any active element so no button retains focus
     if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
@@ -375,29 +363,24 @@ export const ClozeTestView: React.FC<Props> = ({
       setHasFeedback(false);
       setShowTranslation(false);
     } else {
-      // Completed round
       setPhase('summary');
       sound.playLevelUp();
       fireCelebration();
     }
   }, [currentIndex, questions.length]);
 
-  // Handle Option Selection
   const handleSelectOption = useCallback(
     async (option: string, clickCoordinates?: { xRatio: number; yRatio: number }) => {
-      // Transition Cooldown: Ignore any input within 400ms of a new question loading to prevent ghost clicks / touch bleeds
       if (Date.now() - questionLoadedTimeRef.current < 400) {
         return;
       }
 
       if (!currentQ || hasFeedback) return;
 
-      // Blur active button immediately
       if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
       }
 
-      // Clear any pending advance timer
       if (advanceTimerRef.current) {
         clearTimeout(advanceTimerRef.current);
         advanceTimerRef.current = null;
@@ -419,19 +402,16 @@ export const ClozeTestView: React.FC<Props> = ({
           fireMicroSpark(clickCoordinates.xRatio, clickCoordinates.yRatio);
         }
 
-        // Calculate XP
         const xpGain = Math.min(10, 4 + Math.floor(nextCombo / 2));
         setEarnedXp(prev => prev + xpGain);
         if (onAddXp) onAddXp(xpGain);
 
-        // If vocabulary question, update SRS progress
         if (currentQ.wordId && onReviewAnswer) {
           onReviewAnswer(currentQ.wordId, true, false).catch(e =>
             console.warn('SRS update error:', e)
           );
         }
 
-        // Pronounce completed sentence
         const fullSentence = currentQ.sentence.replace('[MASK]', currentQ.answer);
         speakEnglish(fullSentence, 0.95);
       } else {
@@ -439,23 +419,19 @@ export const ClozeTestView: React.FC<Props> = ({
         sound.playWrong();
         setMissedQuestions(prev => [...prev, { q: currentQ, selected: option }]);
 
-        // Award 1 participation XP
         if (onAddXp) onAddXp(1);
         setEarnedXp(prev => prev + 1);
 
-        // If vocabulary question, mark lapse/wrong in SRS
         if (currentQ.wordId && onReviewAnswer) {
           onReviewAnswer(currentQ.wordId, false, false).catch(e =>
             console.warn('SRS update error:', e)
           );
         }
 
-        // Automatically reveal translation on mistake
         if (currentQ.translationTr) {
           setShowTranslation(true);
         }
 
-        // Pronounce correct version so user hears the proper pattern
         const fullSentence = currentQ.sentence.replace('[MASK]', currentQ.answer);
         speakEnglish(fullSentence, 0.95);
       }
@@ -463,19 +439,16 @@ export const ClozeTestView: React.FC<Props> = ({
     [currentQ, hasFeedback, combo, maxCombo, onAddXp, onReviewAnswer, advanceToNextQuestion]
   );
 
-  // Clean timer on unmount
   useEffect(() => {
     return () => {
       if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
     };
   }, []);
 
-  // Keyboard shortcut listener (1, 2, 3, 4 or Space/Enter to advance)
   useEffect(() => {
     if (mode === 'select' || phase === 'summary' || !currentQ) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept if user is typing in an input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       if (hasFeedback) {
@@ -486,7 +459,6 @@ export const ClozeTestView: React.FC<Props> = ({
         return;
       }
 
-      // Ignore rapid keypresses right after question change
       if (Date.now() - questionLoadedTimeRef.current < 400) return;
 
       const keyIndex = ['1', '2', '3', '4'].indexOf(e.key);
@@ -500,14 +472,12 @@ export const ClozeTestView: React.FC<Props> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mode, phase, currentQ, hasFeedback, handleSelectOption, advanceToNextQuestion]);
 
-  // Read current sentence audio
   const handlePlayAudio = () => {
     if (!currentQ) return;
     if (hasFeedback) {
       const full = currentQ.sentence.replace('[MASK]', currentQ.answer);
       speakEnglish(full, 0.9);
     } else {
-      // Read with slight pause or emphasis
       const preview = currentQ.sentence.replace('[MASK]', 'blank');
       speakEnglish(preview, 0.85);
     }
@@ -520,35 +490,34 @@ export const ClozeTestView: React.FC<Props> = ({
     const vocabCount = dueWordsList.length > 0 ? dueWordsList.length : learningWordsList.length;
 
     return (
-      <div className="flex flex-col min-h-[85vh] select-none text-white pb-6 animate-fade-in">
+      <div className="flex flex-col min-h-[85vh] select-none text-black pb-6">
         {/* Top bar */}
-        <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-800/80">
+        <div className="flex items-center justify-between pb-3 mb-3 border-b-3 border-black">
           <button
             onClick={onClose}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-850 active:scale-95 transition-all"
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-white border-2 border-black font-black uppercase text-xs shadow-[2px_2px_0px_0px_#000] hover:bg-zinc-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
           >
-            <ArrowLeft size={16} />
-            <span className="text-xs font-semibold">Geri</span>
+            <ArrowLeft size={16} strokeWidth={2.5} />
+            <span>GERİ</span>
           </button>
           <div className="flex items-center space-x-2">
-            <span className="px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[11px] font-bold uppercase tracking-wider">
-              Cloze Test
+            <span className="px-3 py-1 bg-[#FFE600] border-2 border-black text-black text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_#000]">
+              CLOZE TEST
             </span>
           </div>
         </div>
 
         {/* Hero banner */}
-        <div className="bg-gradient-to-br from-indigo-950/60 via-slate-900 to-slate-900 border border-indigo-500/20 rounded-2xl p-5 mb-5 shadow-lg relative overflow-hidden">
-          <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="bg-[#FFE600] border-3 border-black p-5 mb-5 shadow-[4px_4px_0px_0px_#000] relative">
           <div className="flex items-center space-x-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-              <Sparkles size={20} />
+            <div className="w-12 h-12 bg-black text-[#FFE600] border-2 border-black flex items-center justify-center font-black shadow-[2px_2px_0px_0px_#000]">
+              <Sparkles size={24} />
             </div>
             <div>
-              <h2 className="text-lg font-black text-white tracking-tight">
-                Boşluk Doldurma Testi
+              <h2 className="text-xl font-black uppercase tracking-tight text-black">
+                BOŞLUK DOLDURMA TESTİ
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs font-bold text-black uppercase tracking-wide">
                 Kelimeleri ve edatları cümle bağlamında pekiştirin
               </p>
             </div>
@@ -557,23 +526,23 @@ export const ClozeTestView: React.FC<Props> = ({
 
         {/* Mode Option Cards */}
         <div className="space-y-4 flex-1">
-          {/* Card 1: Kelime Tekrarı (Vocabulary Cloze) */}
-          <div className="bg-slate-900 border border-slate-800 hover:border-indigo-500/40 rounded-2xl p-4 transition-all shadow-sm">
+          {/* Card 1: Kelime Tekrarı */}
+          <div className="bg-white border-3 border-black p-4 shadow-[4px_4px_0px_0px_#000]">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold">
+                <div className="w-10 h-10 bg-[#00F0FF] border-2 border-black flex items-center justify-center text-black font-black shadow-[2px_2px_0px_0px_#000]">
                   <BookOpen size={20} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white flex items-center space-x-2">
-                    <span>Kelime Tekrarı</span>
+                  <h3 className="text-base font-black uppercase text-black flex items-center space-x-2">
+                    <span>KELİME TEKRARI</span>
                     {dueWordsList.length > 0 && (
-                      <span className="px-2 py-0.5 text-[10px] bg-rose-500 text-white rounded-md font-bold">
-                        {dueWordsList.length} Bekleyen
+                      <span className="px-2 py-0.5 text-[10px] bg-[#FF5588] text-white border border-black font-black">
+                        {dueWordsList.length} BEKLEYEN
                       </span>
                     )}
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs font-bold text-zinc-600 mt-0.5 uppercase">
                     {dueWordsList.length > 0
                       ? 'Bugünkü tekrar kelimelerinden cümle boşlukları'
                       : 'Öğrenilen kelimelerden pratik yap'}
@@ -582,53 +551,53 @@ export const ClozeTestView: React.FC<Props> = ({
               </div>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed mb-4 bg-slate-850/80 p-3 rounded-xl border border-slate-800">
-              💡 Cümle içindeki eksik kelimeyi bulun. Doğru ve yanlışlarınız normal tekrar gibi <strong className="text-indigo-300">SRS ilerlemenize</strong> ve <strong className="text-indigo-300">günlük hedefinize</strong> işlenir.
+            <p className="text-xs font-bold text-zinc-800 leading-relaxed mb-4 bg-[#FDFBF7] p-3 border-2 border-black">
+              💡 Cümle içindeki eksik kelimeyi bulun. Doğru ve yanlışlarınız normal tekrar gibi <strong className="text-black underline">SRS ilerlemenize</strong> ve <strong className="text-black underline">günlük hedefinize</strong> işlenir.
             </p>
 
             <div className="flex items-center space-x-2 pt-1">
               <button
                 onClick={() => startVocabularySession(10)}
                 disabled={isLoading || vocabCount === 0}
-                className="flex-1 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-indigo-600/20"
+                className="flex-1 py-3 px-3 bg-[#FFE600] hover:bg-[#FFD600] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none text-black font-black uppercase text-xs flex items-center justify-center space-x-1.5 border-3 border-black shadow-[3px_3px_0px_0px_#000] transition-all disabled:opacity-50"
               >
-                <span>10 Soru Başla</span>
-                <ChevronRight size={14} />
+                <span>10 SORU BAŞLA</span>
+                <ChevronRight size={14} strokeWidth={3} />
               </button>
               {vocabCount >= 20 && (
                 <button
                   onClick={() => startVocabularySession(20)}
                   disabled={isLoading}
-                  className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-750 active:scale-95 text-slate-200 font-bold text-xs transition-all border border-slate-700/80"
+                  className="py-3 px-3 bg-white hover:bg-zinc-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-black font-black uppercase text-xs border-2 border-black shadow-[2px_2px_0px_0px_#000] transition-all"
                 >
-                  20 Soru
+                  20 SORU
                 </button>
               )}
             </div>
           </div>
 
-          {/* Card 2: Prepositions (Edatlar) */}
-          <div className="bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-2xl p-4 transition-all shadow-sm">
+          {/* Card 2: Prepositions */}
+          <div className="bg-white border-3 border-black p-4 shadow-[4px_4px_0px_0px_#000]">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-bold">
+                <div className="w-10 h-10 bg-[#FF69B4] border-2 border-black flex items-center justify-center text-black font-black shadow-[2px_2px_0px_0px_#000]">
                   <Layers size={20} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white flex items-center space-x-2">
-                    <span>Edatlar (Prepositions)</span>
-                    <span className="px-2 py-0.5 text-[10px] bg-amber-500/20 border border-amber-500/30 text-amber-300 rounded-md font-bold">
-                      4,300+ Soru
+                  <h3 className="text-base font-black uppercase text-black flex items-center space-x-2">
+                    <span>EDATLAR (PREPOSITIONS)</span>
+                    <span className="px-2 py-0.5 text-[10px] bg-[#FFE600] border border-black text-black font-black">
+                      4,300+ SORU
                     </span>
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs font-bold text-zinc-600 mt-0.5 uppercase">
                     in, on, at, for, by, with, about, from...
                   </p>
                 </div>
               </div>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed mb-4 bg-slate-850/80 p-3 rounded-xl border border-slate-800">
+            <p className="text-xs font-bold text-zinc-800 leading-relaxed mb-4 bg-[#FDFBF7] p-3 border-2 border-black">
               🎯 Sınavlarda en çok çıkan edat ve fiil tamlamalarını (collocations) gerçek sınav cümleleri içinde doğru yerleştirin.
             </p>
 
@@ -636,17 +605,17 @@ export const ClozeTestView: React.FC<Props> = ({
               <button
                 onClick={() => startPrepositionSession(10)}
                 disabled={isLoading}
-                className="flex-1 py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 active:scale-95 text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-md shadow-amber-600/20"
+                className="flex-1 py-3 px-3 bg-[#FFE600] hover:bg-[#FFD600] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none text-black font-black uppercase text-xs flex items-center justify-center space-x-1.5 border-3 border-black shadow-[3px_3px_0px_0px_#000] transition-all"
               >
-                <span>10 Soru Başla</span>
-                <ChevronRight size={14} />
+                <span>10 SORU BAŞLA</span>
+                <ChevronRight size={14} strokeWidth={3} />
               </button>
               <button
                 onClick={() => startPrepositionSession(20)}
                 disabled={isLoading}
-                className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-750 active:scale-95 text-slate-200 font-bold text-xs transition-all border border-slate-700/80"
+                className="py-3 px-3 bg-white hover:bg-zinc-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-black font-black uppercase text-xs border-2 border-black shadow-[2px_2px_0px_0px_#000] transition-all"
               >
-                20 Soru
+                20 SORU
               </button>
             </div>
           </div>
@@ -656,51 +625,51 @@ export const ClozeTestView: React.FC<Props> = ({
   }
 
   // -------------------------------------------------------------
-  // VIEW: 2. SUMMARY (SONUÇ EKRANI)
+  // VIEW: 2. SUMMARY SCREEN
   // -------------------------------------------------------------
   if (phase === 'summary') {
     const accuracy = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
 
     return (
-      <div className="flex flex-col min-h-[85vh] select-none text-white pb-6 animate-fade-in">
+      <div className="flex flex-col min-h-[85vh] select-none text-black pb-6">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">
-            {mode === 'vocab' ? 'Kelime Cloze Testi Özeti' : 'Edatlar Testi Özeti'}
+        <div className="flex items-center justify-between pb-3 mb-3 border-b-3 border-black">
+          <span className="text-xs font-black uppercase tracking-wider bg-[#FFE600] text-black px-2.5 py-1 border-2 border-black shadow-[2px_2px_0px_0px_#000]">
+            {mode === 'vocab' ? 'KELİME CLOZE TESTİ ÖZETİ' : 'EDATLAR TESTİ ÖZETİ'}
           </span>
           <button
             onClick={() => setMode('select')}
-            className="text-xs text-slate-400 hover:text-white px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800"
+            className="text-xs font-black uppercase text-black hover:bg-zinc-100 px-2.5 py-1 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000]"
           >
-            Mod Değiştir
+            MOD DEĞİŞTİR
           </button>
         </div>
 
         {/* Celebration Badge */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-center my-3 relative overflow-hidden shadow-lg">
-          <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-tr from-amber-500 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 animate-bounce">
-            <Award size={32} />
+        <div className="bg-white border-3 border-black p-6 text-center my-3 shadow-[5px_5px_0px_0px_#000]">
+          <div className="w-16 h-16 mx-auto mb-3 bg-[#FFE600] border-3 border-black flex items-center justify-center text-black shadow-[3px_3px_0px_0px_#000]">
+            <Award size={36} strokeWidth={2.5} />
           </div>
-          <h2 className="text-xl font-black text-white">
-            {accuracy >= 80 ? '🎉 Harika Başarı!' : accuracy >= 50 ? '👏 Tebrikler!' : '💪 Pratik Yapmaya Devam!'}
+          <h2 className="text-2xl font-black uppercase text-black">
+            {accuracy >= 80 ? '🎉 HARİKA BAŞARI!' : accuracy >= 50 ? '👏 TEBRİKLER!' : '💪 PRATİK YAPMAYA DEVAM!'}
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs font-bold text-zinc-600 uppercase mt-1">
             {questions.length} soruluk turu tamamladın.
           </p>
 
           {/* Stats Bar */}
-          <div className="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-slate-800">
-            <div className="bg-slate-850 p-2.5 rounded-xl border border-slate-800">
-              <span className="text-[10px] text-slate-400 block font-medium">Doğruluk</span>
-              <span className="text-base font-black text-emerald-400">%{accuracy}</span>
+          <div className="grid grid-cols-3 gap-2 mt-5 pt-4 border-t-2 border-black">
+            <div className="bg-[#4ADE80] p-2.5 border-2 border-black shadow-[2px_2px_0px_0px_#000]">
+              <span className="text-[10px] text-black block font-black uppercase">DOĞRULUK</span>
+              <span className="text-xl font-black text-black font-mono">%{accuracy}</span>
             </div>
-            <div className="bg-slate-850 p-2.5 rounded-xl border border-slate-800">
-              <span className="text-[10px] text-slate-400 block font-medium">Kazanılan XP</span>
-              <span className="text-base font-black text-indigo-400">+{earnedXp}</span>
+            <div className="bg-[#FFE600] p-2.5 border-2 border-black shadow-[2px_2px_0px_0px_#000]">
+              <span className="text-[10px] text-black block font-black uppercase">KAZANILAN XP</span>
+              <span className="text-xl font-black text-black font-mono">+{earnedXp}</span>
             </div>
-            <div className="bg-slate-850 p-2.5 rounded-xl border border-slate-800">
-              <span className="text-[10px] text-slate-400 block font-medium">Maks. Seri</span>
-              <span className="text-base font-black text-amber-400">🔥 {maxCombo}</span>
+            <div className="bg-[#00F0FF] p-2.5 border-2 border-black shadow-[2px_2px_0px_0px_#000]">
+              <span className="text-[10px] text-black block font-black uppercase">MAKS. SERİ</span>
+              <span className="text-xl font-black text-black font-mono">🔥 {maxCombo}</span>
             </div>
           </div>
         </div>
@@ -708,8 +677,8 @@ export const ClozeTestView: React.FC<Props> = ({
         {/* Missed Questions Review */}
         {missedQuestions.length > 0 && (
           <div className="space-y-2 mb-4 flex-1">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
-              Tekrar Edilecek Cümleler ({missedQuestions.length})
+            <h4 className="text-xs font-black text-black uppercase tracking-wider px-1">
+              TEKRAR EDİLECEK CÜMLELER ({missedQuestions.length})
             </h4>
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
               {missedQuestions.map((item, idx) => {
@@ -717,19 +686,23 @@ export const ClozeTestView: React.FC<Props> = ({
                 return (
                   <div
                     key={idx}
-                    className="p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs space-y-1"
+                    className="p-3 bg-white border-2 border-black text-xs space-y-1 shadow-[2px_2px_0px_0px_#000]"
                   >
-                    <p className="text-slate-200 leading-snug font-medium">
+                    <p className="text-black leading-snug font-bold">
                       {fullText}
                     </p>
                     {item.q.translationTr && (
-                      <p className="text-[11px] text-slate-400 italic">
-                        {item.q.translationTr}
+                      <p className="text-[11px] text-zinc-600 font-semibold italic border-t border-dashed border-black/30 pt-1">
+                        "{item.q.translationTr}"
                       </p>
                     )}
-                    <div className="flex items-center space-x-2 text-[10px] pt-1">
-                      <span className="text-rose-400 line-through">Seçimin: {item.selected}</span>
-                      <span className="text-emerald-400 font-bold">Doğru: {item.q.answer}</span>
+                    <div className="flex items-center space-x-2 text-[10px] font-black pt-1">
+                      <span className="bg-[#FF5588] text-white px-1.5 py-0.5 border border-black line-through">
+                        SEÇİMİN: {item.selected}
+                      </span>
+                      <span className="bg-[#4ADE80] text-black px-1.5 py-0.5 border border-black">
+                        DOĞRU: {item.q.answer}
+                      </span>
                     </div>
                   </div>
                 );
@@ -742,16 +715,16 @@ export const ClozeTestView: React.FC<Props> = ({
         <div className="space-y-2 pt-2">
           <button
             onClick={() => (mode === 'vocab' ? startVocabularySession(roundSize) : startPrepositionSession(roundSize))}
-            className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-98 text-white font-bold text-sm flex items-center justify-center space-x-2 transition-all shadow-lg shadow-indigo-600/30"
+            className="w-full py-4 bg-[#FFE600] hover:bg-[#FFD600] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none text-black font-black uppercase text-sm flex items-center justify-center space-x-2 border-3 border-black shadow-[4px_4px_0px_0px_#000] transition-all"
           >
-            <RotateCcw size={16} />
-            <span>Tekrar Oyna</span>
+            <RotateCcw size={16} strokeWidth={2.5} />
+            <span>TEKRAR OYNA</span>
           </button>
           <button
             onClick={onClose}
-            className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-850 active:scale-98 text-slate-300 font-semibold text-xs border border-slate-800 transition-all"
+            className="w-full py-3 bg-white hover:bg-zinc-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-black font-black uppercase text-xs border-2 border-black shadow-[2px_2px_0px_0px_#000] transition-all"
           >
-            Ana Sayfaya Dön
+            ANA SAYFAYA DÖN
           </button>
         </div>
       </div>
@@ -759,11 +732,11 @@ export const ClozeTestView: React.FC<Props> = ({
   }
 
   // -------------------------------------------------------------
-  // VIEW: 3. ACTIVE QUIZ (SORU EKRANI)
+  // VIEW: 3. ACTIVE QUIZ SCREEN
   // -------------------------------------------------------------
   if (!currentQ) {
     return (
-      <div className="p-8 text-center text-white">
+      <div className="p-8 text-center text-black font-black uppercase">
         <p className="text-sm">Soru yükleniyor...</p>
       </div>
     );
@@ -772,7 +745,6 @@ export const ClozeTestView: React.FC<Props> = ({
   const progressPercent = Math.round(((currentIndex + 1) / questions.length) * 100);
   const isAnswerCorrect = selectedOption?.trim().toLowerCase() === currentQ.answer.trim().toLowerCase();
 
-  // Helper to render sentence with interactive clickable words
   const renderInteractiveSentence = (text: string) => {
     if (!text) return null;
     const parts = text.split(/([a-zA-Z0-9'-]+)/g);
@@ -792,7 +764,7 @@ export const ClozeTestView: React.FC<Props> = ({
             handleWordTrigger(part, e.currentTarget);
           }}
           title="Tıklayarak anlamına bakın ve kelimelerinize ekleyin"
-          className="cursor-pointer hover:text-indigo-300 hover:bg-indigo-500/15 rounded px-0.5 transition-colors select-none inline-block active:text-indigo-400 active:scale-95"
+          className="cursor-pointer hover:bg-[#FFE600] hover:text-black rounded-none px-0.5 transition-colors select-none inline-block active:scale-95 border-b border-dashed border-black/50"
           style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
         >
           {part}
@@ -802,81 +774,81 @@ export const ClozeTestView: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex flex-col min-h-[85vh] select-none text-white pb-6 animate-fade-in relative">
+    <div className="flex flex-col min-h-[85vh] select-none text-black pb-6 relative">
       {/* Top Header Bar */}
       <div className="flex items-center justify-between pb-2 mb-2">
         <button
           onClick={() => setMode('select')}
-          className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white active:scale-95 transition-all"
+          className="p-2 bg-white border-2 border-black font-black uppercase text-xs shadow-[2px_2px_0px_0px_#000] hover:bg-zinc-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
           title="Çıkış"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={16} strokeWidth={2.5} />
         </button>
 
         {/* Progress pill */}
-        <div className="flex items-center space-x-2">
-          <span className="text-xs font-bold text-slate-300">
+        <div className="flex items-center space-x-2 bg-white px-3 py-1 border-2 border-black shadow-[2px_2px_0px_0px_#000]">
+          <span className="text-xs font-black text-black font-mono">
             {currentIndex + 1} / {questions.length}
           </span>
-          <span className="text-slate-600">•</span>
-          <span className="text-[11px] font-semibold text-indigo-400">
-            {currentQ.category === 'vocabulary' ? 'Kelime' : 'Edat'}
+          <span className="text-black font-black">•</span>
+          <span className="text-[11px] font-black uppercase text-black">
+            {currentQ.category === 'vocabulary' ? 'KELİME' : 'EDAT'}
           </span>
         </div>
 
         {/* Combo flame */}
-        <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-amber-400">
-          <Flame size={14} className={combo > 1 ? 'fill-amber-400 animate-pulse' : 'text-slate-500'} />
+        <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-[#FFE600] border-2 border-black text-xs font-black text-black shadow-[2px_2px_0px_0px_#000]">
+          <Flame size={14} className={combo > 1 ? 'fill-black animate-pulse' : 'text-black'} />
           <span>{combo}</span>
         </div>
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mb-4">
+      <div className="w-full h-3 bg-white border-2 border-black overflow-hidden mb-4 shadow-[2px_2px_0px_0px_#000]">
         <div
-          className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 transition-all duration-300 ease-out"
+          className="h-full bg-[#FFE600] border-r-2 border-black transition-all duration-300 ease-out"
           style={{ width: `${progressPercent}%` }}
         />
       </div>
 
       {/* Main Question Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-4 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[170px]">
+      <div className="bg-white border-3 border-black p-5 mb-4 shadow-[4px_4px_0px_0px_#000] relative overflow-hidden flex flex-col justify-between min-h-[170px]">
         {/* Audio speech button & Hint */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-3 border-b-2 border-black pb-2">
           <div className="flex items-center space-x-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center space-x-1">
-              <HelpCircle size={12} className="text-indigo-400" />
-              <span>Boşluğu Doldurun</span>
+            <span className="text-[10px] font-black uppercase tracking-wider text-black flex items-center space-x-1">
+              <HelpCircle size={12} strokeWidth={2.5} />
+              <span>BOŞLUĞU DOLDURUN</span>
             </span>
-            <span className="text-[10px] text-indigo-400/90 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full font-medium">
-              ✨ Tıkla: Anlam & +Ekle
+            <span className="text-[10px] text-black bg-[#FFE600] border border-black px-2 py-0.5 font-black uppercase">
+              ✨ KELİMEYE TIKLA
             </span>
           </div>
 
           <button
             onClick={handlePlayAudio}
-            className="p-1.5 rounded-lg bg-slate-850 hover:bg-slate-800 border border-slate-750 text-indigo-400 hover:text-indigo-300 active:scale-95 transition-all"
+            className="p-1.5 bg-[#FFE600] hover:bg-[#FFD600] border-2 border-black text-black shadow-[1px_1px_0px_0px_#000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
             title="Cümleyi Dinle"
           >
-            <Volume2 size={16} />
+            <Volume2 size={16} strokeWidth={2.5} />
           </button>
         </div>
 
         {/* Sentence Text with styled [MASK] slot */}
         <div
-          className="text-base sm:text-lg font-medium text-slate-100 leading-relaxed my-auto select-none"
+          className="text-base sm:text-lg font-bold text-black leading-relaxed my-auto select-none"
           style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
         >
           {renderInteractiveSentence(currentQ.sentenceBefore)}
 
           {/* DYNAMIC BLANK CHIP */}
           <span
-            className={`inline-flex items-center justify-center px-3 py-0.5 mx-1.5 rounded-xl font-bold transition-all duration-200 align-middle ${
+            className={`inline-flex items-center justify-center px-3 py-1 mx-1.5 font-black uppercase border-2 border-black transition-all duration-150 align-middle shadow-[2px_2px_0px_0px_#000] ${
               hasFeedback
                 ? isAnswerCorrect
-                  ? 'bg-emerald-500/20 text-emerald-300 border-2 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-bounce-short'
-                  : 'bg-rose-500/20 text-rose-300 border-2 border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)]'
-                : 'bg-indigo-500/15 text-indigo-300 border-2 border-dashed border-indigo-500/60 min-w-[70px] animate-pulse'
+                  ? 'bg-[#4ADE80] text-black'
+                  : 'bg-[#FF5588] text-white'
+                : 'bg-[#FFE600] text-black min-w-[70px] animate-pulse'
             }`}
           >
             {hasFeedback ? (
@@ -886,87 +858,76 @@ export const ClozeTestView: React.FC<Props> = ({
                   e.stopPropagation();
                   handleWordTrigger(isAnswerCorrect ? selectedOption! : currentQ.answer, e.currentTarget);
                 }}
-                className="cursor-pointer hover:underline select-none active:scale-95"
+                className="cursor-pointer hover:underline select-none"
                 style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
                 title="Tıklayarak anlamına bakın ve listenize ekleyin"
               >
                 {isAnswerCorrect ? selectedOption : currentQ.answer}
               </span>
             ) : (
-              <span className="text-indigo-400 text-sm tracking-widest select-none">????</span>
+              <span className="text-black text-sm tracking-widest select-none">____</span>
             )}
           </span>
 
           {renderInteractiveSentence(currentQ.sentenceAfter)}
         </div>
 
-        {/* Turkish Translation or Context Hint Accordion */}
-        <div className="mt-3 pt-2.5 border-t border-slate-800/80">
+        {/* Turkish Translation */}
+        <div className="mt-3 pt-2.5 border-t-2 border-black">
           {showTranslation || hasFeedback ? (
-            <div className="text-xs text-slate-200 leading-snug animate-fade-in bg-slate-850/80 p-3 rounded-xl border border-slate-800 space-y-2">
-              {/* Entire sentence translation (shown to understand logic/context, never spoils the answer) */}
+            <div className="text-xs text-black leading-snug bg-[#FDFBF7] p-3 border-2 border-black space-y-2 shadow-[2px_2px_0px_0px_#000]">
               {currentQ.translationTr ? (
                 <div className="flex items-start space-x-2">
-                  <span className="text-indigo-400 font-bold shrink-0">🇹🇷 Cümle Çevirisi:</span>
-                  <span className="italic text-slate-100 font-medium">
+                  <span className="text-black font-black uppercase shrink-0">🇹🇷 CÜMLE:</span>
+                  <span className="italic font-bold text-black">
                     "{currentQ.translationTr}"
                   </span>
                 </div>
               ) : (
-                <div className="flex items-center space-x-2 text-slate-400 italic">
-                  <span className="w-3 h-3 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
+                <div className="flex items-center space-x-2 text-zinc-600 font-bold uppercase italic">
                   <span>Cümle çevirisi hazırlanıyor...</span>
                 </div>
               )}
 
-              {/* Word specific definition: ONLY shown AFTER user answers */}
               {hasFeedback && currentQ.wordTr && (
-                <div className="flex items-center space-x-2 pt-2 border-t border-slate-800 text-[11px]">
-                  <span className="font-bold text-emerald-400">{currentQ.answer}:</span>
-                  <span className="text-slate-300">{currentQ.wordTr}</span>
+                <div className="flex items-center space-x-2 pt-2 border-t border-black text-[11px] font-black uppercase">
+                  <span className="bg-[#4ADE80] text-black px-1 border border-black">{currentQ.answer}:</span>
+                  <span className="text-black">{currentQ.wordTr}</span>
                 </div>
               )}
             </div>
           ) : (
             <button
               onClick={() => setShowTranslation(true)}
-              className="text-[11px] text-slate-400 hover:text-indigo-300 flex items-center space-x-1.5 transition-colors group"
+              className="text-[11px] font-black uppercase text-black hover:underline flex items-center space-x-1.5"
             >
               <span>🇹🇷</span>
-              <span className="group-hover:underline">Tüm Cümlenin Türkçe Çevirisini Gör</span>
+              <span>CÜMLENİN TÜRKÇE ÇEVİRİSİNİ GÖR</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Helper Tip */}
-      <div className="text-[11px] text-slate-400 text-center mb-3 flex items-center justify-center space-x-1">
-        <span>💡</span>
-        <span>Cümledeki herhangi bir kelimeye <strong>tıklayarak</strong> anlamını görebilir ve <strong>+</strong> ile Özel Kelimelerinize ekleyebilirsiniz.</span>
-      </div>
-
       {/* 4 Choices Grid */}
-      <div className="grid grid-cols-2 gap-2.5 mb-3 flex-1">
+      <div className="grid grid-cols-2 gap-3 mb-3 flex-1">
         {currentQ.options.map((opt, idx) => {
           const letter = OPTION_LETTERS[idx] || String(idx + 1);
           const isThisSelected = selectedOption === opt;
           const isThisCorrect = opt.trim().toLowerCase() === currentQ.answer.trim().toLowerCase();
 
           let btnStyle =
-            'bg-slate-900 border-slate-800 hover:border-slate-700 hover:bg-slate-850 text-slate-100 shadow-sm';
-          let badgeStyle = 'bg-slate-800 text-slate-300 border-slate-750';
+            'bg-white text-black border-3 border-black shadow-[3px_3px_0px_0px_#000] hover:bg-zinc-50 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none';
+          let badgeStyle = 'bg-black text-white border-2 border-black';
 
           if (hasFeedback) {
             if (isThisCorrect) {
-              btnStyle =
-                'bg-emerald-950/50 border-emerald-500 text-emerald-100 ring-2 ring-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.2)]';
-              badgeStyle = 'bg-emerald-500 text-white border-emerald-400 font-bold';
+              btnStyle = 'bg-[#4ADE80] text-black border-3 border-black shadow-[3px_3px_0px_0px_#000]';
+              badgeStyle = 'bg-black text-[#4ADE80] border-2 border-black';
             } else if (isThisSelected && !isThisCorrect) {
-              btnStyle =
-                'bg-rose-950/50 border-rose-500 text-rose-100 ring-2 ring-rose-500/30 shadow-[0_0_20px_rgba(244,63,94,0.2)]';
-              badgeStyle = 'bg-rose-500 text-white border-rose-400 font-bold';
+              btnStyle = 'bg-[#FF5588] text-white border-3 border-black shadow-[3px_3px_0px_0px_#000]';
+              badgeStyle = 'bg-white text-black border-2 border-black';
             } else {
-              btnStyle = 'bg-slate-900/40 border-slate-850 text-slate-500 opacity-40';
+              btnStyle = 'bg-zinc-200 text-zinc-500 opacity-60 border-2 border-black shadow-none';
             }
           }
 
@@ -981,21 +942,21 @@ export const ClozeTestView: React.FC<Props> = ({
                 const yRatio = (rect.top + rect.height / 2) / window.innerHeight;
                 handleSelectOption(opt, { xRatio, yRatio });
               }}
-              className={`flex items-center p-3.5 rounded-2xl border text-left transition-all duration-150 active:scale-98 relative ${btnStyle}`}
+              className={`flex items-center p-3.5 border text-left transition-all duration-150 uppercase font-black relative ${btnStyle}`}
             >
               <span
-                className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold border mr-3 shrink-0 ${badgeStyle}`}
+                className={`w-7 h-7 flex items-center justify-center text-xs font-black mr-3 shrink-0 ${badgeStyle}`}
               >
                 {letter}
               </span>
-              <span className="text-sm sm:text-base font-bold truncate flex-1">
+              <span className="text-sm sm:text-base font-black truncate flex-1">
                 {opt}
               </span>
               {hasFeedback && isThisCorrect && (
-                <CheckCircle2 size={18} className="text-emerald-400 ml-1 shrink-0" />
+                <CheckCircle2 size={18} className="text-black ml-1 shrink-0" strokeWidth={3} />
               )}
               {hasFeedback && isThisSelected && !isThisCorrect && (
-                <XCircle size={18} className="text-rose-400 ml-1 shrink-0" />
+                <XCircle size={18} className="text-white ml-1 shrink-0" strokeWidth={3} />
               )}
             </button>
           );
@@ -1004,17 +965,17 @@ export const ClozeTestView: React.FC<Props> = ({
 
       {/* Feedback Bar & Manual Next Button */}
       {hasFeedback && (
-        <div className="pt-2 animate-fade-in">
+        <div className="pt-2">
           <button
             onClick={advanceToNextQuestion}
-            className={`w-full py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center space-x-2 transition-all shadow-lg active:scale-98 ${
+            className={`w-full py-4 px-4 font-black text-sm uppercase tracking-wider flex items-center justify-center space-x-2 transition-all border-3 border-black shadow-[4px_4px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${
               isAnswerCorrect
-                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
-                : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30'
+                ? 'bg-[#4ADE80] text-black hover:bg-[#3ec974]'
+                : 'bg-[#FFE600] text-black hover:bg-[#FFD600]'
             }`}
           >
-            <span>{currentIndex + 1 < questions.length ? 'Sonraki Soru' : 'Sonucu Gör'}</span>
-            <ArrowRight size={16} />
+            <span>{currentIndex + 1 < questions.length ? 'SONRAKİ SORU' : 'SONUCU GÖR'}</span>
+            <ArrowRight size={18} strokeWidth={3} />
           </button>
         </div>
       )}
@@ -1033,26 +994,26 @@ export const ClozeTestView: React.FC<Props> = ({
             left: `${Math.max(
               12,
               Math.min(
-                (typeof window !== 'undefined' ? window.innerWidth : 360) - 275,
-                activePopup.rect.left + activePopup.rect.width / 2 - 130
+                (typeof window !== 'undefined' ? window.innerWidth : 360) - 285,
+                activePopup.rect.left + activePopup.rect.width / 2 - 140
               )
             )}px`,
-            width: '265px',
+            width: '275px',
             zIndex: 9999
           }}
-          className={`bg-slate-900/95 backdrop-blur-md border border-indigo-500/40 rounded-2xl p-3.5 shadow-2xl shadow-black/90 text-white animate-scale-in transition-all ${
+          className={`bg-white border-3 border-black p-3.5 shadow-[5px_5px_0px_0px_#000] text-black transition-all ${
             activePopup.rect.top > 140 ? '-translate-y-full' : ''
           }`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-slate-800">
+          <div className="flex items-center justify-between gap-2 pb-1.5 border-b-2 border-black">
             <div className="flex items-center space-x-1.5 min-w-0">
-              <span className="font-bold text-sm sm:text-base text-white truncate">
+              <span className="font-black text-base text-black uppercase truncate">
                 {activePopup.word}
               </span>
               <button
                 onClick={() => speakEnglish(activePopup.word)}
-                className="p-1 rounded-lg text-indigo-400 hover:text-indigo-300 hover:bg-slate-800 transition-colors shrink-0"
+                className="p-1 bg-[#FFE600] border border-black text-black hover:bg-zinc-100 transition-colors shrink-0"
                 title="Dinle"
               >
                 <Volume2 size={14} />
@@ -1061,16 +1022,16 @@ export const ClozeTestView: React.FC<Props> = ({
 
             <button
               onClick={() => setActivePopup(null)}
-              className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors shrink-0"
+              className="p-1 text-black hover:bg-zinc-200 border border-black transition-colors shrink-0"
               title="Kapat"
             >
-              <X size={14} />
+              <X size={14} strokeWidth={3} />
             </button>
           </div>
 
           {/* Phonetic IPA */}
           {activePopup.ipa && (
-            <p className="text-[10px] text-slate-400 font-mono mt-1">
+            <p className="text-[10px] text-zinc-600 font-mono font-bold mt-1">
               {activePopup.ipa}
             </p>
           )}
@@ -1079,12 +1040,12 @@ export const ClozeTestView: React.FC<Props> = ({
           <div className="mt-2.5 flex items-center justify-between gap-2">
             <div className="flex-1 min-w-0">
               {activePopup.isLoading ? (
-                <div className="flex items-center space-x-1.5 text-xs text-indigo-400 animate-pulse">
+                <div className="flex items-center space-x-1.5 text-xs text-black font-black uppercase animate-pulse">
                   <Loader2 size={13} className="animate-spin shrink-0" />
-                  <span>Anlam aranıyor...</span>
+                  <span>ARANIYOR...</span>
                 </div>
               ) : (
-                <p className="text-xs font-semibold text-emerald-400 line-clamp-2 leading-tight">
+                <p className="text-xs font-black uppercase text-black line-clamp-2 leading-tight">
                   {activePopup.translation}
                 </p>
               )}
@@ -1093,14 +1054,14 @@ export const ClozeTestView: React.FC<Props> = ({
             {/* Plus (+) Button to Add to Custom Words */}
             <div className="shrink-0">
               {activePopup.isAdded ? (
-                <div className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[11px] font-bold animate-bounce-short">
-                  <Check size={13} className="stroke-[3]" />
-                  <span>Eklendi</span>
+                <div className="flex items-center space-x-1 px-2.5 py-1 bg-[#4ADE80] border-2 border-black text-black text-[11px] font-black uppercase shadow-[1px_1px_0px_0px_#000]">
+                  <Check size={13} strokeWidth={3} />
+                  <span>EKLENDİ</span>
                 </div>
               ) : activePopup.isAlreadyCustom ? (
-                <div className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-[10px] font-semibold">
+                <div className="flex items-center space-x-1 px-2 py-1 bg-zinc-200 border border-black text-black text-[10px] font-black uppercase">
                   <Check size={12} />
-                  <span>Listende</span>
+                  <span>LİSTENDE</span>
                 </div>
               ) : (
                 <button
@@ -1111,11 +1072,11 @@ export const ClozeTestView: React.FC<Props> = ({
                     activePopup.translation === 'Çeviri bulunamadı' ||
                     activePopup.translation === 'Çeviri alınamadı'
                   }
-                  className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 active:scale-95 text-white text-[11px] font-bold shadow-md shadow-indigo-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                  className="flex items-center space-x-1 px-2.5 py-1.5 bg-[#FFE600] hover:bg-[#FFD600] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-black text-[11px] font-black uppercase border-2 border-black shadow-[2px_2px_0px_0px_#000] transition-all disabled:opacity-50"
                   title="Özel Kelimelerime Ekle"
                 >
-                  <Plus size={14} className="stroke-[3] group-hover:rotate-90 transition-transform" />
-                  <span>Ekle</span>
+                  <Plus size={14} strokeWidth={3} />
+                  <span>EKLE</span>
                 </button>
               )}
             </div>

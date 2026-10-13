@@ -799,26 +799,28 @@ export const LearnView: React.FC<Props> = ({
     }
 
     return (
-      <div className="space-y-6 pb-20 pt-4 text-center">
-        <div className="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce">
-          <CheckCircle2 size={44} />
+      <div className="space-y-6 pb-20 pt-4 text-center select-none text-black">
+        <div className="w-20 h-20 bg-[#4ADE80] text-black border-4 border-black flex items-center justify-center mx-auto mb-2 shadow-[6px_6px_0px_0px_#000] rotate-[-3deg]">
+          <CheckCircle2 size={44} strokeWidth={2.5} />
         </div>
         <div className="space-y-2">
-          <h2 className="text-3xl font-black text-white">{learnedCount} Kelime Tamamlandı!</h2>
-          <p className="text-slate-400 text-sm max-w-xs mx-auto">
+          <div className="inline-block bg-[#FFE600] border-2 border-black px-3 py-1 shadow-[3px_3px_0px_0px_#000]">
+            <h2 className="text-2xl sm:text-3xl font-black text-black uppercase">{learnedCount} KELİME TAMAMLANDI!</h2>
+          </div>
+          <p className="text-zinc-800 font-bold text-xs max-w-xs mx-auto">
             Bilmeyip seçtiğin tüm kelimeleri önce şıklarla, ardından klavyeyle yazarak başarıyla öğrendin.
           </p>
         </div>
 
-        <div className="bg-slate-800/80 border border-slate-700 rounded-3xl p-5 max-w-sm mx-auto text-left space-y-2">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-            Öğrenilen Kelimeler ({learnedCount})
+        <div className="bg-white border-[3px] border-black p-5 max-w-sm mx-auto text-left space-y-2.5 shadow-[5px_5px_0px_0px_#000]">
+          <span className="text-xs font-black text-black uppercase tracking-wider block bg-[#FFE600] border border-black px-2 py-0.5 inline-block">
+            ÖĞRENİLEN KELİMELER ({learnedCount})
           </span>
-          <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
+          <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1 pt-1">
             {sessionList.filter(i => i.typingPassed).map(i => (
               <span
                 key={i.word.id}
-                className="px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-700 text-emerald-400 text-xs font-bold"
+                className="px-2.5 py-1 bg-[#BBF7D0] border-2 border-black text-black text-xs font-black shadow-[1.5px_1.5px_0px_0px_#000] uppercase"
               >
                 {i.word.en}
               </span>
@@ -830,17 +832,17 @@ export const LearnView: React.FC<Props> = ({
           {!(todayStr && localStorage.getItem('kelime_avi_learn_completed_' + todayStr) === 'true') && (
             <button
               onClick={handleStartFreshDiscovery}
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-2xl shadow-xl flex items-center justify-center space-x-2 text-base"
+              className="w-full py-4 bg-black text-[#FFE600] hover:bg-zinc-800 active:translate-x-[2px] active:translate-y-[2px] border-2 border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_#FFE600] active:shadow-none flex items-center justify-center space-x-2 transition-all"
             >
-              <RotateCcw size={18} />
-              <span>Yeni {targetWordsCount} Kelime Bul (Flash Kart)</span>
+              <RotateCcw size={18} strokeWidth={3} />
+              <span>YENİ {targetWordsCount} KELİME BUL (FLASH KART)</span>
             </button>
           )}
           <button
             onClick={onClose}
-            className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-2xl"
+            className="w-full py-3.5 bg-white text-black hover:bg-zinc-100 active:translate-x-[2px] active:translate-y-[2px] border-2 border-black font-black uppercase text-sm shadow-[3px_3px_0px_0px_#000] active:shadow-none transition-all"
           >
-            Ana Sayfaya Dön
+            ANA SAYFAYA DÖN
           </button>
         </div>
       </div>
@@ -848,43 +850,44 @@ export const LearnView: React.FC<Props> = ({
   }
 
   return (
-    <div className="space-y-5 pb-24 pt-2">
+    <div className="space-y-4 pb-24 pt-2 select-none text-black">
       {/* Top Header */}
       <div className="flex items-center justify-between">
         <button
           onClick={onClose}
-          className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800"
+          className="p-2 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] text-black hover:bg-[#FFE600] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
+          title="Geri"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={18} strokeWidth={3} />
         </button>
 
         {/* Progress Display */}
         <div className="flex-1 mx-3">
           {phase === 'discovery' ? (
             <div>
-              <div className="flex justify-between text-xs text-slate-400 mb-1">
+              <div className="flex justify-between text-xs mb-1 font-black">
                 {sessionList.length > 0 ? (
                   <>
-                    <span className="text-amber-400 font-bold">
-                      🎯 Havuzu 5'e Tamamla ({sessionList.filter(i => !i.typingPassed).length}/5 Aktif)
+                    <span className="text-black uppercase">
+                      🎯 HAVUZU 5'E TAMAMLA ({sessionList.filter(i => !i.typingPassed).length}/5)
                     </span>
-                    <span className="font-bold text-emerald-400 font-mono">
-                      {learnedCount} / {targetWordsCount} Hedef
+                    <span className="text-black font-mono bg-[#FFE600] px-1 border border-black">
+                      {learnedCount}/{targetWordsCount}
                     </span>
                   </>
                 ) : (
                   <>
-                    <span>🎯 {targetWordsCount} Bilinmeyen Kelime Topla</span>
-                    <span className="font-bold text-amber-400 font-mono">
-                      {unknownBasket.length} / {targetWordsCount}
+                    <span className="uppercase text-black">🎯 {targetWordsCount} BİLİNMEYEN TOPLA</span>
+                    <span className="font-mono bg-[#FFE600] text-black px-1 border border-black">
+                      {unknownBasket.length}/{targetWordsCount}
                     </span>
                   </>
                 )}
               </div>
-              <div className="h-2.5 bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-3.5 bg-white border-2 border-black overflow-hidden shadow-[2px_2px_0px_0px_#000]">
                 <div
                   className={`h-full transition-all duration-300 ${
-                    sessionList.length > 0 ? 'bg-emerald-500' : 'bg-amber-500'
+                    sessionList.length > 0 ? 'bg-[#4ADE80]' : 'bg-[#FFE600]'
                   }`}
                   style={{
                     width: sessionList.length > 0
@@ -896,26 +899,26 @@ export const LearnView: React.FC<Props> = ({
             </div>
           ) : (
             <div>
-              <div className="flex justify-between text-xs text-slate-400 mb-1">
-                <span className="flex items-center space-x-1">
+              <div className="flex justify-between text-xs mb-1 font-black">
+                <span className="flex items-center space-x-1 uppercase text-black">
                   <span>
                     {currentQuestion?.isFiller
-                      ? '🔄 Ara Pekiştirme'
+                      ? '🔄 PEKİŞTİRME'
                       : currentQuestion?.type === 'choice'
-                      ? 'Şıklı Test'
-                      : 'Klavyeyle Yazma'}
+                      ? 'ŞIKLI TEST'
+                      : 'KLAVYEYLE YAZ'}
                   </span>
                   {currentQuestion?.type === 'typing' && (
-                    <Keyboard size={12} className="text-emerald-400 inline" />
+                    <Keyboard size={13} strokeWidth={2.5} className="text-black inline" />
                   )}
                 </span>
-                <span className="font-bold text-emerald-400 font-mono">
-                  {learnedCount} / {targetWordsCount} Tamamen Öğrenildi
+                <span className="font-mono bg-[#4ADE80] text-black px-1 border border-black">
+                  {learnedCount}/{targetWordsCount}
                 </span>
               </div>
-              <div className="h-2.5 bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-3.5 bg-white border-2 border-black overflow-hidden shadow-[2px_2px_0px_0px_#000]">
                 <div
-                  className="h-full bg-emerald-500 transition-all duration-300"
+                  className="h-full bg-black transition-all duration-300"
                   style={{ width: `${Math.min(100, (learnedCount / targetWordsCount) * 100)}%` }}
                 />
               </div>
@@ -924,8 +927,8 @@ export const LearnView: React.FC<Props> = ({
         </div>
 
         {combo >= 2 && (
-          <div className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 text-xs font-black animate-bounce">
-            <span>🔥 {combo}x</span>
+          <div className="flex items-center space-x-1 px-2.5 py-1 bg-[#FF69B4] border-2 border-black text-black text-xs font-black shadow-[2px_2px_0px_0px_#000]">
+            <span>🔥 {combo}X</span>
           </div>
         )}
       </div>
@@ -944,30 +947,30 @@ export const LearnView: React.FC<Props> = ({
               transform: `translateX(${dragOffset}px) rotate(${dragOffset * 0.08}deg)`,
               transition: dragOffset === 0 ? 'transform 0.25s ease' : 'none'
             }}
-            className={`cursor-pointer select-none bg-slate-900 border rounded-3xl p-6 shadow-sm min-h-[350px] flex flex-col justify-between relative transition-colors ${
+            className={`cursor-pointer select-none bg-white border-4 border-black p-6 shadow-[6px_6px_0px_0px_#000] min-h-[350px] flex flex-col justify-between relative transition-colors ${
               dragOffset > 30
-                ? 'border-emerald-500 bg-emerald-950/20'
+                ? 'bg-[#BBF7D0]'
                 : dragOffset < -30
-                ? 'border-rose-500 bg-rose-950/20'
-                : 'border-slate-800'
+                ? 'bg-[#FFB1B8]'
+                : 'bg-white'
             }`}
           >
             {(currentCandidate.isCustom || currentCandidate.categories?.includes('custom') || !!currentCandidate.reword) && (
-              <div className="absolute top-4 left-4 inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[11px] font-bold">
-                <Sparkles size={12} />
-                <span>Kendi Kelimen</span>
+              <div className="absolute top-4 left-4 inline-flex items-center space-x-1 px-2 py-0.5 bg-[#C084FC] text-black border border-black text-[10px] font-black uppercase shadow-[1px_1px_0px_0px_#000]">
+                <Sparkles size={11} />
+                <span>ÖZEL</span>
               </div>
             )}
 
             {dragOffset > 30 && (
-              <span className="absolute top-4 right-4 text-emerald-400 font-extrabold text-sm flex items-center space-x-1">
+              <span className="absolute top-4 right-4 bg-black text-[#4ADE80] border-2 border-black px-2 py-0.5 font-black text-xs flex items-center space-x-1 shadow-[2px_2px_0px_0px_#000]">
                 <span>BİLİYORUM</span>
-                <Check size={18} />
+                <Check size={16} strokeWidth={3} />
               </span>
             )}
             {dragOffset < -30 && (
-              <span className="absolute top-4 left-4 text-rose-400 font-extrabold text-sm flex items-center space-x-1">
-                <X size={18} />
+              <span className="absolute top-4 left-4 bg-black text-[#FF5588] border-2 border-black px-2 py-0.5 font-black text-xs flex items-center space-x-1 shadow-[2px_2px_0px_0px_#000]">
+                <X size={16} strokeWidth={3} />
                 <span>BİLMİYORUM</span>
               </span>
             )}
@@ -975,13 +978,13 @@ export const LearnView: React.FC<Props> = ({
             {/* Front: ENGLISH ONLY */}
             <div className="text-center space-y-3 py-6 my-auto">
               <div className="flex items-center justify-center space-x-3">
-                <h1 className="text-4xl font-black text-white tracking-tight">
+                <h1 className="text-4xl sm:text-5xl font-black text-black dark:text-white uppercase tracking-tight">
                   {currentCandidate.en}
                 </h1>
-                <AudioButton text={currentCandidate.en} size={28} />
+                <AudioButton text={currentCandidate.en} size={24} />
               </div>
               {currentCandidate.ipa && (
-                <p className="text-base font-mono text-indigo-400 tracking-wider">
+                <p className="text-sm font-mono font-bold bg-[#FFE600] text-black inline-block px-2 py-0.5 border border-black">
                   {currentCandidate.ipa}
                 </p>
               )}
@@ -989,31 +992,31 @@ export const LearnView: React.FC<Props> = ({
 
             {/* Back: REVEALED ON TAP */}
             {isFlipped ? (
-              <div className="space-y-4 pt-4 border-t border-slate-800 animate-fadeIn">
-                <div className="bg-slate-950 rounded-2xl p-4 text-center border border-slate-800/80">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block mb-1">
-                    Türkçe Karşılığı
+              <div className="space-y-3 pt-4 border-t-2 border-black animate-fadeIn">
+                <div className="bg-[#FFE600] border-2 border-black p-3.5 text-center shadow-[3px_3px_0px_0px_#000]">
+                  <span className="text-[10px] uppercase font-black tracking-wider text-black block mb-1">
+                    TÜRKÇE KARŞILIĞI
                   </span>
-                  <p className="text-2xl font-black text-emerald-400">
+                  <p className="text-2xl font-black text-black uppercase">
                     {currentCandidate.tr}
                   </p>
                 </div>
 
                 {currentCandidate.examples?.[0] && (
-                  <div className="bg-slate-950 rounded-2xl p-3 border border-slate-800 text-xs space-y-1">
-                    <p className="text-slate-200 italic">
+                  <div className="bg-white border-2 border-black p-3 text-xs space-y-1 shadow-[2px_2px_0px_0px_#000]">
+                    <p className="text-black dark:text-zinc-100 font-semibold">
                       <HighlightedText text={currentCandidate.examples[0].en} />
                     </p>
-                    <p className="text-slate-400 text-[11px]">
+                    <p className="text-zinc-700 dark:text-zinc-400 text-[11px] font-bold">
                       {currentCandidate.examples[0].tr}
                     </p>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="text-center py-2 text-xs text-slate-400 flex items-center justify-center space-x-1.5 opacity-80">
-                <Eye size={14} />
-                <span>Anlamı görmek için karta dokun</span>
+              <div className="text-center py-2 text-xs font-black text-zinc-800 flex items-center justify-center space-x-1.5 uppercase tracking-wide">
+                <Eye size={14} strokeWidth={2.5} />
+                <span>ANLAMI GÖRMEK İÇİN KARTA DOKUN</span>
               </div>
             )}
           </div>
@@ -1022,18 +1025,18 @@ export const LearnView: React.FC<Props> = ({
           <div className="grid grid-cols-2 gap-3 pt-1">
             <button
               onClick={() => handleFlashcardChoice(false)}
-              className="py-3.5 px-4 bg-slate-900 hover:bg-slate-850 active:scale-95 border border-slate-800 hover:border-rose-500/50 rounded-2xl text-rose-400 font-bold flex items-center justify-center space-x-2 text-sm shadow-sm transition-all"
+              className="py-3.5 px-4 bg-[#FF5588] text-black hover:bg-[#ff3b75] active:translate-x-[2px] active:translate-y-[2px] border-[3px] border-black font-black uppercase flex items-center justify-center space-x-2 text-xs sm:text-sm shadow-[4px_4px_0px_0px_#000] active:shadow-none transition-all"
             >
-              <X size={18} />
-              <span>Bilmiyorum (Sola)</span>
+              <X size={18} strokeWidth={3} />
+              <span>BİLMİYORUM (SOLA)</span>
             </button>
 
             <button
               onClick={() => handleFlashcardChoice(true)}
-              className="py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:scale-95 rounded-2xl text-white font-bold flex items-center justify-center space-x-2 text-sm shadow-sm transition-all"
+              className="py-3.5 px-4 bg-[#4ADE80] text-black hover:bg-[#34d399] active:translate-x-[2px] active:translate-y-[2px] border-[3px] border-black font-black uppercase flex items-center justify-center space-x-2 text-xs sm:text-sm shadow-[4px_4px_0px_0px_#000] active:shadow-none transition-all"
             >
-              <span>Biliyorum (Sağa)</span>
-              <Check size={18} />
+              <span>BİLİYORUM (SAĞA)</span>
+              <Check size={18} strokeWidth={3} />
             </button>
           </div>
 
@@ -1041,9 +1044,9 @@ export const LearnView: React.FC<Props> = ({
             <div className="text-center pt-2">
               <button
                 onClick={() => startStudy(unknownBasket)}
-                className="text-xs font-bold text-amber-400 hover:text-amber-300 underline"
+                className="text-xs font-black text-black bg-[#FFE600] border-2 border-black px-3 py-1 shadow-[2px_2px_0px_0px_#000] uppercase"
               >
-                {unknownBasket.length} kelimeyle şimdi öğrenmeye başla ➔
+                {unknownBasket.length} KELİMEYLE ÇALIŞMAYA BAŞLA ➔
               </button>
             </div>
           )}
@@ -1056,49 +1059,53 @@ export const LearnView: React.FC<Props> = ({
       {phase === 'study' && currentQuestion && (
         <div className="space-y-4">
           <div
-            className={`bg-slate-900 border rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 sm:space-y-5 transition-all relative ${
+            className={`bg-white border-4 border-black p-5 sm:p-6 shadow-[6px_6px_0px_0px_#000] space-y-4 sm:space-y-5 transition-all relative ${
               inlineFeedback?.status === 'correct'
-                ? 'border-emerald-500/70'
+                ? 'bg-[#F0FDF4]'
                 : inlineFeedback?.status === 'wrong'
-                ? 'border-rose-500/70'
-                : 'border-slate-800'
+                ? 'bg-[#FFF1F2]'
+                : 'bg-white'
             }`}
           >
             {/* Header / Word */}
             <div className="text-center space-y-2">
-              <div className="flex items-center justify-center space-x-1.5 text-xs font-semibold tracking-wide text-slate-400">
+              <div className="flex items-center justify-center space-x-1.5 text-xs font-black tracking-wide text-black">
                 {currentQuestion.isFiller ? (
-                  <span className="text-amber-400 flex items-center space-x-1">
-                    <RefreshCw size={13} />
-                    <span>Ara Pekiştirme Sorusu</span>
+                  <span className="bg-[#FFE600] border border-black px-2 py-0.5 uppercase flex items-center space-x-1">
+                    <RefreshCw size={12} strokeWidth={3} />
+                    <span>ARA PEKİŞTİRME</span>
                   </span>
                 ) : currentQuestion.type === 'typing' ? (
-                  <span className="text-emerald-400 flex items-center space-x-1">
-                    <Keyboard size={13} />
-                    <span>Klavyeyle Türkçe Karşılığını Yaz</span>
+                  <span className="bg-[#00F0FF] border border-black px-2 py-0.5 uppercase flex items-center space-x-1">
+                    <Keyboard size={12} strokeWidth={3} />
+                    <span>KLAVYEYLE TÜRKÇESİNİ YAZ</span>
                   </span>
                 ) : (
-                  <span>Bu kelimenin Türkçesi hangisi?</span>
+                  <span className="bg-[#FFE600] border border-black px-2 py-0.5 uppercase">
+                    DOĞRU TÜRKÇE ANLAMI SEÇ
+                  </span>
                 )}
               </div>
 
               {(currentQuestion.word.isCustom || currentQuestion.word.categories?.includes('custom') || !!currentQuestion.word.reword) && (
-                <div className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[11px] font-bold">
-                  <Sparkles size={12} />
-                  <span>Kendi Kelimen</span>
+                <div className="inline-flex items-center space-x-1 px-2.5 py-0.5 bg-[#C084FC] border border-black text-black text-[10px] font-black uppercase shadow-[1px_1px_0px_0px_#000]">
+                  <Sparkles size={11} />
+                  <span>KENDİ KELİMEN</span>
                 </div>
               )}
 
-              <div className="flex items-center justify-center space-x-2 pt-1">
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">{currentQuestion.word.en}</h2>
+              <div className="flex items-center justify-center space-x-2.5 pt-1">
+                <h2 className="text-3xl sm:text-4xl font-black text-black dark:text-white uppercase tracking-tight">{currentQuestion.word.en}</h2>
                 <AudioButton text={currentQuestion.word.en} size={22} />
               </div>
               {currentQuestion.word.ipa && (
-                <p className="text-xs sm:text-sm font-mono text-indigo-400">{currentQuestion.word.ipa}</p>
+                <p className="text-xs sm:text-sm font-mono font-bold bg-[#E5E0D8] text-black inline-block px-2 py-0.5 border border-black">
+                  {currentQuestion.word.ipa}
+                </p>
               )}
             </div>
 
-            {/* Word Hints List (Encounter-gated English hints: Eş/Benzer/Zıt) */}
+            {/* Word Hints List */}
             <WordHintsList
               hints={currentWordHints}
               revealedCount={hintStats[currentQuestion.word.id]?.revealedCount || 0}
@@ -1109,7 +1116,7 @@ export const LearnView: React.FC<Props> = ({
 
             {/* A) Multiple Choice Mode with QuizOptionButton */}
             {currentQuestion.type === 'choice' && (
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {choiceOptions.map((opt, idx) => {
                   const isSelected = selectedChoice === opt;
                   const isThisCorrect = checkTurkishAnswer(opt, currentQuestion.word.tr);
@@ -1150,11 +1157,11 @@ export const LearnView: React.FC<Props> = ({
                   disabled={inlineFeedback !== null}
                   value={typedInput}
                   onChange={(e) => setTypedInput(e.target.value)}
-                  placeholder="Türkçe anlamını yaz..."
-                  className={`w-full py-3 px-3.5 rounded-xl bg-slate-950 border-2 text-white text-center text-lg sm:text-xl font-bold tracking-wide focus:outline-none transition-all ${
+                  placeholder="Türkçe anlamını buraya yaz..."
+                  className={`w-full py-3.5 px-4 bg-white dark:bg-[#1E1E26] border-[3px] border-black text-black dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 text-center text-lg sm:text-xl font-black tracking-wide focus:outline-none focus:bg-[#FFFBEB] dark:focus:bg-[#252530] transition-all shadow-[3px_3px_0px_0px_#000] ${
                     inlineFeedback?.status === 'wrong'
-                      ? 'border-rose-500 bg-rose-950/20 text-rose-200 animate-wrong-shake'
-                      : 'border-slate-800 focus:border-indigo-500 shadow-inner'
+                      ? 'border-[#FF5588] bg-[#FFE4E6] dark:bg-[#3B1520] animate-wrong-shake'
+                      : ''
                   }`}
                 />
 
@@ -1163,18 +1170,18 @@ export const LearnView: React.FC<Props> = ({
                     type="button"
                     autoFocus
                     onClick={handleAdvanceManually}
-                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold rounded-xl shadow-sm text-sm sm:text-base transition-all flex items-center justify-center space-x-2"
+                    className="w-full py-3.5 bg-black text-[#FFE600] active:translate-x-[2px] active:translate-y-[2px] border-2 border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_#FFE600] active:shadow-none transition-all flex items-center justify-center space-x-2"
                   >
-                    <span>Diğer Kelimeye Geç</span>
-                    <ArrowRight size={18} />
+                    <span>DİĞER KELİMEYE GEÇ</span>
+                    <ArrowRight size={18} strokeWidth={3} />
                   </button>
                 ) : (
                   <button
                     type="submit"
                     disabled={!typedInput.trim()}
-                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] disabled:opacity-40 text-white font-bold rounded-xl shadow-sm text-sm sm:text-base transition-all"
+                    className="w-full py-3.5 bg-[#4ADE80] text-black active:translate-x-[2px] active:translate-y-[2px] disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:text-zinc-500 dark:disabled:text-zinc-500 disabled:shadow-none disabled:cursor-not-allowed border-[3px] border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_#000] active:shadow-none transition-all"
                   >
-                    Onayla
+                    ONAYLA
                   </button>
                 )}
               </form>
@@ -1183,22 +1190,22 @@ export const LearnView: React.FC<Props> = ({
             {/* INLINE WRONG FEEDBACK BANNER */}
             {inlineFeedback?.status === 'wrong' && (
               <div className="pt-1 animate-fadeIn">
-                <div className="bg-slate-950 border border-rose-500/40 rounded-2xl p-3.5 flex items-center justify-between">
+                <div className="bg-[#FF5588] border-3 border-black p-3.5 flex items-center justify-between text-black shadow-[3px_3px_0px_0px_#000]">
                   <div className="space-y-0.5 pr-2">
-                    <span className="text-[11px] font-semibold text-rose-400 block">
-                      Yanlış Cevap! Doğru Anlam:
+                    <span className="text-[10px] font-black uppercase tracking-wider block">
+                      YANLIŞ! DOĞRU ANLAM:
                     </span>
-                    <span className="text-sm font-bold text-white leading-tight">
+                    <span className="text-base font-black uppercase leading-tight">
                       {inlineFeedback.correctAnswer}
                     </span>
                   </div>
 
                   <button
                     onClick={handleAdvanceManually}
-                    className="shrink-0 flex items-center space-x-1 bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-xl transition-all active:scale-95"
+                    className="shrink-0 flex items-center space-x-1 bg-black text-white font-black text-xs px-3.5 py-2 border-2 border-black shadow-[2px_2px_0px_0px_#FFE600] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none uppercase"
                   >
-                    <span>Geç</span>
-                    <ArrowRight size={14} />
+                    <span>GEÇ</span>
+                    <ArrowRight size={14} strokeWidth={3} />
                   </button>
                 </div>
               </div>

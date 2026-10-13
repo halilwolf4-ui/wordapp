@@ -172,6 +172,29 @@ export const App: React.FC = () => {
     init();
   }, [loadData]);
 
+  // Apply theme & dark mode palette
+  useEffect(() => {
+    const isDark = settings.theme === 'dark';
+    const root = document.documentElement;
+
+    if (isDark) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+
+    const palette = settings.darkPalette || 'cyber-yellow';
+    root.setAttribute('data-palette', palette);
+
+    if (palette === 'custom' && settings.customDarkColor) {
+      root.style.setProperty('--brutal-dark-accent', settings.customDarkColor);
+      root.style.setProperty('--brutal-dark-shadow', settings.customDarkColor);
+    } else {
+      root.style.removeProperty('--brutal-dark-accent');
+      root.style.removeProperty('--brutal-dark-shadow');
+    }
+  }, [settings.theme, settings.darkPalette, settings.customDarkColor]);
+
   const today = getEffectiveDate();
 
   // Daily queues
@@ -617,27 +640,29 @@ export const App: React.FC = () => {
   // Loading Screen
   if (isInitializing) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center select-none">
-        <div className="w-20 h-20 bg-indigo-600/20 text-indigo-400 rounded-3xl flex items-center justify-center mb-6 border border-indigo-500/30 animate-pulse">
-          <span className="text-3xl font-black">KA</span>
+      <div className="min-h-screen bg-[#FDFBF7] text-black flex flex-col items-center justify-center p-6 text-center select-none">
+        <div className="w-24 h-24 bg-[#FFE600] text-black border-4 border-black flex items-center justify-center mb-6 shadow-[6px_6px_0px_0px_#000] rotate-[-2deg]">
+          <span className="text-4xl font-black tracking-tighter">KA</span>
         </div>
-        <h1 className="text-2xl font-black mb-2 tracking-tight">Kelime Avı</h1>
-        <p className="text-slate-400 text-sm mb-6 max-w-xs">{initMessage}</p>
+        <h1 className="text-3xl font-black mb-1 uppercase tracking-tight text-black">KELİME AVI</h1>
+        <div className="inline-block bg-[#FF69B4] text-black border-2 border-black font-black text-xs px-2.5 py-0.5 mb-6 shadow-[2px_2px_0px_0px_#000]">
+          {initMessage}
+        </div>
 
-        {/* Progress Bar */}
-        <div className="w-64 h-2.5 bg-slate-900 rounded-full border border-slate-800 overflow-hidden mb-3">
+        {/* Brutalist Progress Bar */}
+        <div className="w-64 h-4 bg-white border-[3px] border-black overflow-hidden mb-2 shadow-[3px_3px_0px_0px_#000]">
           <div
-            className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+            className="h-full bg-black transition-all duration-300"
             style={{ width: `${initPercent}%` }}
           />
         </div>
-        <span className="text-xs font-mono text-slate-500">%{initPercent}</span>
+        <span className="text-xs font-black font-mono bg-white border border-black px-2 py-0.5 text-black">%{initPercent}</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#FDFBF7] text-black flex flex-col selection:bg-[#FFE600] selection:text-black">
       {/* 7-Day Backup Reminder */}
       <BackupReminderBanner
         lastBackupDate={settings.lastBackupDate}
@@ -648,14 +673,18 @@ export const App: React.FC = () => {
       {!isKeyboardVisible && (
         <Header
           profile={profile}
+          isDark={settings.theme === 'dark'}
+          onToggleTheme={() =>
+            handleUpdateSettings({ theme: settings.theme === 'dark' ? 'light' : 'dark' })
+          }
           onOpenSpeedRound={() => setIsSpeedRoundOpen(true)}
           onOpenSettings={() => setIsSettingsOpen(true)}
         />
       )}
 
       {/* Main Container */}
-      <main className={`flex-1 max-w-md w-full mx-auto px-3.5 pt-2 ${
-        currentTab === 'home' && !isKeyboardVisible ? 'pb-20' : 'pb-2'
+      <main className={`flex-1 max-w-md w-full mx-auto px-3.5 pt-3 ${
+        currentTab === 'home' && !isKeyboardVisible ? 'pb-24' : 'pb-4'
       }`}>
         {/* PWA Install Banner (Tam Ekran Uygulama Olarak Yükle) */}
         {currentTab === 'home' && !isKeyboardVisible && <InstallPromptBanner />}

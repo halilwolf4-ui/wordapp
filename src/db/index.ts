@@ -38,7 +38,9 @@ export const DEFAULT_SETTINGS: UserSettings = {
   soundEffects: true,
   vibration: true,
   speechSpeed: 0.9,
-  theme: 'dark',
+  theme: 'light',
+  darkPalette: 'cyber-yellow',
+  customDarkColor: '#FFE600',
   lastBackupDate: undefined,
   lastSurpriseCheckDate: undefined
 };

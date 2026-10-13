@@ -32,6 +32,14 @@ export interface Progress {
   totalWrong: number;
   updatedAt: number;
 }
+export type BrutalDarkPalette =
+  | 'cyber-yellow'
+  | 'toxic-lime'
+  | 'neon-pink'
+  | 'cyan-glitch'
+  | 'ultraviolet'
+  | 'monochrome'
+  | 'custom';
 
 export interface UserSettings {
   id: number; // 1
@@ -44,6 +52,8 @@ export interface UserSettings {
   vibration: boolean;
   speechSpeed: number;
   theme: 'dark' | 'light';
+  darkPalette?: BrutalDarkPalette;
+  customDarkColor?: string;
   lastBackupDate?: string;
   lastSurpriseCheckDate?: string;
 }

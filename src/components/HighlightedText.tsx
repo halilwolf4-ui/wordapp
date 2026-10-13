@@ -12,8 +12,8 @@ interface Props {
  */
 export const HighlightedText: React.FC<Props> = ({
   text,
-  className = 'text-slate-300',
-  highlightClass = 'font-bold text-amber-400 bg-amber-400/10 px-1 py-0.5 rounded'
+  className = 'text-black font-semibold',
+  highlightClass = 'font-black text-black bg-[#FFE600] border border-black px-1.5 py-0.5 shadow-[1.5px_1.5px_0px_0px_#000]'
 }) => {
   if (!text) return null;
 

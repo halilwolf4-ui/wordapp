@@ -145,41 +145,44 @@ export const SpeedRoundView: React.FC<Props> = ({
       <div className="flex items-center justify-between">
         <button
           onClick={onClose}
-          className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800 transition-colors"
+          className="p-2.5 bg-white border-2 border-black font-black uppercase text-xs shadow-[2px_2px_0px_0px_#000] hover:bg-zinc-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center space-x-1"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={18} strokeWidth={2.5} />
+          <span>GERİ</span>
         </button>
-        <span className="text-sm font-bold text-amber-400 flex items-center space-x-1.5">
-          <Zap size={16} className="fill-amber-400 text-amber-400" />
-          <span>60 Saniye Hızlı Tur</span>
+        <span className="text-xs font-black uppercase tracking-wider bg-[#FFE600] text-black px-3 py-1.5 border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center space-x-1.5">
+          <Zap size={16} className="fill-black text-black" />
+          <span>60S HIZLI TUR</span>
         </span>
-        <div className="w-8" />
+        <div className="w-10" />
       </div>
 
       {/* READY SCREEN */}
       {gameState === 'ready' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-center space-y-6 shadow-sm">
-          <div className="w-18 h-18 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mx-auto p-4">
-            <Zap size={36} className="fill-amber-400" />
+        <div className="bg-white border-3 border-black p-6 text-center space-y-6 shadow-[5px_5px_0px_0px_#000]">
+          <div className="w-20 h-20 bg-[#FFE600] border-3 border-black text-black flex items-center justify-center mx-auto shadow-[4px_4px_0px_0px_#000]">
+            <Zap size={44} className="fill-black" />
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-white">Reflekslerini Sına!</h2>
-            <p className="text-sm text-slate-400 leading-relaxed max-w-xs mx-auto">
-              60 saniyede en çok kelimeyi bil. Doğru cevaplar <span className="text-emerald-400 font-bold">+1 sn</span> kazandırır, yanlışlar <span className="text-rose-400 font-bold">-1 sn</span> götürür!
+            <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black">
+              REFLEKSLERİNİ SINA!
+            </h2>
+            <p className="text-xs sm:text-sm font-bold text-zinc-700 leading-relaxed max-w-xs mx-auto border-y-2 border-dashed border-black py-2">
+              60 saniyede en çok kelimeyi bil. Doğru cevaplar <span className="bg-[#4ADE80] text-black px-1 border border-black font-black">+1 sn</span> kazandırır, yanlışlar <span className="bg-[#FF5588] text-white px-1 border border-black font-black">-1 sn</span> götürür!
             </p>
           </div>
 
-          <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800/80 inline-block w-full">
-            <span className="text-xs uppercase font-semibold text-slate-400 block">Mevcut Rekor</span>
-            <span className="text-3xl font-extrabold text-amber-400">{highScore} doğru</span>
+          <div className="bg-[#00F0FF] p-4 border-3 border-black inline-block w-full shadow-[3px_3px_0px_0px_#000]">
+            <span className="text-xs uppercase font-black text-black block tracking-wider">MEVCUT REKOR</span>
+            <span className="text-4xl font-black text-black font-mono">{highScore} DOĞRU</span>
           </div>
 
           <button
             onClick={startGame}
-            className="w-full py-4 bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-slate-950 font-bold text-base rounded-2xl shadow-sm transition-all"
+            className="w-full py-4 bg-[#FFE600] hover:bg-[#FFD600] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none text-black font-black text-base uppercase tracking-wider border-3 border-black shadow-[4px_4px_0px_0px_#000] transition-all"
           >
-            Hemen Başla (60s)
+            ⚡ HEMEN BAŞLA (60S)
           </button>
         </div>
       )}
@@ -189,46 +192,48 @@ export const SpeedRoundView: React.FC<Props> = ({
         <div className="space-y-4">
           {/* Top Indicators */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between relative overflow-hidden shadow-sm">
-              <span className="text-xs text-slate-400 font-medium flex items-center space-x-1.5">
-                <Clock size={16} className="text-amber-400" />
-                <span>Kalan Süre</span>
+            <div className={`border-3 border-black p-3.5 flex items-center justify-between relative overflow-hidden shadow-[3px_3px_0px_0px_#000] transition-colors ${
+              timeLeft <= 10 ? 'bg-[#FF5588] text-white animate-pulse' : 'bg-[#FFE600] text-black'
+            }`}>
+              <span className="text-xs font-black uppercase flex items-center space-x-1.5">
+                <Clock size={16} strokeWidth={2.5} />
+                <span>SÜRE</span>
               </span>
               <div className="flex items-center space-x-1.5">
                 {timeDelta && (
                   <span
                     key={timeDelta.id}
-                    className={`text-xs font-bold animate-bounce ${
-                      timeDelta.val > 0 ? 'text-emerald-400' : 'text-rose-400'
+                    className={`text-xs font-black px-1 border border-black ${
+                      timeDelta.val > 0 ? 'bg-[#4ADE80] text-black' : 'bg-black text-white'
                     }`}
                   >
                     {timeDelta.val > 0 ? '+1s' : '-1s'}
                   </span>
                 )}
-                <span className={`text-2xl font-bold font-mono ${timeLeft <= 10 ? 'text-rose-400 animate-pulse' : 'text-white'}`}>
+                <span className="text-2xl font-black font-mono">
                   {timeLeft}s
                 </span>
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between shadow-sm">
-              <span className="text-xs text-slate-400 font-medium flex items-center space-x-1.5">
-                <Award size={16} className="text-indigo-400" />
-                <span>Doğru</span>
+            <div className="bg-[#00F0FF] border-3 border-black p-3.5 flex items-center justify-between shadow-[3px_3px_0px_0px_#000]">
+              <span className="text-xs text-black font-black uppercase flex items-center space-x-1.5">
+                <Award size={16} strokeWidth={2.5} />
+                <span>DOĞRU</span>
               </span>
-              <span className="text-2xl font-bold text-indigo-400 font-mono">
+              <span className="text-2xl font-black text-black font-mono">
                 {score}
               </span>
             </div>
           </div>
 
           {/* Flash Word Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 text-center space-y-5 shadow-sm">
-            <div className="py-2">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
-                İngilizce
+          <div className="bg-white border-3 border-black p-5 sm:p-6 text-center space-y-5 shadow-[5px_5px_0px_0px_#000]">
+            <div className="py-2 border-b-3 border-black pb-4">
+              <span className="text-[11px] font-black text-black bg-[#FFE600] px-2 py-0.5 border border-black uppercase tracking-wider inline-block mb-2 shadow-[1px_1px_0px_0px_#000]">
+                İNGİLİZCE KELİME
               </span>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              <h2 className="text-3xl sm:text-4xl font-black text-black tracking-tight uppercase">
                 {currentWord.en}
               </h2>
             </div>
@@ -260,48 +265,48 @@ export const SpeedRoundView: React.FC<Props> = ({
 
       {/* GAME OVER SCREEN */}
       {gameState === 'gameover' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-center space-y-6 shadow-sm">
-          <div className="w-18 h-18 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto p-4">
-            <Award size={36} />
+        <div className="bg-white border-3 border-black p-6 text-center space-y-6 shadow-[5px_5px_0px_0px_#000]">
+          <div className="w-20 h-20 bg-[#FFE600] border-3 border-black text-black flex items-center justify-center mx-auto shadow-[4px_4px_0px_0px_#000]">
+            <Award size={44} strokeWidth={2.5} />
           </div>
 
           <div className="space-y-1.5">
-            <h2 className="text-2xl font-bold text-white">Süre Doldu!</h2>
+            <h2 className="text-3xl font-black uppercase text-black">SÜRE DOLDU!</h2>
             {isNewRecord ? (
-              <p className="text-emerald-400 font-bold text-sm">
-                🎉 Yeni Rekor Kırdın!
+              <p className="bg-[#4ADE80] text-black font-black uppercase text-xs sm:text-sm py-1.5 px-3 border-2 border-black inline-block shadow-[2px_2px_0px_0px_#000]">
+                🎉 YENİ REKOR KIRDIN!
               </p>
             ) : (
-              <p className="text-slate-400 text-xs">
+              <p className="text-zinc-600 font-bold text-xs uppercase">
                 Güzel tur! Reflekslerin her gün daha da gelişiyor.
               </p>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800">
-              <span className="text-xs text-slate-400 block mb-1">Bu Tur Skorun</span>
-              <span className="text-3xl font-extrabold text-white">{score}</span>
+            <div className="bg-[#FDFBF7] p-4 border-2 border-black shadow-[2px_2px_0px_0px_#000]">
+              <span className="text-[11px] font-black uppercase text-zinc-600 block mb-1">BU TUR SKORUN</span>
+              <span className="text-4xl font-black text-black font-mono">{score}</span>
             </div>
-            <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800">
-              <span className="text-xs text-slate-400 block mb-1">En İyi Skorun</span>
-              <span className="text-3xl font-extrabold text-amber-400">{Math.max(score, highScore)}</span>
+            <div className="bg-[#FFE600] p-4 border-2 border-black shadow-[2px_2px_0px_0px_#000]">
+              <span className="text-[11px] font-black uppercase text-black block mb-1">EN İYİ SKORUN</span>
+              <span className="text-4xl font-black text-black font-mono">{Math.max(score, highScore)}</span>
             </div>
           </div>
 
           <div className="space-y-2.5 pt-2">
             <button
               onClick={startGame}
-              className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-slate-950 font-bold text-base rounded-2xl shadow-sm flex items-center justify-center space-x-2 transition-all"
+              className="w-full py-4 bg-[#FFE600] hover:bg-[#FFD600] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none text-black font-black text-sm uppercase tracking-wider border-3 border-black shadow-[4px_4px_0px_0px_#000] flex items-center justify-center space-x-2 transition-all"
             >
-              <RotateCcw size={18} />
-              <span>Tekrar Oyna</span>
+              <RotateCcw size={18} strokeWidth={2.5} />
+              <span>TEKRAR OYNA</span>
             </button>
             <button
               onClick={onClose}
-              className="w-full py-3 bg-slate-950 hover:bg-slate-850 border border-slate-800 text-slate-300 font-semibold rounded-2xl transition-all"
+              className="w-full py-3 bg-white hover:bg-zinc-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none border-2 border-black text-black font-black text-xs uppercase shadow-[2px_2px_0px_0px_#000] transition-all"
             >
-              Kapat
+              KAPAT
             </button>
           </div>
         </div>

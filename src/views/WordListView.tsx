@@ -206,103 +206,105 @@ export const WordListView: React.FC<Props> = ({
 
       handleCloseModal();
       setActiveFilter('custom');
+    } catch (err) {
+      console.error('Error saving word:', err);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-4 pb-24">
+    <div className="space-y-4 pb-24 select-none text-black">
       {/* Top Header & Add Button */}
       <div className="flex items-center justify-between pt-1">
         <div>
-          <h2 className="text-xl font-black text-white">Kelime Kütüphanesi</h2>
-          <p className="text-xs text-slate-400">
-            {allWords.length} kelime kayıtlı
+          <h2 className="text-xl font-black text-black uppercase tracking-tight">KELİME KÜTÜPHANESİ</h2>
+          <p className="text-xs font-bold text-zinc-700">
+            <span className="bg-[#FFE600] border border-black px-1.5 py-0.2 font-black">{allWords.length}</span> KELİME KAYITLI
           </p>
         </div>
 
         <button
           onClick={handleOpenAddModal}
-          className="flex items-center space-x-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
+          className="flex items-center space-x-1.5 px-3.5 py-2 bg-black text-[#FFE600] hover:bg-zinc-800 active:translate-x-[1px] active:translate-y-[1px] font-black text-xs uppercase border-2 border-black shadow-[2px_2px_0px_0px_#FFE600] active:shadow-none transition-all"
         >
-          <Plus size={16} />
-          <span>Kelime Ekle</span>
+          <Plus size={16} strokeWidth={3} />
+          <span>KELİME EKLE</span>
         </button>
       </div>
 
       {/* Search Input */}
       <div className="relative">
-        <Search size={18} className="absolute left-3.5 top-3 text-slate-500" />
+        <Search size={18} strokeWidth={3} className="absolute left-3.5 top-3.5 text-black" />
         <input
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="İngilizce veya Türkçe kelime ara..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500"
+          className="w-full pl-10 pr-4 py-2.5 bg-white border-[3px] border-black text-black placeholder-zinc-500 font-bold text-sm shadow-[3px_3px_0px_0px_#000] focus:outline-none focus:bg-[#FFFBEB]"
         />
         {searchTerm && (
           <button
             onClick={() => setSearchTerm('')}
-            className="absolute right-3 top-3 text-slate-400 hover:text-white"
+            className="absolute right-3.5 top-3.5 text-black font-black"
           >
-            <X size={16} />
+            <X size={16} strokeWidth={3} />
           </button>
         )}
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex space-x-2 overflow-x-auto pb-1 text-xs font-semibold no-scrollbar">
+      <div className="flex space-x-2 overflow-x-auto pb-1 text-xs font-black no-scrollbar">
         <button
           onClick={() => setActiveFilter('custom')}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl shrink-0 transition-all ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 shrink-0 border-2 border-black uppercase transition-all ${
             activeFilter === 'custom'
-              ? 'bg-purple-600 text-white shadow-sm'
-              : 'bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-850'
+              ? 'bg-[#C084FC] text-black shadow-[2px_2px_0px_0px_#000] -translate-y-0.5'
+              : 'bg-white text-zinc-800 hover:bg-[#F3E8FF]'
           }`}
         >
-          <Sparkles size={14} />
-          <span>Özel Kelimelerim</span>
+          <Sparkles size={14} strokeWidth={2.5} />
+          <span>ÖZEL KELİMELERİM</span>
         </button>
         <button
           onClick={() => setActiveFilter('mastered')}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl shrink-0 transition-all ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 shrink-0 border-2 border-black uppercase transition-all ${
             activeFilter === 'mastered'
-              ? 'bg-emerald-600 text-white shadow-sm'
-              : 'bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-850'
+              ? 'bg-[#4ADE80] text-black shadow-[2px_2px_0px_0px_#000] -translate-y-0.5'
+              : 'bg-white text-zinc-800 hover:bg-[#DCFCE7]'
           }`}
         >
-          <CheckCircle size={14} />
-          <span>Öğrenilenler</span>
+          <CheckCircle size={14} strokeWidth={2.5} />
+          <span>ÖĞRENİLENLER</span>
         </button>
         <button
           onClick={() => setActiveFilter('learning')}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl shrink-0 transition-all ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 shrink-0 border-2 border-black uppercase transition-all ${
             activeFilter === 'learning'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-850'
+              ? 'bg-[#00F0FF] text-black shadow-[2px_2px_0px_0px_#000] -translate-y-0.5'
+              : 'bg-white text-zinc-800 hover:bg-[#E0F2FE]'
           }`}
         >
-          <RotateCcw size={14} />
-          <span>Tekrardakiler</span>
+          <RotateCcw size={14} strokeWidth={2.5} />
+          <span>TEKRARDAKİLER</span>
         </button>
         <button
           onClick={() => setActiveFilter('all')}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl shrink-0 transition-all ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 shrink-0 border-2 border-black uppercase transition-all ${
             activeFilter === 'all'
-              ? 'bg-slate-800 text-white border border-slate-700'
-              : 'bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-850'
+              ? 'bg-[#FFE600] text-black shadow-[2px_2px_0px_0px_#000] -translate-y-0.5'
+              : 'bg-white text-zinc-800 hover:bg-[#FEF9C3]'
           }`}
         >
-          <span>Tümü</span>
+          <span>TÜMÜ</span>
         </button>
       </div>
 
       {/* Word Cards List */}
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         {filteredWords.length === 0 ? (
-          <div className="text-center py-12 text-slate-500 text-sm">
-            Eşleşen kelime bulunamadı.
+          <div className="text-center py-12 bg-white border-2 border-black shadow-[3px_3px_0px_0px_#000] font-black text-sm uppercase">
+            EŞLEŞEN KELİME BULUNAMADI.
           </div>
         ) : (
           filteredWords.map((w) => {
@@ -313,15 +315,15 @@ export const WordListView: React.FC<Props> = ({
             return (
               <div
                 key={w.id}
-                className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-2 hover:border-slate-700 shadow-sm transition-all"
+                className="bg-white border-[3px] border-black p-4 flex flex-col space-y-2 shadow-[4px_4px_0px_0px_#000] text-black"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-2">
-                    <span className="text-lg font-black text-white">{w.en}</span>
-                    <AudioButton text={w.en} size={18} />
+                    <span className="text-xl font-black text-black uppercase tracking-tight">{w.en}</span>
+                    <AudioButton text={w.en} size={17} />
                     {isCustom && (
-                      <span className="px-1.5 py-0.5 rounded-md bg-purple-500/20 text-purple-300 text-[10px] font-bold">
-                        Özel
+                      <span className="px-1.5 py-0.5 bg-[#C084FC] text-black border border-black text-[10px] font-black uppercase shadow-[1px_1px_0px_0px_#000]">
+                        ÖZEL
                       </span>
                     )}
                   </div>
@@ -333,19 +335,19 @@ export const WordListView: React.FC<Props> = ({
                         {onUpdateCustomWord && (
                           <button
                             onClick={() => handleOpenEditModal(w)}
-                            className="p-1 rounded-lg text-slate-400 hover:text-indigo-300 hover:bg-indigo-500/10 active:scale-95 transition-all"
+                            className="p-1.5 bg-white border border-black hover:bg-[#FFE600] text-black active:scale-95 shadow-[1px_1px_0px_0px_#000]"
                             title="Kelimeyi düzenle"
                           >
-                            <Edit2 size={13} />
+                            <Edit2 size={13} strokeWidth={2.5} />
                           </button>
                         )}
                         {onDeleteCustomWord && (
                           <button
                             onClick={() => onDeleteCustomWord(w.id)}
-                            className="p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 active:scale-95 transition-all"
+                            className="p-1.5 bg-white border border-black hover:bg-[#FF5588] text-black active:scale-95 shadow-[1px_1px_0px_0px_#000]"
                             title="Özel kelimeyi sil"
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={13} strokeWidth={2.5} />
                           </button>
                         )}
                       </div>
@@ -355,40 +357,40 @@ export const WordListView: React.FC<Props> = ({
                     {isMastered ? (
                       <button
                         onClick={() => onRestoreMasteredWord(w.id)}
-                        className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-xs font-semibold border border-emerald-500/30 active:scale-95 transition-all"
+                        className="flex items-center space-x-1 px-2.5 py-1 bg-[#4ADE80] text-black text-xs font-black border-2 border-black shadow-[1.5px_1.5px_0px_0px_#000] active:translate-x-[1px] active:translate-y-[1px] uppercase"
                         title="Tekrar havuzuna geri al"
                       >
-                        <RotateCcw size={12} />
-                        <span>Tekrara Al</span>
+                        <RotateCcw size={12} strokeWidth={3} />
+                        <span>TEKRARA AL</span>
                       </button>
                     ) : prog?.status === 'learning' ? (
-                      <span className="text-[11px] font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
-                        Adım {prog.step + 1}/6
+                      <span className="text-[11px] font-black text-black bg-[#00F0FF] px-2 py-0.5 border border-black uppercase shadow-[1px_1px_0px_0px_#000]">
+                        ADIM {prog.step + 1}/6
                       </span>
                     ) : (
-                      <span className="text-[11px] text-slate-500 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-850">
-                        Yeni
+                      <span className="text-[11px] font-black text-black bg-zinc-200 px-2 py-0.5 border border-black uppercase">
+                        YENİ
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="text-sm font-semibold text-emerald-400">
+                <div className="text-base font-black text-black uppercase">
                   {w.tr}
                 </div>
 
                 {w.ipa && (
-                  <div className="text-xs font-mono text-slate-400">
+                  <div className="text-xs font-mono font-bold text-zinc-700">
                     {w.ipa}
                   </div>
                 )}
 
                 {w.examples && w.examples.length > 0 && (
-                  <div className="pt-1 text-xs text-slate-300 bg-slate-950 p-2.5 rounded-xl border border-slate-850">
-                    <p className="italic">
+                  <div className="pt-1 text-xs text-black bg-[#FDFBF7] p-2.5 border-2 border-black shadow-[2px_2px_0px_0px_#000]">
+                    <p className="font-bold">
                       <HighlightedText text={w.examples[0].en} />
                     </p>
-                    <p className="text-slate-400 text-[11px] mt-0.5">
+                    <p className="text-zinc-700 text-[11px] font-semibold mt-0.5">
                       {w.examples[0].tr}
                     </p>
                   </div>
@@ -401,43 +403,43 @@ export const WordListView: React.FC<Props> = ({
 
       {/* Add Custom Word Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl animate-scaleUp">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                <Sparkles size={18} className="text-purple-400" />
-                <span>{editingWord ? 'Kelimeyi Düzenle' : 'Kendi Kelimeni Ekle'}</span>
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white border-4 border-black w-full max-w-md p-6 space-y-4 shadow-[8px_8px_0px_0px_#000] animate-scaleUp text-black">
+            <div className="flex items-center justify-between pb-2 border-b-2 border-black">
+              <h3 className="text-lg font-black text-black uppercase flex items-center space-x-2 tracking-tight">
+                <Sparkles size={18} strokeWidth={3} className="text-black" />
+                <span>{editingWord ? 'KELİMEYİ DÜZENLE' : 'KENDİ KELİMENİ EKLE'}</span>
               </h3>
               <button
                 onClick={handleCloseModal}
-                className="text-slate-400 hover:text-white"
+                className="w-7 h-7 bg-white border border-black flex items-center justify-center text-black hover:bg-[#FF5588]"
               >
-                <X size={20} />
+                <X size={18} strokeWidth={3} />
               </button>
             </div>
 
             <form onSubmit={handleSaveWord} className="space-y-3.5 text-sm">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-slate-300">
-                    İngilizce Kelime *
+                  <label className="block text-xs font-black text-black uppercase">
+                    İNGİLİZCE KELİME *
                   </label>
                   <button
                     type="button"
                     onClick={() => performLookup(newEn, true)}
                     disabled={isSearchingDict || !newEn.trim()}
-                    className="flex items-center space-x-1 text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 disabled:opacity-40 disabled:hover:text-indigo-400 transition-colors"
+                    className="flex items-center space-x-1 text-[11px] font-black uppercase text-black bg-[#FFE600] border border-black px-2 py-0.5 shadow-[1px_1px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-40"
                     title="Sözlükten çeviri, telaffuz ve örnek cümleyi otomatik çek"
                   >
                     {isSearchingDict ? (
                       <>
-                        <Loader2 size={12} className="animate-spin text-indigo-400" />
-                        <span>Aranıyor...</span>
+                        <Loader2 size={12} className="animate-spin text-black" />
+                        <span>ARANIYOR...</span>
                       </>
                     ) : (
                       <>
-                        <Wand2 size={12} />
-                        <span>Sözlükten Getir</span>
+                        <Wand2 size={12} strokeWidth={2.5} />
+                        <span>SÖZLÜKTEN GETİR</span>
                       </>
                     )}
                   </button>
@@ -455,7 +457,7 @@ export const WordListView: React.FC<Props> = ({
                       }
                     }}
                     placeholder="örn: resilient"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-white border-2 border-black text-black placeholder-zinc-500 font-bold focus:outline-none focus:bg-[#FFFBEB] shadow-[2px_2px_0px_0px_#000]"
                   />
                 </div>
 
@@ -463,17 +465,17 @@ export const WordListView: React.FC<Props> = ({
                 {dictStatus && (
                   <div className="mt-1.5">
                     {dictStatus.source === 'local' ? (
-                      <div className="flex items-center space-x-1.5 text-[11px] text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-                        <CheckCircle size={13} className="shrink-0" />
+                      <div className="flex items-center space-x-1.5 text-[11px] font-black text-black bg-[#BBF7D0] px-2.5 py-1 border border-black uppercase">
+                        <CheckCircle size={13} strokeWidth={3} className="shrink-0" />
                         <span>{dictStatus.text}</span>
                       </div>
                     ) : dictStatus.source === 'online' ? (
-                      <div className="flex items-center space-x-1.5 text-[11px] text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded-lg border border-sky-500/20">
-                        <BookOpen size={13} className="shrink-0" />
+                      <div className="flex items-center space-x-1.5 text-[11px] font-black text-black bg-[#BAE6FD] px-2.5 py-1 border border-black uppercase">
+                        <BookOpen size={13} strokeWidth={3} className="shrink-0" />
                         <span>{dictStatus.text}</span>
                       </div>
                     ) : (
-                      <div className="text-[11px] text-amber-400/90 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
+                      <div className="text-[11px] font-black text-black bg-[#FEF08A] px-2.5 py-1 border border-black uppercase">
                         {dictStatus.text}
                       </div>
                     )}
@@ -482,8 +484,8 @@ export const WordListView: React.FC<Props> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Türkçe Anlamı *
+                <label className="block text-xs font-black text-black uppercase mb-1">
+                  TÜRKÇE ANLAMI *
                 </label>
                 <input
                   type="text"
@@ -491,46 +493,46 @@ export const WordListView: React.FC<Props> = ({
                   value={newTr}
                   onChange={(e) => setNewTr(e.target.value)}
                   placeholder="örn: dirençli, dayanıklı"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3.5 py-2.5 bg-white border-2 border-black text-black font-bold focus:outline-none focus:bg-[#FFFBEB] shadow-[2px_2px_0px_0px_#000]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 mb-1">
-                  Telaffuz / IPA (Opsiyonel)
+                <label className="block text-xs font-black text-black uppercase mb-1">
+                  TELAFFUZ / IPA (OPSİYONEL)
                 </label>
                 <input
                   type="text"
                   value={newIpa}
                   onChange={(e) => setNewIpa(e.target.value)}
                   placeholder="örn: [rɪˈzɪliənt]"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3.5 py-2.5 bg-white border-2 border-black text-black font-bold focus:outline-none focus:bg-[#FFFBEB] shadow-[2px_2px_0px_0px_#000]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 mb-1">
-                  Örnek Cümle (İngilizce - Opsiyonel, kelimeyi #kelime# ile sarın)
+                <label className="block text-xs font-black text-black uppercase mb-1">
+                  ÖRNEK CÜMLE (İNGİLİZCE - #kelime# ile sarın)
                 </label>
                 <input
                   type="text"
                   value={newExampleEn}
                   onChange={(e) => setNewExampleEn(e.target.value)}
                   placeholder="örn: She is very #resilient#."
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3.5 py-2.5 bg-white border-2 border-black text-black font-bold focus:outline-none focus:bg-[#FFFBEB] shadow-[2px_2px_0px_0px_#000]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 mb-1">
-                  Örnek Cümle (Türkçe Çevirisi - Opsiyonel)
+                <label className="block text-xs font-black text-black uppercase mb-1">
+                  ÖRNEK CÜMLE ÇEVİRİSİ (TÜRKÇE)
                 </label>
                 <input
                   type="text"
                   value={newExampleTr}
                   onChange={(e) => setNewExampleTr(e.target.value)}
                   placeholder="örn: O çok dirençlidir."
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3.5 py-2.5 bg-white border-2 border-black text-black font-bold focus:outline-none focus:bg-[#FFFBEB] shadow-[2px_2px_0px_0px_#000]"
                 />
               </div>
 
@@ -538,16 +540,16 @@ export const WordListView: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold"
+                  className="flex-1 py-2.5 bg-white text-black border-2 border-black font-black uppercase text-xs shadow-[2px_2px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5"
                 >
-                  İptal
+                  İPTAL
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold shadow-lg"
+                  className="flex-1 py-2.5 bg-black text-[#FFE600] border-2 border-black font-black uppercase text-xs shadow-[3px_3px_0px_0px_#FFE600] active:translate-x-0.5 active:translate-y-0.5"
                 >
-                  {isSubmitting ? 'Kaydediliyor...' : editingWord ? 'Güncelle' : 'Kaydet'}
+                  {isSubmitting ? 'KAYDEDİLİYOR...' : editingWord ? 'GÜNCELLE' : 'KAYDET'}
                 </button>
               </div>
             </form>

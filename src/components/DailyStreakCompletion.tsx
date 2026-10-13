@@ -34,20 +34,19 @@ export const DailyStreakCompletion: React.FC<Props> = ({
   const itemsPerPage = 4;
   const totalPages = Math.ceil(STREAK_BADGES.length / itemsPerPage);
 
-  // Calculate 7-day week dates starting from Sunday (Pz) to Saturday (Cts)
   const currentMidday = parseDate(todayStr);
-  const dayOfWeek = currentMidday.getDay(); // 0 is Sunday
+  const dayOfWeek = currentMidday.getDay();
   const sundayDate = new Date(currentMidday.getTime());
   sundayDate.setDate(sundayDate.getDate() - dayOfWeek);
 
   const weekDays = [
-    { label: 'Pz', full: 'Pazar' },
-    { label: 'Pzt', full: 'Pazartesi' },
+    { label: 'PZ', full: 'Pazar' },
+    { label: 'PZT', full: 'Pazartesi' },
     { label: 'S', full: 'Salı' },
-    { label: 'Ça', full: 'Çarşamba' },
-    { label: 'Pr', full: 'Perşembe' },
-    { label: 'Cu', full: 'Cuma' },
-    { label: 'Cts', full: 'Cumartesi' }
+    { label: 'ÇA', full: 'Çarşamba' },
+    { label: 'PR', full: 'Perşembe' },
+    { label: 'CU', full: 'Cuma' },
+    { label: 'CTS', full: 'Cumartesi' }
   ];
 
   const weekInfo = weekDays.map((day, idx) => {
@@ -59,11 +58,8 @@ export const DailyStreakCompletion: React.FC<Props> = ({
     const isPast = dateStr <= todayStr;
     const isFrozen = (profile.frozenDates || []).includes(dateStr);
 
-    // Active log for this day
     const log = dailyLogs.find(l => l.date === dateStr);
     const hasActivity = (log && (log.correctCount > 0 || log.newLearnedCount > 0 || log.reviewsDone > 0)) || isToday;
-
-    // Completed if has activity or was frozen
     const isCompleted = isPast && (hasActivity || isFrozen);
 
     return {
@@ -90,63 +86,65 @@ export const DailyStreakCompletion: React.FC<Props> = ({
   }, []);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-5 shadow-sm text-slate-100 max-w-md mx-auto animate-scaleUp relative">
+    <div className="bg-white border-4 border-black p-5 sm:p-6 space-y-5 shadow-[8px_8px_0px_0px_#000] text-black max-w-md mx-auto animate-scaleUp relative select-none">
       {/* Top Close Button */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+        className="absolute top-4 right-4 w-8 h-8 bg-black text-white border-2 border-black flex items-center justify-center hover:bg-zinc-800 transition-colors shadow-[2px_2px_0px_0px_#FFE600] active:translate-x-0.5 active:translate-y-0.5"
         title="Kapat"
       >
-        <X size={18} />
+        <X size={18} strokeWidth={3} />
       </button>
 
       {/* 1. Header: Streak Counter */}
-      <div className="pt-2 text-center space-y-1">
-        <h2 className="text-2xl sm:text-3xl font-black text-white flex items-center justify-center space-x-2">
-          <span>{profile.streak} günlük seri</span>
-          <span className="text-amber-500 inline-block animate-bounce">🔥</span>
-        </h2>
-        <p className="text-xs text-slate-400">
-          Tebrikler! Bugünkü çalışmanı başarıyla tamamladın.
+      <div className="pt-2 text-center space-y-1.5">
+        <div className="inline-block bg-[#FFE600] border-2 border-black px-4 py-1.5 shadow-[3px_3px_0px_0px_#000] rotate-[-1deg]">
+          <h2 className="text-2xl sm:text-3xl font-black text-black flex items-center justify-center space-x-2 uppercase tracking-tight">
+            <span>{profile.streak} GÜNLÜK SERİ!</span>
+            <span className="text-xl">🔥</span>
+          </h2>
+        </div>
+        <p className="text-xs font-bold text-zinc-800 uppercase tracking-wide">
+          TEBRİKLER! BUGÜNKÜ GÖREVİNİ BAŞARIYLA TAMAMLADIN.
         </p>
       </div>
 
       {/* 2. Weekly Calendar Timeline */}
-      <div className="relative py-2 px-1">
+      <div className="relative py-2 px-1 bg-[#FDFBF7] border-2 border-black p-3 shadow-[3px_3px_0px_0px_#000]">
         {/* Background Connecting Line */}
-        <div className="absolute top-[34px] left-6 right-6 h-1 bg-slate-800 -z-0" />
+        <div className="absolute top-[40px] left-6 right-6 h-1 bg-black -z-0" />
 
         {/* Days Row */}
         <div className="grid grid-cols-7 gap-1 text-center relative z-10">
           {weekInfo.map((item, idx) => {
-            const isMilestone = idx === 5; // Friday / 5th day gift highlight
+            const isMilestone = idx === 5;
 
             return (
               <div key={item.dateStr} className="flex flex-col items-center space-y-1.5">
-                <span className={`text-[11px] font-bold ${item.isToday ? 'text-amber-400 font-black' : 'text-slate-400'}`}>
+                <span className={`text-[10px] font-black ${item.isToday ? 'text-black bg-[#FFE600] border border-black px-1' : 'text-zinc-600'}`}>
                   {item.label}
                 </span>
 
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                  className={`w-8 h-8 border-2 border-black flex items-center justify-center transition-all ${
                     item.isFrozen
-                      ? 'bg-sky-400 text-slate-950 shadow-md shadow-sky-400/50 ring-2 ring-sky-300'
+                      ? 'bg-[#00F0FF] text-black shadow-[2px_2px_0px_0px_#000]'
                       : item.isCompleted
-                      ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/40 ring-2 ring-amber-300 font-black'
+                      ? 'bg-[#FFE600] text-black shadow-[2px_2px_0px_0px_#000] font-black'
                       : item.isToday
-                      ? 'bg-amber-500/20 text-amber-300 border-2 border-amber-400 animate-pulse'
-                      : 'bg-slate-800 border border-slate-700/80 text-slate-600'
+                      ? 'bg-white text-black border-dashed'
+                      : 'bg-zinc-200 text-zinc-400'
                   }`}
                   title={`${item.full} - ${item.dateStr}`}
                 >
                   {item.isFrozen ? (
                     <span className="text-xs font-black">🧊</span>
                   ) : item.isCompleted ? (
-                    <Check size={16} strokeWidth={3} />
+                    <Check size={16} strokeWidth={3.5} />
                   ) : isMilestone ? (
-                    <Gift size={14} className="text-amber-400/60" />
+                    <Gift size={14} strokeWidth={2.5} className="text-black" />
                   ) : (
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-600" />
+                    <span className="w-1.5 h-1.5 bg-zinc-400" />
                   )}
                 </div>
               </div>
@@ -157,29 +155,28 @@ export const DailyStreakCompletion: React.FC<Props> = ({
 
       {/* 3. Freeze Award / Milestone Announcement Card */}
       {earnedFreeze ? (
-        <div className="bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-rose-500/20 border-2 border-amber-400/60 rounded-2xl p-4 shadow-lg flex items-center space-x-3.5 animate-pulseGlow">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-slate-950 shrink-0 shadow-md">
-            <Gift size={24} className="fill-slate-950" />
+        <div className="bg-[#BBF7D0] border-3 border-black p-3.5 shadow-[4px_4px_0px_0px_#000] flex items-center space-x-3.5">
+          <div className="w-11 h-11 bg-black border-2 border-black flex items-center justify-center text-[#FFE600] shrink-0 shadow-[2px_2px_0px_0px_#FFE600]">
+            <Gift size={22} strokeWidth={2.5} />
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-black text-amber-300">Tebrikler! 5 Günlük Seri</h4>
-            <p className="text-xs text-slate-200 mt-0.5">
+            <h4 className="text-xs font-black text-black uppercase tracking-tight">ÖDÜL: 5 GÜNLÜK SERİ KAZANDIN!</h4>
+            <p className="text-[11px] font-bold text-zinc-900 mt-0.5">
               5 gün aralıksız çalıştın ve <strong>+1 Seri Dondurma</strong> hakkı kazandın!
             </p>
           </div>
         </div>
       ) : (
-        <div className="bg-slate-800/60 border border-slate-700/70 rounded-2xl p-3.5 flex items-center justify-between">
+        <div className="bg-[#BAE6FD] border-2 border-black p-3 flex items-center justify-between shadow-[3px_3px_0px_0px_#000]">
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-400 text-base">
+            <div className="w-8 h-8 bg-white border-2 border-black flex items-center justify-center text-sm shadow-[1.5px_1.5px_0px_0px_#000]">
               🧊
             </div>
             <div>
-              <h4 className="text-xs font-bold text-white flex items-center space-x-1.5">
-                <span>{streakFreezes} Seri Dondurma Hakkı</span>
-                <span className="text-[10px] text-slate-400 font-normal">({streakFreezes}/2)</span>
+              <h4 className="text-xs font-black text-black uppercase">
+                {streakFreezes} SERİ DONDURMA HAKKI ({streakFreezes}/2)
               </h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="text-[10px] font-bold text-zinc-800 mt-0.5">
                 {streakFreezes >= 2
                   ? 'Maksimum dondurma hakkı dolu (2/2)!'
                   : `${daysUntilNextFreeze} gün sonra yeni dondurma hakkı kazanırsın.`}
@@ -189,24 +186,24 @@ export const DailyStreakCompletion: React.FC<Props> = ({
         </div>
       )}
 
-      {/* 4. Rozetler / Badges Carousel (Matching screenshot) */}
-      <div className="space-y-2 pt-1 border-t border-slate-800">
+      {/* 4. Rozetler / Badges Carousel */}
+      <div className="space-y-2 pt-1 border-t-2 border-black">
         <div className="flex items-center justify-between text-xs px-1">
-          <span className="font-bold text-white text-sm">Rozetler</span>
+          <span className="font-black text-black text-xs uppercase tracking-wider">SERİ ROZETLERİ</span>
           <div className="flex items-center space-x-1">
             <button
               onClick={() => setBadgePage(prev => Math.max(0, prev - 1))}
               disabled={badgePage === 0}
-              className="p-1 rounded-lg text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="w-6 h-6 bg-white border border-black flex items-center justify-center text-black hover:bg-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={14} strokeWidth={3} />
             </button>
             <button
               onClick={() => setBadgePage(prev => Math.min(totalPages - 1, prev + 1))}
               disabled={badgePage >= totalPages - 1}
-              className="p-1 rounded-lg text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="w-6 h-6 bg-white border border-black flex items-center justify-center text-black hover:bg-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={14} strokeWidth={3} />
             </button>
           </div>
         </div>
@@ -219,16 +216,16 @@ export const DailyStreakCompletion: React.FC<Props> = ({
             return (
               <div
                 key={badge.days}
-                className={`p-2 rounded-2xl border text-center transition-all flex flex-col items-center justify-between ${
+                className={`p-2 border-2 border-black text-center transition-all flex flex-col items-center justify-between ${
                   isUnlocked
-                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
-                    : 'bg-slate-800/40 border-slate-800 text-slate-500 opacity-60'
+                    ? 'bg-[#FEF08A] text-black shadow-[2px_2px_0px_0px_#000]'
+                    : 'bg-zinc-200 text-zinc-400 opacity-60'
                 }`}
               >
-                <span className="text-2xl my-1">{badge.icon}</span>
+                <span className="text-xl my-1">{badge.icon}</span>
                 <div className="space-y-0.5">
-                  <span className="block text-xs font-black text-white">{badge.days} gün</span>
-                  <span className="block text-[10px] text-slate-400 truncate max-w-[65px]">
+                  <span className="block text-xs font-black text-black">{badge.days} GÜN</span>
+                  <span className="block text-[9px] font-black uppercase text-zinc-800 truncate max-w-[65px]">
                     {badge.title}
                   </span>
                 </div>
@@ -236,28 +233,15 @@ export const DailyStreakCompletion: React.FC<Props> = ({
             );
           })}
         </div>
-
-        {/* Dots indicator */}
-        <div className="flex items-center justify-center space-x-1.5 pt-1">
-          {Array.from({ length: totalPages }).map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setBadgePage(idx)}
-              className={`w-1.5 h-1.5 rounded-full transition-all ${
-                badgePage === idx ? 'w-4 bg-amber-400' : 'bg-slate-700'
-              }`}
-            />
-          ))}
-        </div>
       </div>
 
       {/* 5. Action Button */}
       <div className="pt-2">
         <button
           onClick={onClose}
-          className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-slate-950 font-bold text-sm rounded-2xl shadow-sm transition-all flex items-center justify-center space-x-2"
+          className="w-full py-3.5 bg-black text-[#FFE600] hover:bg-zinc-900 active:translate-x-[2px] active:translate-y-[2px] font-black uppercase tracking-wider text-sm border-2 border-black shadow-[4px_4px_0px_0px_#FFE600] active:shadow-none transition-all flex items-center justify-center space-x-2"
         >
-          <span>Devam Et</span>
+          <span>DEVAM ET</span>
         </button>
       </div>
     </div>

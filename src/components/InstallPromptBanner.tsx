@@ -57,31 +57,31 @@ export const InstallPromptBanner: React.FC = () => {
   }
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 mb-3 shadow-sm flex items-center justify-between text-xs animate-fadeIn select-none">
+    <div className="bg-[#00F0FF] border-[3px] border-black p-3 mb-3.5 shadow-[4px_4px_0px_0px_#000] flex items-center justify-between text-xs animate-fadeIn select-none text-black">
       <div className="flex items-center space-x-2.5 min-w-0 pr-2">
-        <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
-          <Smartphone size={16} />
+        <div className="w-8 h-8 bg-white border-2 border-black flex items-center justify-center text-black shrink-0 shadow-[2px_2px_0px_0px_#000]">
+          <Smartphone size={16} strokeWidth={2.5} />
         </div>
         <div className="truncate">
-          <span className="font-bold text-white block truncate">Uygulamayı Yükle</span>
-          <span className="text-[11px] text-slate-400 block truncate">Tam ekran hızlı mobil deneyim</span>
+          <span className="font-black text-black block truncate text-xs uppercase tracking-tight">UYGULAMAYI YÜKLE</span>
+          <span className="text-[11px] font-bold text-zinc-900 block truncate">Tam ekran kesintisiz mobil deneyim</span>
         </div>
       </div>
 
-      <div className="flex items-center space-x-1.5 shrink-0">
+      <div className="flex items-center space-x-2 shrink-0">
         <button
           onClick={handleInstallClick}
-          className="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-[11px] font-bold rounded-lg flex items-center space-x-1.5 shadow-sm transition-all"
+          className="py-1 px-3 bg-black text-white hover:bg-zinc-800 font-black text-xs border-2 border-black flex items-center space-x-1.5 shadow-[2px_2px_0px_0px_#FFE600] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all uppercase"
         >
-          <Download size={13} />
-          <span>Yükle</span>
+          <Download size={13} strokeWidth={3} />
+          <span>YÜKLE</span>
         </button>
         <button
           onClick={handleDismiss}
-          className="p-1.5 text-slate-400 hover:text-slate-200 rounded-lg transition-colors"
+          className="w-6 h-6 bg-white border border-black flex items-center justify-center text-black hover:bg-zinc-100"
           title="Kapat"
         >
-          <X size={15} />
+          <X size={14} strokeWidth={3} />
         </button>
       </div>
     </div>

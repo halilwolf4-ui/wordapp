@@ -140,37 +140,37 @@ export const StatsView: React.FC<Props> = ({
   const unlockedCount = profile.unlockedBadges.length;
 
   return (
-    <div className="space-y-4 pb-24 pt-1 select-none">
+    <div className="space-y-4 pb-24 pt-1 select-none text-black">
       <div>
-        <h2 className="text-xl font-bold text-white">İstatistik ve Başarılar</h2>
-        <p className="text-xs text-slate-400">Öğrenme yolculuğunun detaylı grafikleri</p>
+        <h2 className="text-xl font-black text-black uppercase tracking-tight">İSTATİSTİK VE BAŞARILAR</h2>
+        <p className="text-xs font-bold text-zinc-700">Öğrenme yolculuğunun detaylı grafikleri</p>
       </div>
 
       {/* Level & XP Hero Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+      <div className="bg-white border-4 border-black p-5 shadow-[6px_6px_0px_0px_#000] space-y-3.5 text-black">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">
-              Seviye {profile.level}
+            <span className="bg-[#FFE600] border-2 border-black px-2 py-0.5 text-xs font-black uppercase tracking-wider text-black shadow-[1.5px_1.5px_0px_0px_#000]">
+              SEVİYE {profile.level}
             </span>
-            <h3 className="text-2xl font-extrabold text-white">
+            <h3 className="text-3xl font-black text-black mt-1 uppercase tracking-tight">
               {profile.xp.toLocaleString()} XP
             </h3>
           </div>
-          <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-2xl border border-indigo-500/20">
-            <Award size={30} />
+          <div className="w-12 h-12 bg-[#00F0FF] border-2 border-black flex items-center justify-center text-black shadow-[3px_3px_0px_0px_#000]">
+            <Award size={28} strokeWidth={2.5} />
           </div>
         </div>
 
         {/* Progress to next level */}
         <div className="space-y-1.5">
-          <div className="flex justify-between text-xs text-slate-300 font-medium">
-            <span>Seviye {profile.level + 1} için</span>
-            <span>{currentLvlProgress} / {currentLvlNeeded} XP (%{lvlPercent})</span>
+          <div className="flex justify-between text-xs text-black font-black">
+            <span>SEVİYE {profile.level + 1} İÇİN</span>
+            <span className="font-mono">{currentLvlProgress} / {currentLvlNeeded} XP (%{lvlPercent})</span>
           </div>
-          <div className="h-2 bg-slate-950 rounded-full overflow-hidden">
+          <div className="h-3.5 bg-zinc-100 border-2 border-black overflow-hidden shadow-[2px_2px_0px_0px_#000]">
             <div
-              className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+              className="h-full bg-black transition-all duration-500"
               style={{ width: `${lvlPercent}%` }}
             />
           </div>
@@ -179,78 +179,80 @@ export const StatsView: React.FC<Props> = ({
 
       {/* Quick Summary Grid */}
       <div className="grid grid-cols-3 gap-2.5">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-center shadow-sm">
-          <Flame size={20} className="text-amber-500 mx-auto mb-1 fill-amber-500" />
-          <span className="text-lg font-bold text-white">{profile.streak} gün</span>
-          <p className="text-[11px] text-slate-400">Aktif Seri</p>
+        <div className="bg-[#FF69B4] border-[3px] border-black p-3 text-center shadow-[4px_4px_0px_0px_#000] text-black">
+          <Flame size={20} className="text-[#FF5722] fill-[#FF5722] mx-auto mb-1" />
+          <span className="text-base sm:text-lg font-black block">{profile.streak} GÜN</span>
+          <p className="text-[10px] font-black uppercase tracking-wide">AKTİF SERİ</p>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-center shadow-sm">
-          <CheckCircle size={20} className="text-emerald-400 mx-auto mb-1" />
-          <span className="text-lg font-bold text-emerald-400">{totalMastered}</span>
-          <p className="text-[11px] text-slate-400">Öğrenildi</p>
+        <div className="bg-[#4ADE80] border-[3px] border-black p-3 text-center shadow-[4px_4px_0px_0px_#000] text-black">
+          <CheckCircle size={20} strokeWidth={2.5} className="text-black mx-auto mb-1" />
+          <span className="text-base sm:text-lg font-black block">{totalMastered}</span>
+          <p className="text-[10px] font-black uppercase tracking-wide">ÖĞRENİLDİ</p>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-center shadow-sm">
-          <BarChart3 size={20} className="text-indigo-400 mx-auto mb-1" />
-          <span className="text-lg font-bold text-indigo-400">{totalLearned}</span>
-          <p className="text-[11px] text-slate-400">Hafızada</p>
+        <div className="bg-[#00F0FF] border-[3px] border-black p-3 text-center shadow-[4px_4px_0px_0px_#000] text-black">
+          <BarChart3 size={20} strokeWidth={2.5} className="text-black mx-auto mb-1" />
+          <span className="text-base sm:text-lg font-black block">{totalLearned}</span>
+          <p className="text-[10px] font-black uppercase tracking-wide">HAFIZADA</p>
         </div>
       </div>
 
       {/* Streak Freeze Status Banner */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between text-xs shadow-sm">
+      <div className="bg-[#BAE6FD] border-[3px] border-black p-3.5 flex items-center justify-between text-xs shadow-[4px_4px_0px_0px_#000] text-black">
         <div className="flex items-center space-x-2.5">
-          <span className="text-lg">🧊</span>
+          <span className="text-xl">🧊</span>
           <div>
-            <span className="font-bold text-white block">Seri Dondurma: {profile.streakFreezes || 0} / 2</span>
-            <span className="text-[10px] text-slate-400">
+            <span className="font-black text-black block uppercase text-xs">
+              SERİ DONDURMA: {profile.streakFreezes || 0} / 2
+            </span>
+            <span className="text-[10px] font-bold text-zinc-800">
               {(profile.streakFreezes || 0) >= 2
                 ? 'Maksimum dondurma hakkı dolu (2/2).'
                 : `${5 - (profile.consecutiveCompletedDays || 0)} gün sonra yeni hak verilir.`}
             </span>
           </div>
         </div>
-        <span className="px-2.5 py-1 rounded-xl bg-slate-850 border border-slate-800 text-sky-400 font-bold text-[10px]">
-          {profile.consecutiveCompletedDays || 0}/5 Gün
+        <span className="px-2 py-1 bg-white border border-black text-black font-black text-[10px] shadow-[1px_1px_0px_0px_#000]">
+          {profile.consecutiveCompletedDays || 0}/5 GÜN
         </span>
       </div>
 
-      {/* Günlük İstatistik (Stacked 3-Color Bar Chart: Öğrenilen, Tekrar, Master) */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-3.5 shadow-sm">
+      {/* Günlük İstatistik (Stacked 3-Color Bar Chart) */}
+      <div className="bg-white border-4 border-black p-5 space-y-3.5 shadow-[6px_6px_0px_0px_#000] text-black">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-bold text-white flex items-center space-x-2">
-            <BarChart3 size={17} className="text-emerald-400" />
-            <span>Günlük İstatistik</span>
+          <h4 className="text-sm font-black text-black uppercase flex items-center space-x-2 tracking-tight">
+            <BarChart3 size={17} strokeWidth={2.5} className="text-black" />
+            <span>GÜNLÜK İSTATİSTİK</span>
           </h4>
-          <span className="text-[11px] text-slate-400 font-medium">Son 14 Gün</span>
+          <span className="text-[11px] font-black bg-[#FFE600] border border-black px-1.5 py-0.5">SON 14 GÜN</span>
         </div>
 
         {/* Legend & Inspector Header */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5 border-b border-slate-800/80 pb-3 text-xs">
-          <div className="flex items-center space-x-3 text-[11px] font-medium text-slate-300">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5 border-b-2 border-black pb-3 text-xs">
+          <div className="flex items-center space-x-3 text-[11px] font-black text-black uppercase">
             <span className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block shadow-sm shadow-emerald-500/50" />
+              <span className="w-2.5 h-2.5 bg-[#4ADE80] border border-black inline-block" />
               <span>Öğrenilen</span>
             </span>
             <span className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block shadow-sm shadow-sky-500/50" />
+              <span className="w-2.5 h-2.5 bg-[#00F0FF] border border-black inline-block" />
               <span>Tekrar</span>
             </span>
             <span className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block shadow-sm shadow-purple-500/50" />
+              <span className="w-2.5 h-2.5 bg-[#C084FC] border border-black inline-block" />
               <span>Master</span>
             </span>
           </div>
 
           {/* Selected day summary pills */}
-          <div className="text-[11px] font-mono text-slate-300 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 flex items-center space-x-1.5">
-            <span className="text-slate-400">{selectedDay.date === today ? 'Bugün' : selectedDay.date}:</span>
-            <span className="text-emerald-400 font-bold">{selectedDay.learned}</span>
-            <span className="text-slate-600">/</span>
-            <span className="text-sky-400 font-bold">{selectedDay.reviewed}</span>
-            <span className="text-slate-600">/</span>
-            <span className="text-purple-400 font-bold">{selectedDay.mastered}</span>
+          <div className="text-[11px] font-mono font-black text-black bg-[#FDFBF7] px-2.5 py-1 border-2 border-black flex items-center space-x-1.5 shadow-[1.5px_1.5px_0px_0px_#000]">
+            <span>{selectedDay.date === today ? 'BUGÜN' : selectedDay.date}:</span>
+            <span className="bg-[#4ADE80] px-1 border border-black">{selectedDay.learned}</span>
+            <span>/</span>
+            <span className="bg-[#00F0FF] px-1 border border-black">{selectedDay.reviewed}</span>
+            <span>/</span>
+            <span className="bg-[#C084FC] px-1 border border-black">{selectedDay.mastered}</span>
           </div>
         </div>
 
@@ -269,48 +271,45 @@ export const StatsView: React.FC<Props> = ({
                 key={d.date}
                 onClick={() => setSelectedDayDate(d.date)}
                 className="flex-1 h-full flex flex-col justify-end items-center space-y-1.5 cursor-pointer group"
-                title={`${d.date} Toplam: ${d.total} (Öğrenilen: ${d.learned}, Tekrar: ${d.reviewed}, Master: ${d.mastered})`}
+                title={`${d.date} Toplam: ${d.total}`}
               >
                 {/* Stacked Vertical Bar */}
                 <div
-                  className={`w-full rounded-t-md overflow-hidden flex flex-col justify-end transition-all duration-300 ${
-                    isSelected ? 'ring-2 ring-indigo-400 ring-offset-1 ring-offset-slate-900' : 'group-hover:brightness-110'
+                  className={`w-full border-2 border-black overflow-hidden flex flex-col justify-end transition-all ${
+                    isSelected ? 'ring-2 ring-black scale-105 shadow-[2px_2px_0px_0px_#000]' : ''
                   }`}
                   style={{ height: `${barHeightPct}%` }}
                 >
                   {d.total > 0 ? (
                     <>
-                      {/* Master segment (Purple) - Top */}
                       {masteredPct > 0 && (
                         <div
-                          className="w-full bg-purple-500 transition-all duration-300"
+                          className="w-full bg-[#C084FC] border-b border-black"
                           style={{ height: `${masteredPct}%` }}
                         />
                       )}
-                      {/* Tekrar segment (Sky Blue) - Middle */}
                       {reviewedPct > 0 && (
                         <div
-                          className="w-full bg-sky-500 transition-all duration-300"
+                          className="w-full bg-[#00F0FF] border-b border-black"
                           style={{ height: `${reviewedPct}%` }}
                         />
                       )}
-                      {/* Öğrenilen segment (Emerald Green) - Bottom */}
                       {learnedPct > 0 && (
                         <div
-                          className="w-full bg-emerald-500 transition-all duration-300"
+                          className="w-full bg-[#4ADE80]"
                           style={{ height: `${learnedPct}%` }}
                         />
                       )}
                     </>
                   ) : (
-                    <div className="w-full h-1 bg-slate-800 rounded-full" />
+                    <div className="w-full h-1 bg-zinc-300" />
                   )}
                 </div>
 
                 {/* Day label */}
                 <span
-                  className={`text-[10px] font-mono leading-none transition-colors ${
-                    isSelected ? 'text-indigo-400 font-bold' : 'text-slate-500 group-hover:text-slate-300'
+                  className={`text-[10px] font-mono leading-none font-black ${
+                    isSelected ? 'text-black bg-[#FFE600] px-0.5 border border-black' : 'text-zinc-600'
                   }`}
                 >
                   {d.dayNum}
@@ -322,30 +321,30 @@ export const StatsView: React.FC<Props> = ({
       </div>
 
       {/* 30-Day Activity Heatmap */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-3 shadow-sm">
+      <div className="bg-white border-4 border-black p-5 space-y-3 shadow-[6px_6px_0px_0px_#000] text-black">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-bold text-white flex items-center space-x-2">
-            <Calendar size={16} className="text-indigo-400" />
-            <span>Son 30 Gün Takvim Isı Haritası</span>
+          <h4 className="text-sm font-black text-black uppercase flex items-center space-x-2 tracking-tight">
+            <Calendar size={16} strokeWidth={2.5} className="text-black" />
+            <span>30 GÜNLÜK ISI HARİTASI</span>
           </h4>
-          <span className="text-xs text-slate-400">30 gün</span>
+          <span className="text-xs font-black bg-[#FFE600] border border-black px-1.5 py-0.5">30 GÜN</span>
         </div>
 
         <div className="grid grid-cols-6 sm:grid-cols-10 gap-2 pt-2">
           {last30Days.map((day) => {
-            let bgClass = 'bg-slate-950 border-slate-850 text-slate-600';
-            if (day.count > 0 && day.count < 10) bgClass = 'bg-emerald-950/60 border-emerald-800/80 text-emerald-300';
-            else if (day.count >= 10 && day.count < 25) bgClass = 'bg-emerald-700 border-emerald-600 text-white font-bold';
-            else if (day.count >= 25) bgClass = 'bg-emerald-500 border-emerald-400 text-slate-950 font-black';
+            let bgClass = 'bg-[#FDFBF7] text-zinc-400';
+            if (day.count > 0 && day.count < 10) bgClass = 'bg-[#BBF7D0] text-black font-black';
+            else if (day.count >= 10 && day.count < 25) bgClass = 'bg-[#4ADE80] text-black font-black';
+            else if (day.count >= 25) bgClass = 'bg-[#FFE600] text-black font-black';
 
             return (
               <div
                 key={day.date}
                 title={`${day.date}: ${day.count} aktivite`}
-                className={`h-11 rounded-xl border flex flex-col items-center justify-center p-1 transition-all ${bgClass}`}
+                className={`h-11 border-2 border-black flex flex-col items-center justify-center p-1 transition-all shadow-[1.5px_1.5px_0px_0px_#000] ${bgClass}`}
               >
-                <span className="text-[11px] leading-tight">{day.dayNum}</span>
-                <span className="text-[9px] opacity-80">{day.count > 0 ? `${day.count}` : '-'}</span>
+                <span className="text-[11px] font-black leading-tight">{day.dayNum}</span>
+                <span className="text-[9px] font-bold">{day.count > 0 ? `${day.count}` : '-'}</span>
               </div>
             );
           })}
@@ -353,37 +352,37 @@ export const StatsView: React.FC<Props> = ({
       </div>
 
       {/* Expanded Badges Section */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-sm">
+      <div className="bg-white border-4 border-black p-5 space-y-4 shadow-[6px_6px_0px_0px_#000] text-black">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="text-sm font-bold text-white flex items-center space-x-2">
-              <Award size={18} className="text-amber-400" />
-              <span>Rozetler ({unlockedCount} / {BADGES.length})</span>
+            <h4 className="text-sm font-black text-black uppercase flex items-center space-x-2 tracking-tight">
+              <Award size={18} strokeWidth={2.5} className="text-black" />
+              <span>ROZETLER ({unlockedCount} / {BADGES.length})</span>
             </h4>
-            <p className="text-[11px] text-slate-400 mt-0.5">Hedefleri tamamlayarak yeni rozetler aç</p>
+            <p className="text-[11px] font-bold text-zinc-700 mt-0.5">Hedefleri tamamlayarak yeni rozetler aç</p>
           </div>
-          <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">
+          <span className="text-xs px-2.5 py-1 bg-[#FFE600] text-black border-2 border-black font-black shadow-[2px_2px_0px_0px_#000]">
             %{Math.round((unlockedCount / BADGES.length) * 100)}
           </span>
         </div>
 
         {/* Category Filter Pills */}
-        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs scrollbar-none">
+        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs scrollbar-none font-black">
           {[
-            { id: 'all', label: `Tümü (${BADGES.length})` },
-            { id: 'words', label: 'Kelimeler (8)' },
-            { id: 'streak', label: 'Seriler (7)' },
-            { id: 'speed', label: 'Hızlı Tur (6)' },
-            { id: 'master', label: 'Master (5)' },
-            { id: 'special', label: 'Özel (3)' }
+            { id: 'all', label: `TÜMÜ (${BADGES.length})` },
+            { id: 'words', label: 'KELİMELER (8)' },
+            { id: 'streak', label: 'SERİLER (7)' },
+            { id: 'speed', label: 'HIZLI TUR (6)' },
+            { id: 'master', label: 'MASTER (5)' },
+            { id: 'special', label: 'ÖZEL (3)' }
           ].map((cat) => (
             <button
               key={cat.id}
               onClick={() => setBadgeCategory(cat.id as any)}
-              className={`px-3 py-1.5 rounded-xl font-medium whitespace-nowrap transition-all text-[11px] ${
+              className={`px-3 py-1.5 border-2 border-black uppercase whitespace-nowrap transition-all text-[11px] ${
                 badgeCategory === cat.id
-                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/30 font-bold'
-                  : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-850'
+                  ? 'bg-black text-[#FFE600] shadow-[2px_2px_0px_0px_#FFE600] -translate-y-0.5'
+                  : 'bg-white text-black hover:bg-zinc-100'
               }`}
             >
               {cat.label}
@@ -402,18 +401,18 @@ export const StatsView: React.FC<Props> = ({
             return (
               <div
                 key={b.id}
-                className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between ${
+                className={`p-3.5 border-2 border-black transition-all flex flex-col justify-between ${
                   unlocked
-                    ? 'bg-gradient-to-br from-slate-850 to-slate-900 border-amber-500/40 shadow-sm shadow-amber-500/5'
-                    : 'bg-slate-950/60 border-slate-850/80 opacity-75'
+                    ? 'bg-[#FEF08A] text-black shadow-[3px_3px_0px_0px_#000]'
+                    : 'bg-zinc-100 text-zinc-500 opacity-70'
                 }`}
               >
                 <div className="flex items-start space-x-3">
                   <div
-                    className={`w-11 h-11 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${
+                    className={`w-11 h-11 border-2 border-black flex items-center justify-center text-2xl shrink-0 shadow-[2px_2px_0px_0px_#000] ${
                       unlocked
-                        ? 'bg-amber-500/10 border border-amber-500/30 shadow-sm shadow-amber-500/20'
-                        : 'bg-slate-900 border border-slate-800 text-slate-600 grayscale'
+                        ? 'bg-white text-black'
+                        : 'bg-zinc-200 text-zinc-400 grayscale'
                     }`}
                   >
                     {b.icon}
@@ -421,21 +420,21 @@ export const StatsView: React.FC<Props> = ({
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
-                      <h5 className={`text-xs font-bold truncate ${unlocked ? 'text-white' : 'text-slate-300'}`}>
+                      <h5 className="text-xs font-black uppercase truncate text-black">
                         {b.title}
                       </h5>
                       {unlocked ? (
-                        <span className="flex items-center space-x-0.5 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20 shrink-0">
-                          <Check size={10} />
-                          <span>Açıldı</span>
+                        <span className="flex items-center space-x-0.5 text-[9px] font-black text-black bg-[#4ADE80] border border-black px-1.5 py-0.5 uppercase shrink-0">
+                          <Check size={10} strokeWidth={3} />
+                          <span>AÇILDI</span>
                         </span>
                       ) : (
-                        <span className="flex items-center space-x-0.5 text-[9px] font-medium text-slate-500 shrink-0">
-                          <Lock size={10} />
+                        <span className="flex items-center space-x-0.5 text-[9px] font-black text-zinc-600 shrink-0">
+                          <Lock size={10} strokeWidth={2.5} />
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-400 line-clamp-2 mt-0.5 leading-snug">
+                    <p className="text-[11px] font-semibold text-zinc-800 line-clamp-2 mt-0.5 leading-snug">
                       {b.description}
                     </p>
                   </div>
@@ -443,14 +442,14 @@ export const StatsView: React.FC<Props> = ({
 
                 {/* Progress bar for locked badges */}
                 {!unlocked && progress && (
-                  <div className="mt-3 pt-2 border-t border-slate-850 space-y-1">
-                    <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                      <span>İlerleme</span>
-                      <span className="text-indigo-300 font-bold">{progress.label}</span>
+                  <div className="mt-3 pt-2 border-t border-black space-y-1">
+                    <div className="flex justify-between text-[10px] text-black font-black font-mono">
+                      <span>İLERLEME</span>
+                      <span className="bg-black text-white px-1">{progress.label}</span>
                     </div>
-                    <div className="h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                    <div className="h-2 bg-white border border-black overflow-hidden">
                       <div
-                        className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                        className="h-full bg-black transition-all duration-300"
                         style={{ width: `${progressPct}%` }}
                       />
                     </div>
