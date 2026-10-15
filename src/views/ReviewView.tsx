@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Word, Progress } from '../types';
 import { AudioButton } from '../components/AudioButton';
 import { sound } from '../services/audio';
 import { fireCelebration } from '../components/Confetti';
-import { checkTurkishAnswer } from '../utils/turkishMatcher';
+import { checkTurkishAnswer, checkTurkishAnswerDetailed } from '../utils/turkishMatcher';
 import { getSmartDistractors } from '../utils/distractorHelper';
 import {
   ArrowLeft,
@@ -12,7 +12,8 @@ import {
   Sparkles,
   Keyboard,
   CheckCircle2,
-  RefreshCw
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 import { speakEnglish } from '../services/speech';
 
@@ -31,7 +32,8 @@ interface Props {
   profile?: UserProfile;
   dailyLogs?: DailyLog[];
   todayStr?: string;
-  onReviewAnswer: (wordId: number, isCorrect: boolean, isPartial: boolean) => Promise<void>;
+  onReviewAnswer: (wordId: number, isCorrect: boolean, isPartial: boolean, lastMistake?: string) => Promise<void>;
+  onRecordMistake?: (wordId: number, mistake: string) => Promise<void>;
   onSessionCompleted?: () => Promise<{ earnedFreeze: boolean }>;
   onClose: () => void;
   onRefreshDue: () => void;
@@ -45,7 +47,27 @@ interface ReviewSessionState {
   failedAny: boolean;
   choicePassedAtStep: number | null;
   lastAskedStep: number | null;
+  lastMistake?: string;
 }
+
+interface PersistedReviewState {
+  date: string;
+  targetCount: number;
+  items: {
+    wordId: number;
+    choicePassed: boolean;
+    typingPassed: boolean;
+    failedAny: boolean;
+    choicePassedAtStep: number | null;
+    lastAskedStep: number | null;
+    lastMistake?: string;
+  }[];
+  globalStep: number;
+  hintStats?: Record<number, { encounters: number; wrongCount: number; revealedCount: number }>;
+  poolQueue?: PoolQueueItem[];
+}
+
+const STORAGE_REVIEW_SESSION = 'kelime_avi_active_review_session';
 
 export const ReviewView: React.FC<Props> = ({
   dueQueue,
@@ -56,6 +78,7 @@ export const ReviewView: React.FC<Props> = ({
   dailyLogs,
   todayStr,
   onReviewAnswer,
+  onRecordMistake,
   onSessionCompleted,
   onClose,
   onRefreshDue
@@ -81,10 +104,12 @@ export const ReviewView: React.FC<Props> = ({
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [typedInput, setTypedInput] = useState('');
 
-  // Inline feedback (NO gigantic full-screen card!)
+  // Inline feedback
   const [inlineFeedback, setInlineFeedback] = useState<{
     status: 'correct' | 'wrong';
     correctAnswer: string;
+    isNear?: boolean;
+    nearExplanation?: string;
   } | null>(null);
 
   const [combo, setCombo] = useState(0);
@@ -105,6 +130,52 @@ export const ReviewView: React.FC<Props> = ({
       return () => clearTimeout(timer);
     }
   }, [currentQuestion]);
+
+  // Helper to persist active review session to localStorage
+  const saveReviewSession = (
+    list: ReviewSessionState[],
+    step: number,
+    stats: Record<number, { encounters: number; wrongCount: number; revealedCount: number }> = hintStats,
+    queue: PoolQueueItem[] = poolQueueRef.current,
+    target: number = sessionTarget
+  ) => {
+    const uncompleted = list.filter(i => !i.typingPassed);
+    const fullyReviewed = list.filter(i => i.typingPassed).length;
+    if (fullyReviewed >= target || uncompleted.length === 0) {
+      localStorage.removeItem(STORAGE_REVIEW_SESSION);
+      return;
+    }
+    const data: PersistedReviewState = {
+      date: todayStr || new Date().toISOString().split('T')[0],
+      targetCount: target,
+      items: list.map(i => ({
+        wordId: i.word.id,
+        choicePassed: i.choicePassed,
+        typingPassed: i.typingPassed,
+        failedAny: i.failedAny,
+        choicePassedAtStep: i.choicePassedAtStep,
+        lastAskedStep: i.lastAskedStep,
+        lastMistake: i.lastMistake
+      })),
+      globalStep: step,
+      hintStats: stats,
+      poolQueue: queue
+    };
+    try {
+      localStorage.setItem(STORAGE_REVIEW_SESSION, JSON.stringify(data));
+    } catch {
+      // Ignore
+    }
+  };
+
+  // Aktif kelimede daha önce yapılmış yanlış varsa bul (tek string - hafızayı şişirmez)
+  const activeLastMistake = useMemo(() => {
+    if (!currentQuestion) return undefined;
+    const sessionItem = sessionList.find(i => i.word.id === currentQuestion.word.id);
+    if (sessionItem?.lastMistake) return sessionItem.lastMistake;
+    const prog = allProgress?.find(p => p.wordId === currentQuestion.word.id);
+    return prog?.lastMistake;
+  }, [currentQuestion, sessionList, allProgress]);
 
   // Önceki tekrar edilmiş veya öğrenilmiş kelimeleri topla (Tampon / Pekiştirme havuzu)
   const getPreviouslyReviewedWords = useCallback((): Word[] => {
@@ -175,10 +246,10 @@ export const ReviewView: React.FC<Props> = ({
       const uncompleted = list.filter(item => !item.typingPassed);
       const fullyReviewed = list.filter(item => item.typingPassed).length;
 
-      // 1. Hedef sayıya ulaşıldıysa veya tüm kelimeler bittiyse oturumu tamamla:
-      // "hedefte günlük 20 tekrar varsa mesela 19 tane bildiyse 5 kelime tekrar çıkacak terkrar etmediği brini bile doğru hallederse bitireceğiz o günü kalan 4e gerek yok"
+      // 1. Hedef sayıya ulaşıldıysa veya tüm kelimeler bittiyse oturumu tamamla
       if (fullyReviewed >= targetCount || uncompleted.length === 0) {
         poolQueueRef.current = [];
+        localStorage.removeItem(STORAGE_REVIEW_SESSION);
         if (todayStr) {
           localStorage.setItem('kelime_avi_review_completed_' + todayStr, 'true');
         }
@@ -212,6 +283,7 @@ export const ReviewView: React.FC<Props> = ({
 
       if (!result) {
         poolQueueRef.current = [];
+        localStorage.removeItem(STORAGE_REVIEW_SESSION);
         setPhase('summary');
         return;
       }
@@ -228,13 +300,15 @@ export const ReviewView: React.FC<Props> = ({
       // Track encounter count for hints
       setHintStats(prev => {
         const existing = prev[chosenWord.id] || { encounters: 0, wrongCount: 0, revealedCount: 0 };
-        return {
+        const updated = {
           ...prev,
           [chosenWord.id]: {
             ...existing,
             encounters: existing.encounters + 1
           }
         };
+        saveReviewSession(list, currentStep, updated, poolQueueRef.current, targetCount);
+        return updated;
       });
 
       // Load English hints for this word
@@ -254,7 +328,7 @@ export const ReviewView: React.FC<Props> = ({
     [allWordsMap, getPreviouslyReviewedWords, onSessionCompleted, sessionTarget, todayStr]
   );
 
-  // Initialize
+  // Initialize or resume review session
   useEffect(() => {
     if (!initializedRef.current) {
       if (!allWordsMap || allWordsMap.size === 0) return;
@@ -270,6 +344,72 @@ export const ReviewView: React.FC<Props> = ({
         return;
       }
 
+      // 1. Önce aktif kaydedilmiş yarım kalmış oturumu kontrol et (19'da veya 29'da çıkıp geri dönüldüğünde devam etmek için)
+      const savedReviewRaw = localStorage.getItem(STORAGE_REVIEW_SESSION);
+      if (savedReviewRaw) {
+        try {
+          const parsed: PersistedReviewState = JSON.parse(savedReviewRaw);
+          if (parsed && (!todayStr || parsed.date === todayStr) && Array.isArray(parsed.items) && parsed.items.length > 0) {
+            const restoredList: ReviewSessionState[] = [];
+            for (const item of parsed.items) {
+              const word = allWordsMap.get(item.wordId);
+              if (word) {
+                const prog = allProgress?.find(p => p.wordId === item.wordId) || {
+                  wordId: word.id,
+                  step: 0,
+                  streakDays: 0,
+                  dueDate: todayStr || '',
+                  status: 'learning' as const,
+                  lapses: 0,
+                  totalCorrect: 0,
+                  totalWrong: 0,
+                  updatedAt: Date.now(),
+                  lastMistake: item.lastMistake
+                };
+                restoredList.push({
+                  progress: prog,
+                  word,
+                  // ÖNEMLİ KURAL: Oturuma yeniden girildiğinde veya uygulama açıldığında,
+                  // tamamlanmamış hiçbir kelime ASLA doğrudan yazmalı açılmamalıdır!
+                  // Kullanıcı önce o kelimenin şıkkını görmeli ve çözmeli;
+                  // ancak şıkkı çözüldükten sonra aralık kuralıyla yazma aşamasına geçmelidir.
+                  choicePassed: false,
+                  typingPassed: item.typingPassed,
+                  failedAny: item.failedAny ?? false,
+                  choicePassedAtStep: null,
+                  lastAskedStep: null,
+                  lastMistake: item.lastMistake || prog.lastMistake
+                });
+              }
+            }
+
+            const hasUncompleted = restoredList.some(i => !i.typingPassed);
+            if (hasUncompleted) {
+              initializedRef.current = true;
+              const target = parsed.targetCount || restoredList.length;
+              setSessionTarget(target);
+              setSessionList(restoredList);
+              if (parsed.hintStats) {
+                setHintStats(parsed.hintStats);
+              }
+              // Kuyruğu temiz başlat ki şıklı sorular öncelikli dizilsin
+              poolQueueRef.current = [];
+              const step = parsed.globalStep || 1;
+              setGlobalStep(step);
+              setPhase('study');
+              setCombo(0);
+              lastWordIdRef.current = null;
+              prefetchHints(restoredList.map(i => i.word), Array.from(allWordsMap.values()));
+              pickNextQuestion(restoredList, step, null, target);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('Error reading persisted review session:', e);
+        }
+      }
+
+      // 2. Aktif oturum yoksa: dueQueue'dan yeni oturum başlat
       if (dueQueue.length > 0) {
         initializedRef.current = true;
         const items: ReviewSessionState[] = [];
@@ -286,24 +426,27 @@ export const ReviewView: React.FC<Props> = ({
               typingPassed: false,
               failedAny: false,
               choicePassedAtStep: null,
-              lastAskedStep: null
+              lastAskedStep: null,
+              lastMistake: prog.lastMistake
             });
           }
         });
 
-        setSessionTarget(items.length);
+        const target = items.length;
+        setSessionTarget(target);
         setSessionList(items);
         setPhase('study');
         setCombo(0);
         setGlobalStep(1);
         lastWordIdRef.current = null;
+        saveReviewSession(items, 1, {}, [], target);
         prefetchHints(items.map(i => i.word), Array.from(allWordsMap.values()));
         if (items.length > 0) {
-          pickNextQuestion(items, 1, null, items.length);
+          pickNextQuestion(items, 1, null, target);
         }
       }
     }
-  }, [dueQueue, allWordsMap, dailyReviewLimit, pickNextQuestion, todayStr, dailyLogs]);
+  }, [dueQueue, allWordsMap, allProgress, dailyReviewLimit, pickNextQuestion, todayStr, dailyLogs]);
 
   // Reveal next English hint (Eş anlamlı / Benzer anlamlı / Zıt anlamlı)
   const handleRevealNextHint = () => {
@@ -312,13 +455,15 @@ export const ReviewView: React.FC<Props> = ({
     setHintStats(prev => {
       const existing = prev[wordId] || { encounters: 1, wrongCount: 0, revealedCount: 0 };
       const nextRevealed = Math.min(3, existing.revealedCount + 1);
-      return {
+      const updated = {
         ...prev,
         [wordId]: {
           ...existing,
           revealedCount: nextRevealed
         }
       };
+      saveReviewSession(sessionList, globalStep, updated);
+      return updated;
     });
   };
 
@@ -364,6 +509,8 @@ export const ReviewView: React.FC<Props> = ({
 
       const nextStep = globalStep + 1;
       setGlobalStep(nextStep);
+      saveReviewSession(updatedList, nextStep);
+
       feedbackTimerRef.current = setTimeout(() => {
         pickNextQuestion(updatedList, nextStep, targetWord.id, sessionTarget);
       }, 350);
@@ -371,34 +518,47 @@ export const ReviewView: React.FC<Props> = ({
       sound.playWrong();
       setCombo(0);
 
+      const chosenMistake = option.trim();
       let updatedList = sessionList;
       if (!isRefresherOrFiller) {
         updatedList = sessionList.map(item =>
           item.word.id === targetWord.id
-            ? { ...item, failedAny: true, choicePassed: false, choicePassedAtStep: null, lastAskedStep: globalStep }
+            ? {
+                ...item,
+                failedAny: true,
+                choicePassed: false,
+                choicePassedAtStep: null,
+                lastAskedStep: globalStep,
+                lastMistake: chosenMistake // Kullanıcının o an sandığı yanlış anlamı kaydet
+              }
             : item
         );
         setSessionList(updatedList);
+        if (onRecordMistake) {
+          onRecordMistake(targetWord.id, chosenMistake);
+        }
       } else {
         bufferLastAskedRef.current.set(targetWord.id, globalStep);
       }
 
       // Increment wrong count for hints logic
+      const nextStep = globalStep + 1;
+      setGlobalStep(nextStep);
+
       setHintStats(prev => {
         const existing = prev[targetWord.id] || { encounters: 1, wrongCount: 0, revealedCount: 0 };
-        return {
+        const updated = {
           ...prev,
           [targetWord.id]: {
             ...existing,
             wrongCount: existing.wrongCount + 1
           }
         };
+        saveReviewSession(updatedList, nextStep, updated);
+        return updated;
       });
 
       setInlineFeedback({ status: 'wrong', correctAnswer: targetWord.tr });
-
-      const nextStep = globalStep + 1;
-      setGlobalStep(nextStep);
       // Kullanıcı "Geç" butonuna basınca ilerler
     }
   };
@@ -409,7 +569,8 @@ export const ReviewView: React.FC<Props> = ({
     if (!typedInput.trim() || !currentQuestion) return;
 
     const targetWord = currentQuestion.word;
-    const isCorrect = checkTurkishAnswer(typedInput, targetWord.tr);
+    const detailed = checkTurkishAnswerDetailed(typedInput, targetWord.tr);
+    const isCorrect = detailed.isCorrect;
 
     if (isCorrect) {
       sound.playCorrect(combo + 1);
@@ -430,6 +591,8 @@ export const ReviewView: React.FC<Props> = ({
 
       const nextStep = globalStep + 1;
       setGlobalStep(nextStep);
+      saveReviewSession(updatedList, nextStep);
+
       feedbackTimerRef.current = setTimeout(() => {
         pickNextQuestion(updatedList, nextStep, targetWord.id, sessionTarget);
       }, 350);
@@ -437,29 +600,48 @@ export const ReviewView: React.FC<Props> = ({
       sound.playWrong();
       setCombo(0);
 
+      const typedMistake = typedInput.trim();
       const updatedList = sessionList.map(item =>
         item.word.id === targetWord.id
-          ? { ...item, failedAny: true, choicePassed: false, choicePassedAtStep: null, lastAskedStep: globalStep }
+          ? {
+              ...item,
+              failedAny: true,
+              choicePassed: false,
+              choicePassedAtStep: null,
+              lastAskedStep: globalStep,
+              lastMistake: typedMistake // Bir önceki yanlış kelimeyi kaydet (hafıza şişmez)
+            }
           : item
       );
       setSessionList(updatedList);
 
+      if (onRecordMistake) {
+        onRecordMistake(targetWord.id, typedMistake);
+      }
+
+      const nextStep = globalStep + 1;
+      setGlobalStep(nextStep);
+
       // Increment wrong count for hints logic
       setHintStats(prev => {
         const existing = prev[targetWord.id] || { encounters: 1, wrongCount: 0, revealedCount: 0 };
-        return {
+        const updated = {
           ...prev,
           [targetWord.id]: {
             ...existing,
             wrongCount: existing.wrongCount + 1
           }
         };
+        saveReviewSession(updatedList, nextStep, updated);
+        return updated;
       });
 
-      setInlineFeedback({ status: 'wrong', correctAnswer: targetWord.tr });
-
-      const nextStep = globalStep + 1;
-      setGlobalStep(nextStep);
+      setInlineFeedback({
+        status: 'wrong',
+        correctAnswer: targetWord.tr,
+        isNear: detailed.isNear,
+        nearExplanation: detailed.nearExplanation
+      });
       // Kullanıcı "Geç" butonuna basınca ilerler
     }
   };
@@ -641,6 +823,20 @@ export const ReviewView: React.FC<Props> = ({
                   {currentQuestion.word.ipa}
                 </p>
               )}
+
+              {/* Daha önce sandığı kelime / eski hata uyarısı (Ünlem İşaretli) */}
+              {activeLastMistake && (
+                <div className="pt-1 flex justify-center animate-fadeIn">
+                  <div className="inline-flex items-center space-x-2 px-3 py-1.5 bg-[#FFF1F2] border-2 border-black text-[#BE123C] text-xs font-black shadow-[2px_2px_0px_0px_#000]">
+                    <span className="w-5 h-5 bg-[#FF5588] text-white border border-black flex items-center justify-center font-black text-xs">
+                      <AlertCircle size={13} strokeWidth={3} />
+                    </span>
+                    <span>
+                      Daha önce sandığın: <strong className="underline decoration-2">"{activeLastMistake}"</strong> (Aynı hatayı yapma!)
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Word Hints List */}
@@ -731,11 +927,16 @@ export const ReviewView: React.FC<Props> = ({
                 <div className="bg-[#FF5588] border-3 border-black p-3.5 flex items-center justify-between text-black shadow-[3px_3px_0px_0px_#000]">
                   <div className="space-y-0.5 pr-2">
                     <span className="text-[10px] font-black uppercase tracking-wider block">
-                      YANLIŞ! DOĞRU ANLAM:
+                      {inlineFeedback.isNear ? '⚡ ÇOK YAKLAŞTIN! TAM DOĞRU ANLAM:' : 'YANLIŞ! DOĞRU ANLAM:'}
                     </span>
                     <span className="text-base font-black uppercase leading-tight">
                       {inlineFeedback.correctAnswer}
                     </span>
+                    {inlineFeedback.nearExplanation && (
+                      <span className="text-xs font-bold block mt-1 text-black bg-white/90 px-1.5 py-0.5 border border-black inline-block">
+                        {inlineFeedback.nearExplanation}
+                      </span>
+                    )}
                   </div>
 
                   <button

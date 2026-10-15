@@ -31,6 +31,7 @@ export interface Progress {
   totalCorrect: number;
   totalWrong: number;
   updatedAt: number;
+  lastMistake?: string; // En son yanlış cevap/sanılan kelime (hafıza şişirmemek için tek string)
 }
 export type BrutalDarkPalette =
   | 'cyber-yellow'

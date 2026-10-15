@@ -192,4 +192,81 @@ describe('sessionQueue - 5 Kelimelik Tampon Döngüsü ve Minimum 5 Soru Aralık
     // Oturum bitti -> null döner!
     expect(res).toBeNull();
   });
+
+  it('şık çözülmeden asla klavye (typing) sorusu açılamaz, daima choice dönmelidir', () => {
+    const list: GenericSessionItem[] = [
+      {
+        word: word1,
+        choicePassed: false,
+        typingPassed: false,
+        choicePassedAtStep: null,
+        lastAskedStep: null
+      }
+    ];
+
+    const currentQueue: PoolQueueItem[] = [];
+    const bufferLastAskedMap = new Map<number, number>();
+
+    const res = syncAndSelectNextQuestion({
+      list,
+      currentStep: 1,
+      excludeWordId: null,
+      currentQueue,
+      candidateBuffers,
+      allWordsMap,
+      bufferLastAskedMap
+    });
+
+    expect(res).not.toBeNull();
+    expect(res!.chosenWord.id).toBe(1);
+    expect(res!.questionType).toBe('choice'); // ASLA typing olamaz!
+  });
+
+  it('fallback durumunda henüz şıkkı çözülmemiş kelimeler yazma sorusunun önüne geçer', () => {
+    // 1 numaralı kelime şıkkı geçmiş ama henüz aralık kuralı dolmamış
+    // 2 numaralı kelime ise şıkkı henüz çözülmemiş
+    const word2 = createMockWord(2, 'book', 'kitap');
+    const localWordsMap = new Map<number, Word>([
+      [1, word1],
+      [2, word2]
+    ]);
+
+    const list: GenericSessionItem[] = [
+      {
+        word: word1,
+        choicePassed: true,
+        typingPassed: false,
+        choicePassedAtStep: 5,
+        lastAskedStep: 5
+      },
+      {
+        word: word2,
+        choicePassed: false,
+        typingPassed: false,
+        choicePassedAtStep: null,
+        lastAskedStep: null
+      }
+    ];
+
+    // Kuyrukta kelime 2 var, kelime 1 var
+    const currentQueue: PoolQueueItem[] = [
+      { wordId: 1, isBuffer: false },
+      { wordId: 2, isBuffer: false }
+    ];
+
+    const res = syncAndSelectNextQuestion({
+      list,
+      currentStep: 6, // 6 - 5 = 1 < 5 (kelime 1 yazma için uygun değil)
+      excludeWordId: 1,
+      currentQueue,
+      candidateBuffers: [],
+      allWordsMap: localWordsMap,
+      bufferLastAskedMap: new Map()
+    });
+
+    expect(res).not.toBeNull();
+    expect(res!.chosenWord.id).toBe(2);
+    expect(res!.questionType).toBe('choice'); // Kelime 2'nin şık sorusu sorulmalıdır!
+  });
 });
+

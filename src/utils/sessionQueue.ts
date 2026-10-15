@@ -145,9 +145,34 @@ export function syncAndSelectNextQuestion<T extends GenericSessionItem>(params: 
       queue.push({ wordId: fallbackBuffer.id, isBuffer: true });
       pickIdx = queue.length - 1;
     } else {
-      // Güvenlik fallback: excludeWordId hariç ilk eleman
-      pickIdx = queue.findIndex(q => q.wordId !== excludeWordId);
-      if (pickIdx === -1) pickIdx = 0;
+      // Güvenlik fallback:
+      // 1. Henüz şıkkı çözülmemiş hedef kelime varsa onu seç (asla şık çözülmeden yazma öne geçmesin)
+      let candidateIdx = queue.findIndex(q => {
+        if (excludeWordId !== null && q.wordId === excludeWordId) return false;
+        const target = list.find(i => i.word.id === q.wordId);
+        return target && !target.choicePassed && !target.typingPassed;
+      });
+
+      // 2. Eğer yoksa, araya girebilecek herhangi bir aday tampon kelimeyi buffer olarak ekle (tamponlar her zaman şıktır)
+      if (candidateIdx === -1) {
+        const anyBuffer = candidateBuffers.find(w => {
+          if (excludeWordId !== null && w.id === excludeWordId) return false;
+          if (uncompletedIds.has(w.id)) return false;
+          return true;
+        });
+        if (anyBuffer) {
+          queue.push({ wordId: anyBuffer.id, isBuffer: true });
+          candidateIdx = queue.length - 1;
+        }
+      }
+
+      if (candidateIdx !== -1) {
+        pickIdx = candidateIdx;
+      } else {
+        // 3. Son çare güvenlik fallback: excludeWordId hariç ilk eleman
+        pickIdx = queue.findIndex(q => q.wordId !== excludeWordId);
+        if (pickIdx === -1) pickIdx = 0;
+      }
     }
   }
 

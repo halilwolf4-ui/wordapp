@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Word } from '../types';
 import { AudioButton } from '../components/AudioButton';
 import { HighlightedText } from '../components/HighlightedText';
 import { sound } from '../services/audio';
 import { fireCelebration } from '../components/Confetti';
-import { checkTurkishAnswer } from '../utils/turkishMatcher';
+import { checkTurkishAnswer, checkTurkishAnswerDetailed } from '../utils/turkishMatcher';
 import { getSmartDistractors } from '../utils/distractorHelper';
 import {
   ArrowLeft,
@@ -16,7 +16,8 @@ import {
   Eye,
   Keyboard,
   CheckCircle2,
-  RefreshCw
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 import { speakEnglish } from '../services/speech';
 
@@ -38,6 +39,7 @@ interface Props {
   onCompleteWord: (word: Word, isCorrect: boolean) => Promise<void>;
   onMarkWordKnown?: (word: Word) => Promise<void>;
   onMarkWordLearning?: (word: Word) => Promise<void>;
+  onRecordMistake?: (wordId: number, mistake: string) => Promise<void>;
   onSessionCompleted?: () => Promise<{ earnedFreeze: boolean }>;
   onClose: () => void;
   onRefreshBatch: () => void;
@@ -51,18 +53,22 @@ interface WordSessionState {
   typingPassed: boolean;
   choicePassedAtStep: number | null;
   lastAskedStep: number | null;
+  lastMistake?: string;
 }
 
 interface PersistedState {
+  date?: string;
   items: {
     wordId: number;
     choicePassed: boolean;
     typingPassed: boolean;
     choicePassedAtStep: number | null;
     lastAskedStep: number | null;
+    lastMistake?: string;
   }[];
   globalStep: number;
   hintStats?: Record<number, { encounters: number; wrongCount: number; revealedCount: number }>;
+  poolQueue?: PoolQueueItem[];
 }
 
 const STORAGE_LEARN_SESSION = 'kelime_avi_active_learn_session';
@@ -79,6 +85,7 @@ export const LearnView: React.FC<Props> = ({
   onCompleteWord,
   onMarkWordKnown,
   onMarkWordLearning,
+  onRecordMistake,
   onSessionCompleted,
   onClose,
   onRefreshBatch
@@ -121,6 +128,8 @@ export const LearnView: React.FC<Props> = ({
   const [inlineFeedback, setInlineFeedback] = useState<{
     status: 'correct' | 'wrong';
     correctAnswer: string;
+    isNear?: boolean;
+    nearExplanation?: string;
   } | null>(null);
 
   const [combo, setCombo] = useState(0);
@@ -146,24 +155,27 @@ export const LearnView: React.FC<Props> = ({
   const saveSession = (
     list: WordSessionState[],
     step: number,
-    stats: Record<number, { encounters: number; wrongCount: number; revealedCount: number }> = hintStats
+    stats: Record<number, { encounters: number; wrongCount: number; revealedCount: number }> = hintStats,
+    queue: PoolQueueItem[] = poolQueueRef.current
   ) => {
     const uncompleted = list.filter(i => !i.typingPassed);
-    const learned = list.filter(i => i.typingPassed).length;
-    if (learned >= targetWordsCount || uncompleted.length === 0) {
+    if (uncompleted.length === 0) {
       localStorage.removeItem(STORAGE_LEARN_SESSION);
       return;
     }
     const data: PersistedState = {
+      date: todayStr || new Date().toISOString().split('T')[0],
       items: list.map(i => ({
         wordId: i.word.id,
         choicePassed: i.choicePassed,
         typingPassed: i.typingPassed,
         choicePassedAtStep: i.choicePassedAtStep,
-        lastAskedStep: i.lastAskedStep
+        lastAskedStep: i.lastAskedStep,
+        lastMistake: i.lastMistake
       })),
       globalStep: step,
-      hintStats: stats
+      hintStats: stats,
+      poolQueue: queue
     };
     try {
       localStorage.setItem(STORAGE_LEARN_SESSION, JSON.stringify(data));
@@ -171,6 +183,15 @@ export const LearnView: React.FC<Props> = ({
       // Ignore
     }
   };
+
+  // Aktif kelimede daha önce yapılmış yanlış varsa bul (tek string - hafızayı şişirmez)
+  const activeLastMistake = useMemo(() => {
+    if (!currentQuestion) return undefined;
+    const sessionItem = sessionList.find(i => i.word.id === currentQuestion.word.id);
+    if (sessionItem?.lastMistake) return sessionItem.lastMistake;
+    const prog = allProgress?.find(p => p.wordId === currentQuestion.word.id);
+    return prog?.lastMistake;
+  }, [currentQuestion, sessionList, allProgress]);
 
   // Helper to persist discovery basket
   const saveBasket = (basket: Word[]) => {
@@ -369,36 +390,40 @@ export const LearnView: React.FC<Props> = ({
     if (savedSessionRaw) {
       try {
         const parsed: PersistedState = JSON.parse(savedSessionRaw);
-        if (parsed && Array.isArray(parsed.items) && parsed.items.length > 0) {
+        if (parsed && (!todayStr || !parsed.date || parsed.date === todayStr) && Array.isArray(parsed.items) && parsed.items.length > 0) {
           const restoredList: WordSessionState[] = [];
           for (const item of parsed.items) {
             const word = allWordsMap.get(item.wordId);
             if (word) {
+              const prog = allProgress?.find(p => p.wordId === item.wordId);
               restoredList.push({
                 word,
-                choicePassed: item.choicePassed,
+                // ÖNEMLİ KURAL: Oturuma yeniden girildiğinde veya uygulama açıldığında,
+                // tamamlanmamış hiçbir kelime ASLA doğrudan yazmalı açılmamalıdır!
+                // Kullanıcı önce o kelimenin şıkkını görmeli ve çözmeli;
+                // ancak şıkkı çözüldükten sonra aralık kuralıyla yazma aşamasına geçmelidir.
+                choicePassed: false,
                 typingPassed: item.typingPassed,
-                choicePassedAtStep: item.choicePassedAtStep,
-                lastAskedStep: item.lastAskedStep ?? null
+                choicePassedAtStep: null,
+                lastAskedStep: null,
+                lastMistake: item.lastMistake || prog?.lastMistake
               });
             }
           }
 
           const hasUncompleted = restoredList.some(i => !i.typingPassed);
           if (hasUncompleted) {
-            // Trim to targetWordsCount if previously loaded with 20 items and target is lower
-            const trimmedList = restoredList.length > targetWordsCount
-              ? restoredList.slice(0, targetWordsCount)
-              : restoredList;
-            setSessionList(trimmedList);
+            setSessionList(restoredList);
             if (parsed.hintStats) {
               setHintStats(parsed.hintStats);
             }
-            prefetchHints(trimmedList.map(i => i.word), Array.from(allWordsMap.values()));
+            // Kuyruğu temiz başlat ki şıklı sorular öncelikli dizilsin
+            poolQueueRef.current = [];
+            prefetchHints(restoredList.map(i => i.word), Array.from(allWordsMap.values()));
             const step = parsed.globalStep || 1;
             setGlobalStep(step);
             setPhase('study');
-            pickNextQuestion(trimmedList, step, null);
+            pickNextQuestion(restoredList, step, null);
             return;
           }
         }
@@ -664,15 +689,25 @@ export const LearnView: React.FC<Props> = ({
       const nextStep = globalStep + 1;
       setGlobalStep(nextStep);
 
+      const chosenMistake = option.trim();
       let updatedList = sessionList;
       if (!currentQuestion.isFiller) {
         updatedList = sessionList.map(item =>
           item.word.id === targetWord.id
-            ? { ...item, choicePassed: false, choicePassedAtStep: null, lastAskedStep: globalStep }
+            ? {
+                ...item,
+                choicePassed: false,
+                choicePassedAtStep: null,
+                lastAskedStep: globalStep,
+                lastMistake: chosenMistake
+              }
             : item
         );
         setSessionList(updatedList);
         saveSession(updatedList, nextStep);
+        if (onRecordMistake) {
+          onRecordMistake(targetWord.id, chosenMistake);
+        }
       } else {
         bufferLastAskedRef.current.set(targetWord.id, globalStep);
       }
@@ -701,7 +736,8 @@ export const LearnView: React.FC<Props> = ({
     if (!typedInput.trim() || !currentQuestion) return;
 
     const targetWord = currentQuestion.word;
-    const isCorrect = checkTurkishAnswer(typedInput, targetWord.tr);
+    const detailed = checkTurkishAnswerDetailed(typedInput, targetWord.tr);
+    const isCorrect = detailed.isCorrect;
 
     if (isCorrect) {
       sound.playCorrect(combo + 1);
@@ -732,15 +768,31 @@ export const LearnView: React.FC<Props> = ({
       const nextStep = globalStep + 1;
       setGlobalStep(nextStep);
 
+      const typedMistake = typedInput.trim();
       const updatedList = sessionList.map(item =>
         item.word.id === targetWord.id
-          ? { ...item, choicePassed: false, choicePassedAtStep: null, lastAskedStep: globalStep }
+          ? {
+              ...item,
+              choicePassed: false,
+              choicePassedAtStep: null,
+              lastAskedStep: globalStep,
+              lastMistake: typedMistake
+            }
           : item
       );
       setSessionList(updatedList);
       saveSession(updatedList, nextStep);
 
-      setInlineFeedback({ status: 'wrong', correctAnswer: targetWord.tr });
+      if (onRecordMistake) {
+        onRecordMistake(targetWord.id, typedMistake);
+      }
+
+      setInlineFeedback({
+        status: 'wrong',
+        correctAnswer: targetWord.tr,
+        isNear: detailed.isNear,
+        nearExplanation: detailed.nearExplanation
+      });
 
       // Increment wrong count for hints logic
       setHintStats(prev => {
@@ -1103,6 +1155,20 @@ export const LearnView: React.FC<Props> = ({
                   {currentQuestion.word.ipa}
                 </p>
               )}
+
+              {/* Daha önce sandığı kelime / eski hata uyarısı (Ünlem İşaretli) */}
+              {activeLastMistake && (
+                <div className="pt-1 flex justify-center animate-fadeIn">
+                  <div className="inline-flex items-center space-x-2 px-3 py-1.5 bg-[#FFF1F2] border-2 border-black text-[#BE123C] text-xs font-black shadow-[2px_2px_0px_0px_#000]">
+                    <span className="w-5 h-5 bg-[#FF5588] text-white border border-black flex items-center justify-center font-black text-xs">
+                      <AlertCircle size={13} strokeWidth={3} />
+                    </span>
+                    <span>
+                      Daha önce sandığın: <strong className="underline decoration-2">"{activeLastMistake}"</strong> (Aynı hatayı yapma!)
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Word Hints List */}
@@ -1193,11 +1259,16 @@ export const LearnView: React.FC<Props> = ({
                 <div className="bg-[#FF5588] border-3 border-black p-3.5 flex items-center justify-between text-black shadow-[3px_3px_0px_0px_#000]">
                   <div className="space-y-0.5 pr-2">
                     <span className="text-[10px] font-black uppercase tracking-wider block">
-                      YANLIŞ! DOĞRU ANLAM:
+                      {inlineFeedback.isNear ? '⚡ ÇOK YAKLAŞTIN! TAM DOĞRU ANLAM:' : 'YANLIŞ! DOĞRU ANLAM:'}
                     </span>
                     <span className="text-base font-black uppercase leading-tight">
                       {inlineFeedback.correctAnswer}
                     </span>
+                    {inlineFeedback.nearExplanation && (
+                      <span className="text-xs font-bold block mt-1 text-black bg-white/90 px-1.5 py-0.5 border border-black inline-block">
+                        {inlineFeedback.nearExplanation}
+                      </span>
+                    )}
                   </div>
 
                   <button

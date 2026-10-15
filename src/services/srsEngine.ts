@@ -21,7 +21,8 @@ export function calculateNextProgress(
   current: Progress | null,
   wordId: number,
   isCorrect: boolean,
-  effectiveDate: string = getEffectiveDate()
+  effectiveDate: string = getEffectiveDate(),
+  lastMistake?: string
 ): SrsAnswerResult {
   const base: Progress = current || {
     wordId,
@@ -33,7 +34,8 @@ export function calculateNextProgress(
     lapses: 0,
     totalCorrect: 0,
     totalWrong: 0,
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
+    lastMistake: undefined
   };
 
   if (!isCorrect) {
@@ -47,6 +49,7 @@ export function calculateNextProgress(
       status: 'learning',
       lapses: base.lapses + 1,
       totalWrong: base.totalWrong + 1,
+      lastMistake: lastMistake ? lastMistake.trim() : base.lastMistake,
       updatedAt: Date.now()
     };
     return {
@@ -72,6 +75,7 @@ export function calculateNextProgress(
       lastReviewDate: effectiveDate,
       status: 'mastered',
       totalCorrect: nextTotalCorrect,
+      lastMistake: undefined, // Master olunca önceki hata temizlenir
       updatedAt: Date.now()
     };
     return {

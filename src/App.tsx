@@ -470,9 +470,9 @@ export const App: React.FC = () => {
   };
 
   // Handle Review mode word answer
-  const handleReviewWordAnswer = async (wordId: number, isCorrect: boolean, isPartial: boolean) => {
+  const handleReviewWordAnswer = async (wordId: number, isCorrect: boolean, isPartial: boolean, lastMistake?: string) => {
     const existingProg = await db.progress.get(wordId);
-    const { nextProgress } = calculateNextProgress(existingProg || null, wordId, isCorrect, today);
+    const { nextProgress } = calculateNextProgress(existingProg || null, wordId, isCorrect, today, lastMistake);
 
     // If partial (hint used), grant partial interval step
     if (isPartial && isCorrect && nextProgress.step > 1) {
@@ -487,6 +487,21 @@ export const App: React.FC = () => {
     });
 
     await recordAnswerResult(isCorrect, false, 1, becameMastered);
+  };
+
+  // Record single last mistake on a word (without bloating DB, only saves the latest one)
+  const handleRecordMistake = async (wordId: number, mistake: string) => {
+    if (!mistake) return;
+    const existingProg = await db.progress.get(wordId);
+    if (existingProg) {
+      const updated: Progress = {
+        ...existingProg,
+        lastMistake: mistake.trim(),
+        updatedAt: Date.now()
+      };
+      await db.progress.put(updated);
+      setAllProgress(prev => prev.map(p => p.wordId === wordId ? updated : p));
+    }
   };
 
   // Add custom word (directly assigned to 'learning' queue)
@@ -773,6 +788,7 @@ export const App: React.FC = () => {
                 onCompleteWord={handleLearnWordComplete}
                 onMarkWordKnown={handleMarkWordKnown}
                 onMarkWordLearning={handleMarkWordLearning}
+                onRecordMistake={handleRecordMistake}
                 onSessionCompleted={handleSessionCompleted}
                 onClose={() => setCurrentTab('home')}
                 onRefreshBatch={loadData}
@@ -789,6 +805,7 @@ export const App: React.FC = () => {
                 dailyLogs={dailyLogs}
                 todayStr={today}
                 onReviewAnswer={handleReviewWordAnswer}
+                onRecordMistake={handleRecordMistake}
                 onSessionCompleted={handleSessionCompleted}
                 onClose={() => setCurrentTab('home')}
                 onRefreshDue={loadData}
