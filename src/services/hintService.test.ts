@@ -4,7 +4,8 @@ import {
   getLocalFallbackHints,
   getWordHints,
   getMaxAllowedHints,
-  LOCAL_ANTONYM_PAIRS
+  LOCAL_ANTONYM_PAIRS,
+  isB1OrBelowWord
 } from './hintService';
 import { Word } from '../types';
 
@@ -97,4 +98,51 @@ describe('hintService', () => {
     expect(getMaxAllowedHints(5)).toBe(3);
     expect(getMaxAllowedHints(10)).toBe(3);
   });
+
+  it('isB1OrBelowWord allows A1-B1 words and rejects C1/obscure words', () => {
+    const mockWords: Word[] = [
+      { id: 1, en: 'easy', tr: 'kolay', examples: [], categories: ['oxford3000_a1'] },
+      { id: 2, en: 'difficult', tr: 'zor', examples: [], categories: ['oxford3000_b1'] },
+      { id: 3, en: 'colossal', tr: 'muazzam', examples: [], categories: ['oxford5000_c1'] },
+      { id: 4, en: 'zenith', tr: 'zirve', examples: [], categories: ['oxford5000_c1'] }
+    ];
+
+    expect(isB1OrBelowWord('easy', mockWords)).toBe(true);
+    expect(isB1OrBelowWord('difficult', mockWords)).toBe(true);
+    expect(isB1OrBelowWord('colossal', mockWords)).toBe(false);
+    expect(isB1OrBelowWord('zenith', mockWords)).toBe(false);
+    // Multi-word phrase check
+    expect(isB1OrBelowWord('in the middle of', mockWords)).toBe(false);
+  });
+
+  it('getLocalFallbackHints filters out C1 words from hints even if Turkish matches', () => {
+    const target: Word = {
+      id: 10,
+      en: 'huge',
+      tr: 'büyük, devasa',
+      examples: [],
+      categories: ['oxford3000_a2']
+    };
+
+    const b1Word: Word = {
+      id: 20,
+      en: 'large',
+      tr: 'büyük, geniş',
+      examples: [],
+      categories: ['oxford3000_a1']
+    };
+
+    const c1Word: Word = {
+      id: 30,
+      en: 'gargantuan',
+      tr: 'büyük, devasa',
+      examples: [],
+      categories: ['oxford5000_c1']
+    };
+
+    const hints = getLocalFallbackHints(target, [target, b1Word, c1Word]);
+    expect(hints.some(h => h.word === 'large')).toBe(true);
+    expect(hints.some(h => h.word === 'gargantuan')).toBe(false);
+  });
 });
+

@@ -34,10 +34,10 @@ describe('passaparolaService', () => {
 
     const questions = generatePassaparolaQuestions(mockWords, progressMap);
 
-    // Question for 'A' should prioritize 'to associate' and display 'associate'
+    // Question for 'A' should prioritize 'to associate' and keep 'to associate' as displayWord under letter A
     const qA = questions.find(q => q.letter === 'A');
     expect(qA).toBeDefined();
-    expect(qA?.displayWord).toBe('associate');
+    expect(qA?.displayWord).toBe('to associate');
     expect(qA?.word.en).toBe('to associate');
 
     // Question for 'B' should be 'brain'

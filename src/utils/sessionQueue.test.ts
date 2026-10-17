@@ -268,5 +268,132 @@ describe('sessionQueue - 5 Kelimelik Tampon Döngüsü ve Minimum 5 Soru Aralık
     expect(res!.chosenWord.id).toBe(2);
     expect(res!.questionType).toBe('choice'); // Kelime 2'nin şık sorusu sorulmalıdır!
   });
+
+  it('birden fazla kelime şıkkı geçtikten sonra yazma soruları daima aynı sırayla değil, rastgele karıştırılarak seçilir', () => {
+    // 5 hedef kelime tanımla
+    const words = [
+      createMockWord(10, 'ten', 'on'),
+      createMockWord(20, 'twenty', 'yirmi'),
+      createMockWord(30, 'thirty', 'otuz'),
+      createMockWord(40, 'forty', 'kırk'),
+      createMockWord(50, 'fifty', 'elli')
+    ];
+    const map = new Map<number, Word>(words.map(w => [w.id, w]));
+
+    const list: GenericSessionItem[] = words.map(w => ({
+      word: w,
+      choicePassed: true,
+      typingPassed: false,
+      choicePassedAtStep: 1, // Hepsi 1. adımda şıkkı geçti
+      lastAskedStep: 1
+    }));
+
+    const queue: PoolQueueItem[] = words.map(w => ({ wordId: w.id, isBuffer: false }));
+
+    // 10. adımda tüm kelimeler yazma için uygundur (10 - 1 = 9 >= 5)
+    // Farklı rastgele seçimleri topla
+    const pickedFirstIds = new Set<number>();
+    for (let i = 0; i < 30; i++) {
+      const res = syncAndSelectNextQuestion({
+        list,
+        currentStep: 10,
+        excludeWordId: null,
+        currentQueue: [...queue],
+        candidateBuffers: [],
+        allWordsMap: map,
+        bufferLastAskedMap: new Map()
+      });
+      if (res) {
+        pickedFirstIds.add(res.chosenWord.id);
+        expect(res.questionType).toBe('typing');
+      }
+    }
+
+    // Tek bir kelimeye kilitlenmeyip farklı kelimeleri rastgele seçebilmelidir!
+    expect(pickedFirstIds.size).toBeGreaterThan(1);
+  });
+
+  it('sonda 5ten az kelime kaldığında eklenen tampon kelimeler hep aynı ilk kelimeyi seçmez, rastgele havuzdan seçer', () => {
+    // 1 hedef kelime ve 10 farklı tampon kelime
+    const targetWord = createMockWord(1, 'target', 'hedef');
+    const buffers = Array.from({ length: 10 }, (_, i) =>
+      createMockWord(100 + i, `buffer_${i}`, `tampon_${i}`)
+    );
+    const map = new Map<number, Word>([[1, targetWord], ...buffers.map(b => [b.id, b] as [number, Word])]);
+
+    const list: GenericSessionItem[] = [
+      {
+        word: targetWord,
+        choicePassed: false,
+        typingPassed: false,
+        choicePassedAtStep: null,
+        lastAskedStep: 1 // Hedef kelime henüz sorulmuş
+      }
+    ];
+
+    const pickedBufferIds = new Set<number>();
+    for (let i = 0; i < 30; i++) {
+      const res = syncAndSelectNextQuestion({
+        list,
+        currentStep: 2, // Hedef kelime 5-gap yüzünden sorulamaz
+        excludeWordId: 1,
+        currentQueue: [],
+        candidateBuffers: buffers,
+        allWordsMap: map,
+        bufferLastAskedMap: new Map()
+      });
+      if (res && res.isBuffer) {
+        pickedBufferIds.add(res.chosenWord.id);
+      }
+    }
+
+    // Tampon kelime seçimleri her zaman buffers[0] olmak yerine rastgele dağılmalıdır!
+    expect(pickedBufferIds.size).toBeGreaterThan(1);
+  });
+
+  it('tampon kelime sorulduktan sonra kuyruğa aynı 3 kelime yerine havuzdan taze tampon kelimeler rotasyonla girer', () => {
+    const targetWord = createMockWord(1, 'target', 'hedef');
+    const buffers = Array.from({ length: 15 }, (_, i) =>
+      createMockWord(100 + i, `buffer_${i}`, `tampon_${i}`)
+    );
+    const map = new Map<number, Word>([[1, targetWord], ...buffers.map(b => [b.id, b] as [number, Word])]);
+
+    const list: GenericSessionItem[] = [
+      {
+        word: targetWord,
+        choicePassed: false,
+        typingPassed: false,
+        choicePassedAtStep: null,
+        lastAskedStep: 1 // Hedef kelime sorulmuş
+      }
+    ];
+
+    let currentQueue: PoolQueueItem[] = [];
+    const bufferLastAskedMap = new Map<number, number>();
+    const allSeenBufferIds = new Set<number>();
+
+    // 8 adım boyunca tampon kelimelerin rotasyonunu izle
+    for (let step = 2; step <= 8; step++) {
+      const res = syncAndSelectNextQuestion({
+        list,
+        currentStep: step,
+        excludeWordId: null,
+        currentQueue,
+        candidateBuffers: buffers,
+        allWordsMap: map,
+        bufferLastAskedMap
+      });
+
+      if (res && res.isBuffer) {
+        allSeenBufferIds.add(res.chosenWord.id);
+        bufferLastAskedMap.set(res.chosenWord.id, step);
+        currentQueue = res.nextQueue;
+      }
+    }
+
+    // Yalnızca 3 kelimeye saplanıp kalmamalı, havuzdan yeni tampon kelimeler rotasyona girmelidir!
+    expect(allSeenBufferIds.size).toBeGreaterThan(3);
+  });
 });
+
 

@@ -82,13 +82,16 @@ export function syncAndSelectNextQuestion<T extends GenericSessionItem>(params: 
   // Eğer uncompleted sayısı < 5 ise en az 5 elemana tamamlayacak kadar buffer ekle
   if (uncompCount < 5) {
     const neededBuffers = 5 - uncompCount;
-    for (const w of candidateBuffers) {
+    // Buffer adaylarını karıştırarak seç (her zaman baştaki aynı kelime gelmesin)
+    const availableBuffers = candidateBuffers
+      .filter(w => !existingQueueIds.has(w.id) && !uncompletedIds.has(w.id))
+      .sort(() => Math.random() - 0.5);
+
+    for (const w of availableBuffers) {
       const currentBufferCount = queue.filter(q => q.isBuffer).length;
       if (currentBufferCount >= neededBuffers && queue.length >= 5) break;
-      if (!existingQueueIds.has(w.id) && !uncompletedIds.has(w.id)) {
-        queue.push({ wordId: w.id, isBuffer: true });
-        existingQueueIds.add(w.id);
-      }
+      queue.push({ wordId: w.id, isBuffer: true });
+      existingQueueIds.add(w.id);
     }
 
     // Fazla buffer varsa toplam 5 olacak şekilde kırp
@@ -129,49 +132,99 @@ export function syncAndSelectNextQuestion<T extends GenericSessionItem>(params: 
     );
   };
 
-  let pickIdx = queue.findIndex(isEligible);
+  const eligibleIndices: number[] = [];
+  queue.forEach((item, idx) => {
+    if (isEligible(item)) {
+      eligibleIndices.push(idx);
+    }
+  });
+
+  let pickIdx = -1;
+
+  if (eligibleIndices.length > 0) {
+    // 1. Öncelik: Şıkkı henüz geçilmemiş hedef kelimeler (şıkları kendi içinde karıştırarak sor)
+    const choiceEligible = eligibleIndices.filter(idx => {
+      const item = queue[idx];
+      if (item.isBuffer) return false;
+      const target = list.find(i => i.word.id === item.wordId);
+      return target && !target.choicePassed;
+    });
+
+    // 2. Öncelik: Şıkkı geçmiş, yazma zamanı gelmiş hedef kelimeler (yazmaları rastgele karıştırarak sor)
+    const typingEligible = eligibleIndices.filter(idx => {
+      const item = queue[idx];
+      if (item.isBuffer) return false;
+      const target = list.find(i => i.word.id === item.wordId);
+      return target && target.choicePassed && !target.typingPassed;
+    });
+
+    // 3. Öncelik: Tampon (Buffer) kelimeler
+    const bufferEligible = eligibleIndices.filter(idx => queue[idx].isBuffer);
+
+    if (choiceEligible.length > 0) {
+      // Şık soruları arasında rastgele seç (sırayla değil)
+      pickIdx = choiceEligible[Math.floor(Math.random() * choiceEligible.length)];
+    } else if (typingEligible.length > 0) {
+      // Yazma soruları arasında rastgele seç (15'li ilk tur bittiğinde aynı sırayla gelmez!)
+      pickIdx = typingEligible[Math.floor(Math.random() * typingEligible.length)];
+    } else if (bufferEligible.length > 0) {
+      // Tampon kelimeler arasında rastgele seç
+      pickIdx = bufferEligible[Math.floor(Math.random() * bufferEligible.length)];
+    } else {
+      pickIdx = eligibleIndices[Math.floor(Math.random() * eligibleIndices.length)];
+    }
+  }
 
   // Eğer kuyruktaki hiçbir kelime henüz 5 soru aralığı kuralını doldurmadıysa:
-  // Araya kurala uyan bir tampon (buffer) kelime sok!
+  // Araya kurala uyan bir tampon (buffer) kelime sok (rastgele seç)!
   if (pickIdx === -1) {
-    const fallbackBuffer = candidateBuffers.find(w => {
+    const fallbackBuffers = candidateBuffers.filter(w => {
       if (excludeWordId !== null && w.id === excludeWordId) return false;
       if (uncompletedIds.has(w.id)) return false;
       const lastAsked = bufferLastAskedMap.get(w.id);
       return lastAsked === undefined || (currentStep - lastAsked >= minGap);
     });
 
-    if (fallbackBuffer) {
-      queue.push({ wordId: fallbackBuffer.id, isBuffer: true });
+    if (fallbackBuffers.length > 0) {
+      const randomFallback = fallbackBuffers[Math.floor(Math.random() * fallbackBuffers.length)];
+      queue.push({ wordId: randomFallback.id, isBuffer: true });
       pickIdx = queue.length - 1;
     } else {
       // Güvenlik fallback:
-      // 1. Henüz şıkkı çözülmemiş hedef kelime varsa onu seç (asla şık çözülmeden yazma öne geçmesin)
-      let candidateIdx = queue.findIndex(q => {
-        if (excludeWordId !== null && q.wordId === excludeWordId) return false;
-        const target = list.find(i => i.word.id === q.wordId);
-        return target && !target.choicePassed && !target.typingPassed;
-      });
+      // 1. Henüz şıkkı çözülmemiş hedef kelime varsa rastgele seç (asla şık çözülmeden yazma öne geçmesin)
+      const unpassedChoiceIndices = queue
+        .map((q, idx) => ({ q, idx }))
+        .filter(({ q }) => {
+          if (excludeWordId !== null && q.wordId === excludeWordId) return false;
+          const target = list.find(i => i.word.id === q.wordId);
+          return target && !target.choicePassed && !target.typingPassed;
+        })
+        .map(({ idx }) => idx);
 
-      // 2. Eğer yoksa, araya girebilecek herhangi bir aday tampon kelimeyi buffer olarak ekle (tamponlar her zaman şıktır)
-      if (candidateIdx === -1) {
-        const anyBuffer = candidateBuffers.find(w => {
+      if (unpassedChoiceIndices.length > 0) {
+        pickIdx = unpassedChoiceIndices[Math.floor(Math.random() * unpassedChoiceIndices.length)];
+      } else {
+        // 2. Eğer yoksa, araya girebilecek herhangi bir aday tampon kelimeyi rastgele buffer olarak ekle
+        const anyBuffers = candidateBuffers.filter(w => {
           if (excludeWordId !== null && w.id === excludeWordId) return false;
           if (uncompletedIds.has(w.id)) return false;
           return true;
         });
-        if (anyBuffer) {
-          queue.push({ wordId: anyBuffer.id, isBuffer: true });
-          candidateIdx = queue.length - 1;
+        if (anyBuffers.length > 0) {
+          const randomAny = anyBuffers[Math.floor(Math.random() * anyBuffers.length)];
+          queue.push({ wordId: randomAny.id, isBuffer: true });
+          pickIdx = queue.length - 1;
+        } else {
+          // 3. Son çare güvenlik fallback: excludeWordId hariç rastgele eleman
+          const otherIndices = queue
+            .map((_, idx) => idx)
+            .filter(idx => queue[idx].wordId !== excludeWordId);
+          if (otherIndices.length > 0) {
+            pickIdx = otherIndices[Math.floor(Math.random() * otherIndices.length)];
+          } else {
+            pickIdx = 0;
+          }
         }
-      }
-
-      if (candidateIdx !== -1) {
-        pickIdx = candidateIdx;
-      } else {
-        // 3. Son çare güvenlik fallback: excludeWordId hariç ilk eleman
-        pickIdx = queue.findIndex(q => q.wordId !== excludeWordId);
-        if (pickIdx === -1) pickIdx = 0;
       }
     }
   }
@@ -179,7 +232,28 @@ export function syncAndSelectNextQuestion<T extends GenericSessionItem>(params: 
   const pickedItem = queue[pickIdx];
   const nextQueue = [...queue];
   nextQueue.splice(pickIdx, 1);
-  nextQueue.push(pickedItem);
+
+  if (pickedItem.isBuffer) {
+    // Soru olarak sorulan tampon kelimenin yerine havuzdan henüz kuyrukta olmayan YENİ bir tampon kelime ekle
+    // Böylece kullanıcı hep aynı 3 kelimenin döngüsüne hapsolmaz, sürekli farklı öğrendiği kelimeler çıkar!
+    const inNextQueueIds = new Set(nextQueue.map(q => q.wordId));
+    const freshBuffers = candidateBuffers.filter(w =>
+      !inNextQueueIds.has(w.id) &&
+      !uncompletedIds.has(w.id) &&
+      w.id !== pickedItem.wordId
+    );
+
+    if (freshBuffers.length > 0) {
+      const randomFresh = freshBuffers[Math.floor(Math.random() * freshBuffers.length)];
+      nextQueue.push({ wordId: randomFresh.id, isBuffer: true });
+    } else {
+      // Eğer havuzda başka tampon kalmadıysa mecburen mevcut olanı arkaya at
+      nextQueue.push(pickedItem);
+    }
+  } else {
+    // Hedef kelime ise arkaya at (döngü devam etsin)
+    nextQueue.push(pickedItem);
+  }
 
   let chosenWord: Word;
   let questionType: 'choice' | 'typing';

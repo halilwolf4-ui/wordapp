@@ -3,7 +3,7 @@ import { Word, Progress } from '../types';
 export interface PassaparolaQuestion {
   letter: string;
   word: Word;
-  displayWord: string; // "to " removed for verbs, e.g. "associate"
+  displayWord: string; // Full word including infinitive (e.g. "to accelerate")
   state: 'unvisited' | 'current' | 'correct' | 'wrong' | 'pass';
   userAnswer?: string;
 }
@@ -33,7 +33,7 @@ export function generatePassaparolaQuestions(
   for (const letter of PASSAPAROLA_LETTERS) {
     const lLower = letter.toLowerCase();
 
-    // Find all matching candidate words starting with this letter
+    // Find all matching candidate words starting with this letter (excluding 'to ' for letter indexing)
     const candidates = allWords.filter(w => {
       const cleaned = cleanEnglishWord(w.en).toLowerCase();
       return cleaned.startsWith(lLower) && w.tr.trim().length > 0;
@@ -66,7 +66,7 @@ export function generatePassaparolaQuestions(
     questions.push({
       letter,
       word: selected,
-      displayWord: cleanEnglishWord(selected.en),
+      displayWord: selected.en.trim(),
       state: questions.length === 0 ? 'current' : 'unvisited'
     });
   }

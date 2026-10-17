@@ -202,55 +202,52 @@ export const LearnView: React.FC<Props> = ({
     }
   };
 
-  // Tampon / Pekiştirme kelimeleri havuzu
+  // Tampon / Ara Pekiştirme kelimeleri havuzu:
+  // KULLANICI KURALI: Yalnızca kullanıcının halihazırda ÖĞRENDİĞİ (learning veya mastered)
+  // ve o oturumda tamamladığı kelimelerden rastgele seçilir. Asla hiç görmediği sözlük kelimesi çıkamaz!
   const getBufferWords = useCallback((): Word[] => {
-    const result: Word[] = [];
     const addedIds = new Set<number>();
 
     // 1. Bu oturumda zaten tamamlanmış kelimeler
+    const sessionCompleted: Word[] = [];
     sessionList.forEach(item => {
       if (item.typingPassed && !addedIds.has(item.word.id)) {
-        result.push(item.word);
+        sessionCompleted.push(item.word);
         addedIds.add(item.word.id);
       }
     });
 
-    // 2. Geçmişte öğrenilmiş/mastered kelimeler
+    // 2. Geçmişte öğrenilen ('learning') veya pekişen ('mastered') kelimeler
+    const learnedProgressWords: Word[] = [];
     if (allProgress && allProgress.length > 0) {
       allProgress.forEach(p => {
-        if ((!!p.lastReviewDate || p.status === 'mastered' || p.step > 0) && !addedIds.has(p.wordId)) {
+        if ((p.status === 'learning' || p.status === 'mastered') && !addedIds.has(p.wordId)) {
           const w = allWordsMap.get(p.wordId);
           if (w) {
-            result.push(w);
+            learnedProgressWords.push(w);
             addedIds.add(w.id);
           }
         }
       });
     }
 
-    // 3. Sıradaki diğer aday kelimeler
-    if (wordsQueue && wordsQueue.length > 0) {
-      wordsQueue.forEach(w => {
-        if (!addedIds.has(w.id)) {
-          result.push(w);
-          addedIds.add(w.id);
-        }
-      });
-    }
-
-    // 4. Genel sözlük fallback
-    if (result.length < 10 && allWordsMap.size > 0) {
-      for (const w of allWordsMap.values()) {
-        if (!addedIds.has(w.id)) {
-          result.push(w);
-          addedIds.add(w.id);
-          if (result.length >= 15) break;
-        }
+    // 3. Oturumda şıkkı geçilmiş diğer kelimeler (pekiştirme için)
+    const sessionChoicePassed: Word[] = [];
+    sessionList.forEach(item => {
+      if (item.choicePassed && !addedIds.has(item.word.id)) {
+        sessionChoicePassed.push(item.word);
+        addedIds.add(item.word.id);
       }
-    }
+    });
 
-    return result;
-  }, [sessionList, allProgress, wordsQueue, allWordsMap]);
+    const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
+
+    return [
+      ...shuffle(learnedProgressWords),
+      ...shuffle(sessionCompleted),
+      ...shuffle(sessionChoicePassed)
+    ];
+  }, [sessionList, allProgress, allWordsMap]);
 
   // Pick Next Question
   const pickNextQuestion = useCallback(
@@ -349,7 +346,10 @@ export const LearnView: React.FC<Props> = ({
   // Start study with given words
   const startStudy = useCallback(
     (words: Word[]) => {
-      const list: WordSessionState[] = words.map(w => ({
+      // Kelimelerin baştan alfabetik / eklenme sırasıyla gelmemesi için karıştır
+      const shuffledWords = [...words].sort(() => Math.random() - 0.5);
+
+      const list: WordSessionState[] = shuffledWords.map(w => ({
         word: w,
         choicePassed: false,
         typingPassed: false,

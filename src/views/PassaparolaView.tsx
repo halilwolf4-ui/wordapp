@@ -259,7 +259,7 @@ export const PassaparolaView: React.FC<Props> = ({
           </div>
 
           <div className="bg-[#FFE600] border-2 border-black p-2.5 text-[11px] font-black uppercase text-black shadow-[2px_2px_0px_0px_#000]">
-            💡 İPUCU: Fiiller "to" olmadan sorulur. Pas geçtiklerine çark tekrar döner!
+            💡 İPUCU: "to ..." fiilleri kök harfinde sorulur (örn: to accelerate -&gt; A). Pas geçtiklerine çark tekrar döner!
           </div>
 
           <button
@@ -333,8 +333,10 @@ export const PassaparolaView: React.FC<Props> = ({
                 <span className="text-xl font-black text-black">{currentQ.letter}</span>
               </div>
 
-              <div className="flex items-center space-x-1 mt-0.5">
-                <span className="text-base sm:text-lg font-black text-black uppercase tracking-wide truncate max-w-[150px]">
+              <div className="flex items-center justify-center space-x-1 mt-0.5 max-w-[170px]">
+                <span className={`font-black text-black uppercase tracking-wide truncate ${
+                  currentQ.displayWord.length > 13 ? 'text-sm' : 'text-base sm:text-lg'
+                }`}>
                   {currentQ.displayWord}
                 </span>
                 <AudioButton text={currentQ.displayWord} size={15} />

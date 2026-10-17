@@ -177,57 +177,41 @@ export const ReviewView: React.FC<Props> = ({
     return prog?.lastMistake;
   }, [currentQuestion, sessionList, allProgress]);
 
-  // Önceki tekrar edilmiş veya öğrenilmiş kelimeleri topla (Tampon / Pekiştirme havuzu)
+  // Önceki tekrar edilmiş veya öğrenilmiş kelimeleri topla (Tampon / Ara Pekiştirme havuzu)
+  // KULLANICI KURALI: Yalnızca kullanıcının halihazırda ÖĞRENDİĞİ (learning veya mastered)
+  // ve o oturumda tamamladığı kelimelerden rastgele seçilir. Asla hiç görmediği sözlük kelimesi çıkamaz!
   const getPreviouslyReviewedWords = useCallback((): Word[] => {
-    const result: Word[] = [];
     const addedIds = new Set<number>();
 
     // 1. Bu oturumda zaten tamamlanmış kelimeler
+    const sessionCompleted: Word[] = [];
     sessionList.forEach(item => {
       if (item.typingPassed && !addedIds.has(item.word.id)) {
-        result.push(item.word);
+        sessionCompleted.push(item.word);
         addedIds.add(item.word.id);
       }
     });
 
-    // 2. Geçmişte tekrar edilmiş veya pekişmiş (mastered) kelimeler
+    // 2. Geçmişte öğrenilen ('learning') veya pekişen ('mastered') kelimeler
+    const learnedProgressWords: Word[] = [];
     if (allProgress && allProgress.length > 0) {
       allProgress.forEach(p => {
-        if ((!!p.lastReviewDate || p.status === 'mastered' || p.step > 0) && !addedIds.has(p.wordId)) {
+        if ((p.status === 'learning' || p.status === 'mastered') && !addedIds.has(p.wordId)) {
           const w = allWordsMap.get(p.wordId);
           if (w) {
-            result.push(w);
+            learnedProgressWords.push(w);
             addedIds.add(w.id);
           }
         }
       });
     }
 
-    // 3. Yedek havuz: en az bir kere doğru bilinmiş öğrenme aşamasındaki kelimeler
-    if (result.length < 5 && allProgress) {
-      allProgress.forEach(p => {
-        if (p.totalCorrect > 0 && !addedIds.has(p.wordId)) {
-          const w = allWordsMap.get(p.wordId);
-          if (w) {
-            result.push(w);
-            addedIds.add(w.id);
-          }
-        }
-      });
-    }
+    const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
 
-    // 4. Güvenlik fallback: allWordsMap'ten kelimeler (garantili en az 10 kelime)
-    if (result.length < 10 && allWordsMap.size > 0) {
-      for (const w of allWordsMap.values()) {
-        if (!addedIds.has(w.id)) {
-          result.push(w);
-          addedIds.add(w.id);
-          if (result.length >= 15) break;
-        }
-      }
-    }
-
-    return result;
+    return [
+      ...shuffle(learnedProgressWords),
+      ...shuffle(sessionCompleted)
+    ];
   }, [sessionList, allProgress, allWordsMap]);
 
   // Pick Next Question
@@ -291,8 +275,8 @@ export const ReviewView: React.FC<Props> = ({
       poolQueueRef.current = result.nextQueue;
       const chosenWord = result.chosenWord;
       const questionType = result.questionType;
-      const isRefresher = result.isBuffer;
-      const isFiller = false;
+      const isRefresher = false;
+      const isFiller = result.isBuffer;
 
       lastWordIdRef.current = chosenWord.id;
       setCurrentQuestion({ word: chosenWord, type: questionType, isFiller, isRefresher });
@@ -414,7 +398,8 @@ export const ReviewView: React.FC<Props> = ({
         initializedRef.current = true;
         const items: ReviewSessionState[] = [];
         const limit = Math.max(1, dailyReviewLimit || 40);
-        const slice = dueQueue.slice(0, limit);
+        // Tekrar kelimelerinin her gün aynı alfabetik/tarih sırasıyla gelmemesi için karıştır
+        const slice = [...dueQueue.slice(0, limit)].sort(() => Math.random() - 0.5);
 
         slice.forEach((prog) => {
           const w = allWordsMap.get(prog.wordId);
@@ -567,6 +552,8 @@ export const ReviewView: React.FC<Props> = ({
   const handleTypingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!typedInput.trim() || !currentQuestion) return;
+    // Ara pekiştirme kelimeleri asla SRS aşamasını (0/6 sayacı) değiştiremez
+    if (currentQuestion.isFiller || currentQuestion.isRefresher) return;
 
     const targetWord = currentQuestion.word;
     const detailed = checkTurkishAnswerDetailed(typedInput, targetWord.tr);
