@@ -11,7 +11,7 @@ export const APP_VERSION = '1.0.0';
  */
 export async function createBackupData(): Promise<BackupData> {
   const progress = await db.progress.toArray();
-  const customWords = await db.words.filter(w => !!w.isCustom || w.id >= 1000000).toArray();
+  const customWords = await db.words.filter(w => !!w.isCustom || w.id >= 1000000 || !!w.emoji).toArray();
   const settings = (await db.settings.get(1)) || DEFAULT_SETTINGS;
   const profile = (await db.profile.get(1)) || DEFAULT_PROFILE;
   const dailyLogs = await db.dailyLogs.toArray();

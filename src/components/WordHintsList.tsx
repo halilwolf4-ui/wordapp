@@ -79,7 +79,7 @@ export const WordHintsList: React.FC<WordHintsListProps> = ({
       )}
 
       {/* Neo-brutalist hint trigger button */}
-      {canRevealNext && (
+      {canRevealNext && !disabled && (
         <div className="flex justify-center pt-1">
           <button
             type="button"

@@ -4,6 +4,7 @@ import { AudioButton } from '../components/AudioButton';
 import { HighlightedText } from '../components/HighlightedText';
 import { Plus, Search, RotateCcw, CheckCircle, Sparkles, X, Loader2, BookOpen, Wand2, Trash2, Edit2 } from 'lucide-react';
 import { lookupWord } from '../services/dictionaryService';
+import { getWordEmoji } from '../utils/wordEmoji';
 
 interface Props {
   allWords: Word[];
@@ -31,6 +32,7 @@ export const WordListView: React.FC<Props> = ({
   const [newEn, setNewEn] = useState('');
   const [newTr, setNewTr] = useState('');
   const [newIpa, setNewIpa] = useState('');
+  const [newEmoji, setNewEmoji] = useState('');
   const [newExampleEn, setNewExampleEn] = useState('');
   const [newExampleTr, setNewExampleTr] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,6 +50,7 @@ export const WordListView: React.FC<Props> = ({
     setNewEn('');
     setNewTr('');
     setNewIpa('');
+    setNewEmoji('');
     setNewExampleEn('');
     setNewExampleTr('');
     setDictStatus(null);
@@ -63,6 +66,7 @@ export const WordListView: React.FC<Props> = ({
     setNewEn(w.en);
     setNewTr(w.tr);
     setNewIpa(w.ipa || '');
+    setNewEmoji(w.emoji || '');
     setNewExampleEn(w.examples?.[0]?.en || '');
     setNewExampleTr(w.examples?.[0]?.tr || '');
     setDictStatus(null);
@@ -174,6 +178,12 @@ export const WordListView: React.FC<Props> = ({
     return list.slice(0, 100); // paginate / limit to 100 for render speed
   }, [allWords, progressMap, activeFilter, searchTerm]);
 
+  // Akıllı emoji önerisi (formda otomatik öneri olarak sunulur)
+  const suggestedEmoji = useMemo(() => {
+    if (!newEn.trim() && !newTr.trim()) return null;
+    return getWordEmoji({ id: 0, en: newEn.trim(), tr: newTr.trim(), categories: [], examples: [] });
+  }, [newEn, newTr]);
+
   const handleSaveWord = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEn.trim() || !newTr.trim()) return;
@@ -190,6 +200,7 @@ export const WordListView: React.FC<Props> = ({
           en: newEn.trim(),
           tr: newTr.trim(),
           ipa: newIpa.trim() || undefined,
+          emoji: newEmoji.trim() || undefined,
           examples
         });
       } else {
@@ -197,6 +208,7 @@ export const WordListView: React.FC<Props> = ({
           en: newEn.trim(),
           tr: newTr.trim(),
           ipa: newIpa.trim() || undefined,
+          emoji: newEmoji.trim() || undefined,
           examples,
           categories: ['custom'],
           isCustom: true,
@@ -320,6 +332,11 @@ export const WordListView: React.FC<Props> = ({
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-2">
                     <span className="text-xl font-black text-black uppercase tracking-tight">{w.en}</span>
+                    {w.emoji && (
+                      <span className="text-xl select-none" title={`Özel Emoji: ${w.emoji}`}>
+                        {w.emoji}
+                      </span>
+                    )}
                     <AudioButton text={w.en} size={17} />
                     {isCustom && (
                       <span className="px-1.5 py-0.5 bg-[#C084FC] text-black border border-black text-[10px] font-black uppercase shadow-[1px_1px_0px_0px_#000]">
@@ -330,28 +347,26 @@ export const WordListView: React.FC<Props> = ({
 
                   {/* Actions & Status */}
                   <div className="flex items-center space-x-1.5">
-                    {isCustom && (
-                      <div className="flex items-center space-x-1 mr-1">
-                        {onUpdateCustomWord && (
-                          <button
-                            onClick={() => handleOpenEditModal(w)}
-                            className="p-1.5 bg-white border border-black hover:bg-[#FFE600] text-black active:scale-95 shadow-[1px_1px_0px_0px_#000]"
-                            title="Kelimeyi düzenle"
-                          >
-                            <Edit2 size={13} strokeWidth={2.5} />
-                          </button>
-                        )}
-                        {onDeleteCustomWord && (
-                          <button
-                            onClick={() => onDeleteCustomWord(w.id)}
-                            className="p-1.5 bg-white border border-black hover:bg-[#FF5588] text-black active:scale-95 shadow-[1px_1px_0px_0px_#000]"
-                            title="Özel kelimeyi sil"
-                          >
-                            <Trash2 size={13} strokeWidth={2.5} />
-                          </button>
-                        )}
-                      </div>
-                    )}
+                    <div className="flex items-center space-x-1 mr-1">
+                      {onUpdateCustomWord && (
+                        <button
+                          onClick={() => handleOpenEditModal(w)}
+                          className="p-1.5 bg-white border border-black hover:bg-[#FFE600] text-black active:scale-95 shadow-[1px_1px_0px_0px_#000]"
+                          title="Kelimeyi ve emojisini düzenle"
+                        >
+                          <Edit2 size={13} strokeWidth={2.5} />
+                        </button>
+                      )}
+                      {isCustom && onDeleteCustomWord && (
+                        <button
+                          onClick={() => onDeleteCustomWord(w.id)}
+                          className="p-1.5 bg-white border border-black hover:bg-[#FF5588] text-black active:scale-95 shadow-[1px_1px_0px_0px_#000]"
+                          title="Özel kelimeyi sil"
+                        >
+                          <Trash2 size={13} strokeWidth={2.5} />
+                        </button>
+                      )}
+                    </div>
 
                     {/* Status Indicator / Action */}
                     {isMastered ? (
@@ -495,6 +510,43 @@ export const WordListView: React.FC<Props> = ({
                   placeholder="örn: dirençli, dayanıklı"
                   className="w-full px-3.5 py-2.5 bg-white border-2 border-black text-black font-bold focus:outline-none focus:bg-[#FFFBEB] shadow-[2px_2px_0px_0px_#000]"
                 />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-black text-black uppercase">
+                    ÖZEL EMOJİ (1-3 ADET EMOJİ)
+                  </label>
+                  {suggestedEmoji && (
+                    <button
+                      type="button"
+                      onClick={() => setNewEmoji(suggestedEmoji)}
+                      className="flex items-center space-x-1 text-[11px] font-black uppercase text-black bg-[#BBF7D0] border border-black px-2 py-0.5 shadow-[1px_1px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5"
+                      title="Sistemin önerdiği emojiyi tek tıkla ekle"
+                    >
+                      <span>ÖNERİ:</span>
+                      <span className="text-sm">{suggestedEmoji}</span>
+                      <span className="text-[10px] text-zinc-600">(EKLE)</span>
+                    </button>
+                  )}
+                </div>
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    value={newEmoji}
+                    onChange={(e) => setNewEmoji(e.target.value.slice(0, 10))}
+                    placeholder="örn: 👴👵 veya ⏳ veya 💡"
+                    className="w-full px-3.5 py-2.5 bg-white border-2 border-black text-black text-base font-bold focus:outline-none focus:bg-[#FFFBEB] shadow-[2px_2px_0px_0px_#000]"
+                  />
+                  {newEmoji && (
+                    <div className="absolute right-3 text-xl select-none pointer-events-none">
+                      {newEmoji}
+                    </div>
+                  )}
+                </div>
+                <p className="text-[11px] text-zinc-500 font-bold mt-1">
+                  Yanlış yapıldığında İngilizce kelimenin yanında hatırlatıcı görsel olarak çıkar (2-3 emoji ekleyebilirsin).
+                </p>
               </div>
 
               <div>

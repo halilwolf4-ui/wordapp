@@ -8,6 +8,7 @@ export interface Word {
   en: string;
   ipa?: string;
   tr: string;
+  emoji?: string;
   examples: WordExample[];
   categories: string[];
   isCustom?: boolean;

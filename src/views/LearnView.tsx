@@ -27,6 +27,7 @@ import { QuizOptionButton } from '../components/QuizOptionButton';
 import { WordHintsList } from '../components/WordHintsList';
 import { getWordHints, prefetchHints, getMaxAllowedHints, WordHint } from '../services/hintService';
 import { syncAndSelectNextQuestion, PoolQueueItem, MIN_QUESTION_GAP } from '../utils/sessionQueue';
+import { getWordEmoji, formatCorrectAnswer } from '../utils/wordEmoji';
 
 interface Props {
   wordsQueue: Word[];
@@ -192,6 +193,11 @@ export const LearnView: React.FC<Props> = ({
     const prog = allProgress?.find(p => p.wordId === currentQuestion.word.id);
     return prog?.lastMistake;
   }, [currentQuestion, sessionList, allProgress]);
+
+  // Aktif kelime için semantik / alakalı emoji
+  const currentWordEmoji = useMemo(() => {
+    return getWordEmoji(currentQuestion?.word);
+  }, [currentQuestion?.word]);
 
   // Helper to persist discovery basket
   const saveBasket = (basket: Word[]) => {
@@ -1146,18 +1152,59 @@ export const LearnView: React.FC<Props> = ({
                 </div>
               )}
 
-              <div className="flex items-center justify-center space-x-2.5 pt-1">
-                <h2 className="text-3xl sm:text-4xl font-black text-black dark:text-white uppercase tracking-tight">{currentQuestion.word.en}</h2>
-                <AudioButton text={currentQuestion.word.en} size={22} />
+              {/* Word & Inline Correct Answer Fusion Block */}
+              <div
+                className={`transition-all ${
+                  inlineFeedback?.status === 'wrong'
+                    ? 'border-[3px] border-black bg-white dark:bg-[#1E1E26] shadow-[4px_4px_0px_0px_#000] overflow-hidden'
+                    : ''
+                }`}
+              >
+                {/* English Word */}
+                <div className={inlineFeedback?.status === 'wrong' ? 'py-3.5 px-3' : 'pt-1'}>
+                  <div className="flex items-center justify-center space-x-2.5">
+                    <h2 className="text-3xl sm:text-4xl font-black text-black dark:text-white uppercase tracking-tight break-words">
+                      {currentQuestion.word.en}
+                    </h2>
+                    {inlineFeedback?.status === 'wrong' && currentWordEmoji && (
+                      <span
+                        className="text-2xl sm:text-3xl animate-fadeIn filter drop-shadow-[2px_2px_0px_#000] select-none"
+                        title={currentWordEmoji}
+                      >
+                        {currentWordEmoji}
+                      </span>
+                    )}
+                    <AudioButton text={currentQuestion.word.en} size={22} />
+                  </div>
+                  {currentQuestion.word.ipa && (
+                    <div className="mt-1">
+                      <p className="text-xs sm:text-sm font-mono font-bold bg-[#E5E0D8] text-black inline-block px-2 py-0.5 border border-black">
+                        {currentQuestion.word.ipa}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Turkish Meaning - Directly Unified under English Word */}
+                {inlineFeedback?.status === 'wrong' && (
+                  <div className="bg-[#FF5588] border-t-[3px] border-black p-3 sm:p-3.5 text-center animate-fadeIn">
+                    <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-black/85 block">
+                      {inlineFeedback.isNear ? '⚡ ÇOK YAKLAŞTIN! TAM DOĞRU ANLAM:' : 'DOĞRU TÜRKÇE KARŞILIĞI:'}
+                    </span>
+                    <span className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black block mt-0.5 break-words">
+                      {formatCorrectAnswer(inlineFeedback.correctAnswer)}
+                    </span>
+                    {inlineFeedback.nearExplanation && (
+                      <span className="text-xs font-bold mt-1 text-black bg-white px-2 py-0.5 border border-black inline-block">
+                        {inlineFeedback.nearExplanation}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
-              {currentQuestion.word.ipa && (
-                <p className="text-xs sm:text-sm font-mono font-bold bg-[#E5E0D8] text-black inline-block px-2 py-0.5 border border-black">
-                  {currentQuestion.word.ipa}
-                </p>
-              )}
 
               {/* Daha önce sandığı kelime / eski hata uyarısı (Ünlem İşaretli) */}
-              {activeLastMistake && (
+              {activeLastMistake && inlineFeedback?.status !== 'wrong' && (
                 <div className="pt-1 flex justify-center animate-fadeIn">
                   <div className="inline-flex items-center space-x-2 px-3 py-1.5 bg-[#FFF1F2] border-2 border-black text-[#BE123C] text-xs font-black shadow-[2px_2px_0px_0px_#000]">
                     <span className="w-5 h-5 bg-[#FF5588] text-white border border-black flex items-center justify-center font-black text-xs">
@@ -1200,6 +1247,18 @@ export const LearnView: React.FC<Props> = ({
                     />
                   );
                 })}
+
+                {inlineFeedback?.status === 'wrong' && (
+                  <button
+                    type="button"
+                    autoFocus
+                    onClick={handleAdvanceManually}
+                    className="w-full py-3.5 bg-black text-[#FFE600] active:translate-x-[2px] active:translate-y-[2px] border-2 border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_#FFE600] active:shadow-none transition-all flex items-center justify-center space-x-2 animate-fadeIn"
+                  >
+                    <span>DİĞER KELİMEYE GEÇ</span>
+                    <ArrowRight size={18} strokeWidth={3} />
+                  </button>
+                )}
               </div>
             )}
 
@@ -1251,35 +1310,6 @@ export const LearnView: React.FC<Props> = ({
                   </button>
                 )}
               </form>
-            )}
-
-            {/* INLINE WRONG FEEDBACK BANNER */}
-            {inlineFeedback?.status === 'wrong' && (
-              <div className="pt-1 animate-fadeIn">
-                <div className="bg-[#FF5588] border-3 border-black p-3.5 flex items-center justify-between text-black shadow-[3px_3px_0px_0px_#000]">
-                  <div className="space-y-0.5 pr-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider block">
-                      {inlineFeedback.isNear ? '⚡ ÇOK YAKLAŞTIN! TAM DOĞRU ANLAM:' : 'YANLIŞ! DOĞRU ANLAM:'}
-                    </span>
-                    <span className="text-base font-black uppercase leading-tight">
-                      {inlineFeedback.correctAnswer}
-                    </span>
-                    {inlineFeedback.nearExplanation && (
-                      <span className="text-xs font-bold block mt-1 text-black bg-white/90 px-1.5 py-0.5 border border-black inline-block">
-                        {inlineFeedback.nearExplanation}
-                      </span>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={handleAdvanceManually}
-                    className="shrink-0 flex items-center space-x-1 bg-black text-white font-black text-xs px-3.5 py-2 border-2 border-black shadow-[2px_2px_0px_0px_#FFE600] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none uppercase"
-                  >
-                    <span>GEÇ</span>
-                    <ArrowRight size={14} strokeWidth={3} />
-                  </button>
-                </div>
-              </div>
             )}
           </div>
         </div>
