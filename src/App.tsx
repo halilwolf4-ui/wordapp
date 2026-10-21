@@ -697,15 +697,17 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-black flex flex-col selection:bg-[#FFE600] selection:text-black">
-      {/* 7-Day Backup Reminder */}
-      <BackupReminderBanner
-        lastBackupDate={settings.lastBackupDate}
-        onBackupCompleted={loadData}
-      />
+    <div className="min-h-screen min-h-[100dvh] bg-[#FDFBF7] text-black flex flex-col selection:bg-[#FFE600] selection:text-black">
+      {/* 7-Day Backup Reminder - Only on Home tab, never during active tests */}
+      {currentTab === 'home' && !isKeyboardVisible && !isSpeedRoundOpen && !isPassaparolaOpen && !isClozeTestOpen && (
+        <BackupReminderBanner
+          lastBackupDate={settings.lastBackupDate}
+          onBackupCompleted={loadData}
+        />
+      )}
 
-      {/* Sticky Top Header */}
-      {!isKeyboardVisible && (
+      {/* Sticky Top Header - Hidden during active learning, review, overlays, or keyboard typing */}
+      {!isKeyboardVisible && currentTab !== 'learn' && currentTab !== 'review' && !isSpeedRoundOpen && !isPassaparolaOpen && !isClozeTestOpen && (
         <Header
           profile={profile}
           isDark={settings.theme === 'dark'}
@@ -718,8 +720,10 @@ export const App: React.FC = () => {
       )}
 
       {/* Main Container */}
-      <main className={`flex-1 max-w-md w-full mx-auto px-3.5 pt-3 ${
-        currentTab === 'home' && !isKeyboardVisible ? 'pb-24' : 'pb-4'
+      <main className={`flex-1 max-w-md w-full mx-auto ${
+        (currentTab === 'learn' || currentTab === 'review')
+          ? 'px-2.5 sm:px-3.5 pt-1 sm:pt-2 pb-2 flex flex-col justify-start'
+          : currentTab === 'home' && !isKeyboardVisible ? 'px-3.5 pt-3 pb-24' : 'px-3.5 pt-3 pb-4'
       }`}>
         {/* PWA Install Banner (Tam Ekran Uygulama Olarak Yükle) */}
         {currentTab === 'home' && !isKeyboardVisible && <InstallPromptBanner />}

@@ -13,7 +13,8 @@ import {
   Keyboard,
   CheckCircle2,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Flame
 } from 'lucide-react';
 import { speakEnglish } from '../services/speech';
 
@@ -859,48 +860,55 @@ export const ReviewView: React.FC<Props> = ({
   const uncompletedCount = sessionList.filter(i => !i.typingPassed).length;
 
   return (
-    <div className="space-y-4 pb-24 pt-2 select-none text-black">
+    <div className="space-y-2 select-none text-black w-full pb-2">
       {/* Top Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <button
           onClick={onClose}
-          className="p-2 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] text-black hover:bg-[#FFE600] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
+          className="p-1.5 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] text-black hover:bg-[#FFE600] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all shrink-0"
           title="Geri"
         >
-          <ArrowLeft size={18} strokeWidth={3} />
+          <ArrowLeft size={16} strokeWidth={3} />
         </button>
 
-        <div className="flex-1 mx-3">
-          <div className="flex justify-between items-center text-xs mb-1 font-black">
-            <span className="flex items-center space-x-1.5 flex-wrap">
+        {profile && profile.streak > 0 && (
+          <div className="flex items-center space-x-1 bg-white border-2 border-black px-2 py-0.5 text-black font-black text-xs shadow-[2px_2px_0px_0px_#000] shrink-0">
+            <Flame size={12} className="text-[#FF5722] fill-[#FF5722]" />
+            <span>{profile.streak} GÜN</span>
+          </div>
+        )}
+
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-center text-[11px] mb-0.5 font-black">
+            <span className="flex items-center space-x-1 flex-wrap truncate">
               <span className="uppercase text-black">
                 {currentQuestion?.isRefresher
                   ? '🔄 KOLAY TEKRAR'
                   : currentQuestion?.isFiller
-                  ? '🔄 ARA PEKİŞTİRME'
+                  ? '🔄 PEKİŞTİRME'
                   : currentQuestion?.type === 'choice'
                   ? 'ŞIKLI TEKRAR'
                   : 'KLAVYEYLE YAZ'}
               </span>
               {isExtraReview && (
-                <span className="text-[10px] bg-[#00F0FF] text-black font-black px-1.5 py-0.5 border border-black shadow-[1px_1px_0px_0px_#000]">
-                  ⚡ EKSTRA TEKRAR
+                <span className="text-[9px] bg-[#00F0FF] text-black font-black px-1 py-0.5 border border-black shadow-[1px_1px_0px_0px_#000]">
+                  ⚡ EKSTRA
                 </span>
               )}
               {currentQuestion?.type === 'typing' && (
-                <Keyboard size={13} strokeWidth={2.5} className="text-black inline" />
+                <Keyboard size={12} strokeWidth={2.5} className="text-black inline" />
               )}
               {uncompletedCount <= 4 && uncompletedCount > 0 && (
-                <span className="text-[10px] bg-[#FFE600] text-black font-black px-1.5 py-0.5 border border-black">
-                  🎯 {uncompletedCount} KALDI
+                <span className="text-[9px] bg-[#FFE600] text-black font-black px-1 py-0.5 border border-black">
+                  🎯 {uncompletedCount}
                 </span>
               )}
             </span>
-            <span className="font-mono bg-[#C084FC] text-black px-1 border border-black">
+            <span className="font-mono bg-[#C084FC] text-black px-1 border border-black shrink-0">
               {fullyReviewedCount}/{sessionTarget}
             </span>
           </div>
-          <div className="h-3.5 bg-white border-2 border-black overflow-hidden shadow-[2px_2px_0px_0px_#000]">
+          <div className="h-2.5 bg-white border-2 border-black overflow-hidden shadow-[1.5px_1.5px_0px_0px_#000]">
             <div
               className="h-full bg-black transition-all duration-300"
               style={{ width: `${Math.min(100, (fullyReviewedCount / Math.max(1, sessionTarget)) * 100)}%` }}
@@ -909,7 +917,7 @@ export const ReviewView: React.FC<Props> = ({
         </div>
 
         {combo >= 2 && (
-          <div className="flex items-center space-x-1 px-2.5 py-1 bg-[#FF69B4] border-2 border-black text-black text-xs font-black shadow-[2px_2px_0px_0px_#000]">
+          <div className="flex items-center space-x-1 px-2 py-0.5 bg-[#FF69B4] border-2 border-black text-black text-xs font-black shadow-[2px_2px_0px_0px_#000] shrink-0">
             <span>🔥 {combo}X</span>
           </div>
         )}
@@ -917,9 +925,15 @@ export const ReviewView: React.FC<Props> = ({
 
       {/* QUESTION CARD */}
       {phase === 'study' && currentQuestion && (
-        <div className="space-y-4">
+        <div className="space-y-2.5">
           <div
-            className={`bg-white border-4 border-black p-5 sm:p-6 shadow-[6px_6px_0px_0px_#000] space-y-4 sm:space-y-5 transition-all relative ${
+            className={`bg-white border-2 sm:border-[3px] border-black ${
+              currentQuestion.type === 'typing'
+                ? 'p-3 sm:p-4 space-y-2'
+                : inlineFeedback?.status === 'wrong'
+                ? 'p-3.5 sm:p-4 space-y-2 sm:space-y-2.5'
+                : 'p-4 sm:p-5 space-y-3 sm:space-y-4'
+            } shadow-[4px_4px_0px_0px_#000] transition-all relative ${
               inlineFeedback?.status === 'correct'
                 ? 'bg-[#F0FDF4]'
                 : inlineFeedback?.status === 'wrong'
@@ -927,32 +941,32 @@ export const ReviewView: React.FC<Props> = ({
                 : 'bg-white'
             }`}
           >
-            <div className="text-center space-y-2">
-              <div className="flex items-center justify-center space-x-1.5 text-xs font-black tracking-wide text-black">
+            <div className="text-center space-y-1.5 sm:space-y-2">
+              <div className="flex items-center justify-center gap-1.5 flex-wrap text-xs font-black tracking-wide text-black">
                 {currentQuestion.isRefresher ? (
-                  <span className="bg-[#FEF08A] border border-black px-2 py-0.5 uppercase flex items-center space-x-1">
+                  <span className="bg-[#FEF08A] border border-black px-2.5 py-0.5 uppercase flex items-center space-x-1 shadow-[1px_1px_0px_0px_#000]">
                     <RotateCcw size={12} strokeWidth={3} />
                     <span>KOLAY HATIRLATMA</span>
                   </span>
                 ) : currentQuestion.isFiller ? (
                   isCurrentMastered ? (
-                    <span className="bg-[#BBF7D0] text-black border border-black px-2 py-0.5 uppercase flex items-center space-x-1">
+                    <span className="bg-[#BBF7D0] text-black border border-black px-2.5 py-0.5 uppercase flex items-center space-x-1 shadow-[1px_1px_0px_0px_#000]">
                       <Sparkles size={12} strokeWidth={3} />
-                      <span>6/6 HATIRLATMA PEKİŞTİRMESİ</span>
+                      <span>6/6 HATIRLATMA</span>
                     </span>
                   ) : (
-                    <span className="bg-[#FFE600] border border-black px-2 py-0.5 uppercase flex items-center space-x-1">
+                    <span className="bg-[#FFE600] border border-black px-2.5 py-0.5 uppercase flex items-center space-x-1 shadow-[1px_1px_0px_0px_#000]">
                       <RefreshCw size={12} strokeWidth={3} />
                       <span>ARA PEKİŞTİRME</span>
                     </span>
                   )
                 ) : currentQuestion.type === 'typing' ? (
-                  <span className="bg-[#00F0FF] border border-black px-2 py-0.5 uppercase flex items-center space-x-1">
+                  <span className="bg-[#00F0FF] border border-black px-2.5 py-0.5 uppercase flex items-center space-x-1 shadow-[1px_1px_0px_0px_#000]">
                     <Keyboard size={12} strokeWidth={3} />
                     <span>KLAVYEYLE TÜRKÇESİNİ YAZ</span>
                   </span>
                 ) : (
-                  <span className="bg-[#FFE600] border border-black px-2 py-0.5 uppercase">
+                  <span className="bg-[#FFE600] border border-black px-2.5 py-0.5 uppercase shadow-[1px_1px_0px_0px_#000]">
                     DOĞRU TÜRKÇE ANLAMI SEÇ
                   </span>
                 )}
@@ -962,12 +976,12 @@ export const ReviewView: React.FC<Props> = ({
               <div
                 className={`transition-all ${
                   inlineFeedback?.status === 'wrong'
-                    ? 'border-[3px] border-black bg-white dark:bg-[#1E1E26] shadow-[4px_4px_0px_0px_#000] overflow-hidden'
+                    ? 'border-2 border-black bg-white dark:bg-[#1E1E26] shadow-[3px_3px_0px_0px_#000] overflow-hidden'
                     : ''
                 }`}
               >
                 {/* English Word */}
-                <div className={inlineFeedback?.status === 'wrong' ? 'py-3.5 px-3' : 'pt-1'}>
+                <div className={inlineFeedback?.status === 'wrong' ? 'py-1.5 px-2' : 'pt-0.5'}>
                   <div className="flex items-center justify-center space-x-2.5">
                     <h2 className="text-3xl sm:text-4xl font-black text-black dark:text-white uppercase tracking-tight break-words">
                       {currentQuestion.word.en}
@@ -984,7 +998,7 @@ export const ReviewView: React.FC<Props> = ({
                   </div>
                   {currentQuestion.word.ipa && (
                     <div className="mt-1">
-                      <p className="text-xs sm:text-sm font-mono font-bold bg-[#E5E0D8] text-black inline-block px-2 py-0.5 border border-black">
+                      <p className="text-xs font-mono font-bold bg-[#E5E0D8] text-black inline-block px-2 py-0.5 border border-black">
                         {currentQuestion.word.ipa}
                       </p>
                     </div>
@@ -993,11 +1007,11 @@ export const ReviewView: React.FC<Props> = ({
 
                 {/* Turkish Meaning - Directly Unified under English Word */}
                 {inlineFeedback?.status === 'wrong' && (
-                  <div className="bg-[#FF5588] border-t-[3px] border-black p-3 sm:p-3.5 text-center animate-fadeIn">
-                    <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-black/85 block">
+                  <div className="bg-[#FF5588] border-t-2 border-black p-2.5 sm:p-3 text-center animate-fadeIn">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-black/85 block">
                       {inlineFeedback.isNear ? '⚡ ÇOK YAKLAŞTIN! TAM DOĞRU ANLAM:' : 'DOĞRU TÜRKÇE KARŞILIĞI:'}
                     </span>
-                    <span className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black block mt-0.5 break-words">
+                    <span className="text-lg sm:text-xl font-black uppercase tracking-tight text-black block mt-0.5 break-words">
                       {formatCorrectAnswer(inlineFeedback.correctAnswer)}
                     </span>
                     {inlineFeedback.nearExplanation && (
@@ -1011,10 +1025,10 @@ export const ReviewView: React.FC<Props> = ({
 
               {/* Daha önce sandığı kelime / eski hata uyarısı (Ünlem İşaretli) */}
               {activeLastMistake && inlineFeedback?.status !== 'wrong' && (
-                <div className="pt-1 flex justify-center animate-fadeIn">
-                  <div className="inline-flex items-center space-x-2 px-3 py-1.5 bg-[#FFF1F2] border-2 border-black text-[#BE123C] text-xs font-black shadow-[2px_2px_0px_0px_#000]">
-                    <span className="w-5 h-5 bg-[#FF5588] text-white border border-black flex items-center justify-center font-black text-xs">
-                      <AlertCircle size={13} strokeWidth={3} />
+                <div className="pt-0.5 flex justify-center animate-fadeIn">
+                  <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-[#FFF1F2] border-2 border-black text-[#BE123C] text-xs font-black shadow-[2px_2px_0px_0px_#000]">
+                    <span className="w-4 h-4 bg-[#FF5588] text-white border border-black flex items-center justify-center font-black text-[10px]">
+                      <AlertCircle size={11} strokeWidth={3} />
                     </span>
                     <span>
                       Daha önce sandığın: <strong className="underline decoration-2">"{activeLastMistake}"</strong> (Aynı hatayı yapma!)
@@ -1035,7 +1049,7 @@ export const ReviewView: React.FC<Props> = ({
 
             {/* A) Choice Mode with QuizOptionButton */}
             {currentQuestion.type === 'choice' && (
-              <div className="space-y-3">
+              <div className={inlineFeedback !== null ? "space-y-1.5 sm:space-y-2" : "space-y-2.5 sm:space-y-3"}>
                 {choiceOptions.map((opt, idx) => {
                   const isSelected = selectedChoice === opt;
                   const isThisCorrect = checkTurkishAnswer(opt, currentQuestion.word.tr);
@@ -1059,10 +1073,10 @@ export const ReviewView: React.FC<Props> = ({
                     type="button"
                     autoFocus
                     onClick={handleAdvanceManually}
-                    className="w-full py-3.5 bg-black text-[#FFE600] active:translate-x-[2px] active:translate-y-[2px] border-2 border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_#FFE600] active:shadow-none transition-all flex items-center justify-center space-x-2 animate-fadeIn"
+                    className="w-full py-3 bg-black text-[#FFE600] active:translate-x-[1px] active:translate-y-[1px] border-2 border-black font-black uppercase text-xs sm:text-sm shadow-[3px_3px_0px_0px_#FFE600] active:shadow-none transition-all flex items-center justify-center space-x-2 animate-fadeIn"
                   >
                     <span>DİĞER KELİMEYE GEÇ</span>
-                    <ArrowRight size={18} strokeWidth={3} />
+                    <ArrowRight size={16} strokeWidth={3} />
                   </button>
                 )}
               </div>
@@ -1079,17 +1093,20 @@ export const ReviewView: React.FC<Props> = ({
                     handleTypingSubmit(e);
                   }
                 }}
-                className="space-y-3"
+                className="space-y-2"
               >
                 <input
                   ref={typingInputRef}
                   type="text"
                   autoFocus
+                  onFocus={(e) => {
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  }}
                   disabled={inlineFeedback !== null}
                   value={typedInput}
                   onChange={(e) => setTypedInput(e.target.value)}
                   placeholder="Türkçe anlamını buraya yaz..."
-                  className={`w-full py-3.5 px-4 bg-white dark:bg-[#1E1E26] border-[3px] border-black text-black dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 text-center text-lg sm:text-xl font-black tracking-wide focus:outline-none focus:bg-[#FFFBEB] dark:focus:bg-[#252530] transition-all shadow-[3px_3px_0px_0px_#000] ${
+                  className={`w-full py-2.5 sm:py-3 px-3.5 bg-white dark:bg-[#1E1E26] border-2 border-black text-black dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 text-center text-base sm:text-lg font-black tracking-wide focus:outline-none focus:bg-[#FFFBEB] dark:focus:bg-[#252530] transition-all shadow-[2px_2px_0px_0px_#000] ${
                     inlineFeedback?.status === 'wrong'
                       ? 'border-[#FF5588] bg-[#FFE4E6] dark:bg-[#3B1520] animate-wrong-shake'
                       : ''
@@ -1101,16 +1118,16 @@ export const ReviewView: React.FC<Props> = ({
                     type="button"
                     autoFocus
                     onClick={handleAdvanceManually}
-                    className="w-full py-3.5 bg-black text-[#FFE600] active:translate-x-[2px] active:translate-y-[2px] border-2 border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_#FFE600] active:shadow-none transition-all flex items-center justify-center space-x-2"
+                    className="w-full py-2.5 sm:py-3 bg-black text-[#FFE600] active:translate-x-[1px] active:translate-y-[1px] border-2 border-black font-black uppercase text-xs sm:text-sm shadow-[3px_3px_0px_0px_#FFE600] active:shadow-none transition-all flex items-center justify-center space-x-2"
                   >
                     <span>DİĞER KELİMEYE GEÇ</span>
-                    <ArrowRight size={18} strokeWidth={3} />
+                    <ArrowRight size={16} strokeWidth={3} />
                   </button>
                 ) : (
                   <button
                     type="submit"
                     disabled={!typedInput.trim()}
-                    className="w-full py-3.5 bg-[#4ADE80] text-black active:translate-x-[2px] active:translate-y-[2px] disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:text-zinc-500 dark:disabled:text-zinc-500 disabled:shadow-none disabled:cursor-not-allowed border-[3px] border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_#000] active:shadow-none transition-all"
+                    className="w-full py-2.5 sm:py-3 bg-[#4ADE80] text-black active:translate-x-[1px] active:translate-y-[1px] disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:text-zinc-500 dark:disabled:text-zinc-500 disabled:shadow-none disabled:cursor-not-allowed border-2 border-black font-black uppercase text-xs sm:text-sm shadow-[3px_3px_0px_0px_#000] active:shadow-none transition-all"
                   >
                     ONAYLA
                   </button>
