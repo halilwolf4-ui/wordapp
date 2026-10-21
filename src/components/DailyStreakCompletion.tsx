@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, DailyLog } from '../types';
-import { Check, Gift, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Check, Gift, ChevronLeft, ChevronRight, X, Sparkles } from 'lucide-react';
 import { parseDate, formatDate } from '../services/dateUtils';
 import { fireStreakCelebration } from './Confetti';
 
@@ -10,6 +10,8 @@ interface Props {
   todayStr: string;
   earnedFreeze?: boolean;
   onClose: () => void;
+  onStartExtraReview?: () => void;
+  isExtraCompleted?: boolean;
 }
 
 const STREAK_BADGES = [
@@ -28,7 +30,9 @@ export const DailyStreakCompletion: React.FC<Props> = ({
   dailyLogs,
   todayStr,
   earnedFreeze,
-  onClose
+  onClose,
+  onStartExtraReview,
+  isExtraCompleted
 }) => {
   const [badgePage, setBadgePage] = useState(0);
   const itemsPerPage = 4;
@@ -98,14 +102,18 @@ export const DailyStreakCompletion: React.FC<Props> = ({
 
       {/* 1. Header: Streak Counter */}
       <div className="pt-2 text-center space-y-1.5">
-        <div className="inline-block bg-[#FFE600] border-2 border-black px-4 py-1.5 shadow-[3px_3px_0px_0px_#000] rotate-[-1deg]">
+        <div className={`inline-block border-2 border-black px-4 py-1.5 shadow-[3px_3px_0px_0px_#000] rotate-[-1deg] ${
+          isExtraCompleted ? 'bg-[#00F0FF]' : 'bg-[#FFE600]'
+        }`}>
           <h2 className="text-2xl sm:text-3xl font-black text-black flex items-center justify-center space-x-2 uppercase tracking-tight">
-            <span>{profile.streak} GÜNLÜK SERİ!</span>
-            <span className="text-xl">🔥</span>
+            <span>{isExtraCompleted ? 'EKSTRA TEKRAR BİTTİ!' : `${profile.streak} GÜNLÜK SERİ!`}</span>
+            <span className="text-xl">{isExtraCompleted ? '⚡' : '🔥'}</span>
           </h2>
         </div>
         <p className="text-xs font-bold text-zinc-800 uppercase tracking-wide">
-          TEBRİKLER! BUGÜNKÜ GÖREVİNİ BAŞARIYLA TAMAMLADIN.
+          {isExtraCompleted
+            ? 'ÖĞRENDİĞİN TÜM KELİMELERİ PEKİŞTİRDİN. SERİN VE AŞAMALARIN KORUNDU!'
+            : 'TEBRİKLER! BUGÜNKÜ GÖREVİNİ BAŞARIYLA TAMAMLADIN.'}
         </p>
       </div>
 
@@ -235,13 +243,22 @@ export const DailyStreakCompletion: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* 5. Action Button */}
-      <div className="pt-2">
+      {/* 5. Action Buttons */}
+      <div className="pt-2 space-y-2.5">
+        {onStartExtraReview && (
+          <button
+            onClick={onStartExtraReview}
+            className="w-full py-3.5 bg-[#00F0FF] hover:bg-[#5ce1e6] text-black active:translate-x-[2px] active:translate-y-[2px] font-black uppercase tracking-wider text-sm border-2 border-black shadow-[4px_4px_0px_0px_#000] active:shadow-none transition-all flex items-center justify-center space-x-2"
+          >
+            <Sparkles size={18} strokeWidth={2.5} />
+            <span>{isExtraCompleted ? 'YENİDEN EKSTRA TEKRAR YAP' : 'EKSTRA TEKRAR YAP'}</span>
+          </button>
+        )}
         <button
           onClick={onClose}
-          className="w-full py-3.5 bg-black text-[#FFE600] hover:bg-zinc-900 active:translate-x-[2px] active:translate-y-[2px] font-black uppercase tracking-wider text-sm border-2 border-black shadow-[4px_4px_0px_0px_#FFE600] active:shadow-none transition-all flex items-center justify-center space-x-2"
+          className="w-full py-3 bg-black text-[#FFE600] hover:bg-zinc-900 active:translate-x-[2px] active:translate-y-[2px] font-black uppercase tracking-wider text-xs border-2 border-black shadow-[3px_3px_0px_0px_#FFE600] active:shadow-none transition-all flex items-center justify-center space-x-2"
         >
-          <span>DEVAM ET</span>
+          <span>{onStartExtraReview ? 'ANA SAYFAYA DÖN' : 'DEVAM ET'}</span>
         </button>
       </div>
     </div>

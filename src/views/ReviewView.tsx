@@ -35,6 +35,7 @@ interface Props {
   todayStr?: string;
   onReviewAnswer: (wordId: number, isCorrect: boolean, isPartial: boolean, lastMistake?: string) => Promise<void>;
   onRecordMistake?: (wordId: number, mistake: string) => Promise<void>;
+  onDemoteMasteredWord?: (wordId: number, mistake?: string) => Promise<void>;
   onSessionCompleted?: () => Promise<{ earnedFreeze: boolean }>;
   onClose: () => void;
   onRefreshDue: () => void;
@@ -80,11 +81,15 @@ export const ReviewView: React.FC<Props> = ({
   todayStr,
   onReviewAnswer,
   onRecordMistake,
+  onDemoteMasteredWord,
   onSessionCompleted,
   onClose,
   onRefreshDue
 }) => {
   const [earnedFreeze, setEarnedFreeze] = useState(false);
+  const [isExtraReview, setIsExtraReview] = useState(false);
+  const isExtraReviewRef = useRef(false);
+  const [isExtraCompleted, setIsExtraCompleted] = useState(false);
   const [sessionList, setSessionList] = useState<ReviewSessionState[]>([]);
   const [sessionTarget, setSessionTarget] = useState(1);
   const [globalStep, setGlobalStep] = useState(0);
@@ -140,6 +145,7 @@ export const ReviewView: React.FC<Props> = ({
     queue: PoolQueueItem[] = poolQueueRef.current,
     target: number = sessionTarget
   ) => {
+    if (isExtraReviewRef.current) return;
     const uncompleted = list.filter(i => !i.typingPassed);
     const fullyReviewed = list.filter(i => i.typingPassed).length;
     if (fullyReviewed >= target || uncompleted.length === 0) {
@@ -183,9 +189,15 @@ export const ReviewView: React.FC<Props> = ({
     return getWordEmoji(currentQuestion?.word);
   }, [currentQuestion?.word]);
 
+  // Aktif kelime halihazırda 6/6 (mastered) mı kontrolü
+  const isCurrentMastered = useMemo(() => {
+    if (!currentQuestion) return false;
+    const prog = allProgress?.find(p => p.wordId === currentQuestion.word.id);
+    return prog?.status === 'mastered';
+  }, [currentQuestion, allProgress]);
+
   // Önceki tekrar edilmiş veya öğrenilmiş kelimeleri topla (Tampon / Ara Pekiştirme havuzu)
-  // KULLANICI KURALI: Yalnızca kullanıcının halihazırda ÖĞRENDİĞİ (learning veya mastered)
-  // ve o oturumda tamamladığı kelimelerden rastgele seçilir. Asla hiç görmediği sözlük kelimesi çıkamaz!
+  // KULLANICI KURALI: 4'ten az kelime kalınca araya öğrenilenler ve daha önce 6/6 yapılmış (mastered) kelimeler harmanlanarak girer.
   const getPreviouslyReviewedWords = useCallback((): Word[] => {
     const addedIds = new Set<number>();
 
@@ -198,14 +210,21 @@ export const ReviewView: React.FC<Props> = ({
       }
     });
 
-    // 2. Geçmişte öğrenilen ('learning') veya pekişen ('mastered') kelimeler
-    const learnedProgressWords: Word[] = [];
+    // 2. Daha önce 6/6 yapılmış (pekişen / 'mastered') kelimeler
+    const masteredWords: Word[] = [];
+    // 3. Halen öğrenilmekte olan ('learning') kelimeler
+    const learningWords: Word[] = [];
+
     if (allProgress && allProgress.length > 0) {
       allProgress.forEach(p => {
-        if ((p.status === 'learning' || p.status === 'mastered') && !addedIds.has(p.wordId)) {
+        if (!addedIds.has(p.wordId)) {
           const w = allWordsMap.get(p.wordId);
           if (w) {
-            learnedProgressWords.push(w);
+            if (p.status === 'mastered') {
+              masteredWords.push(w);
+            } else if (p.status === 'learning') {
+              learningWords.push(w);
+            }
             addedIds.add(w.id);
           }
         }
@@ -214,10 +233,18 @@ export const ReviewView: React.FC<Props> = ({
 
     const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
 
-    return [
-      ...shuffle(learnedProgressWords),
-      ...shuffle(sessionCompleted)
-    ];
+    const shuffledMastered = shuffle(masteredWords);
+    const shuffledOthers = shuffle([...sessionCompleted, ...learningWords]);
+
+    // Mastered (6/6) kelimelerin ara pekiştirmede düzenli aralıklarla gelmesi için harmanla
+    const mixed: Word[] = [];
+    const maxLen = Math.max(shuffledMastered.length, shuffledOthers.length);
+    for (let i = 0; i < maxLen; i++) {
+      if (i < shuffledMastered.length) mixed.push(shuffledMastered[i]);
+      if (i < shuffledOthers.length) mixed.push(shuffledOthers[i]);
+    }
+
+    return mixed.length > 0 ? mixed : shuffle([...masteredWords, ...learningWords, ...sessionCompleted]);
   }, [sessionList, allProgress, allWordsMap]);
 
   // Pick Next Question
@@ -239,14 +266,19 @@ export const ReviewView: React.FC<Props> = ({
       // 1. Hedef sayıya ulaşıldıysa veya tüm kelimeler bittiyse oturumu tamamla
       if (fullyReviewed >= targetCount || uncompleted.length === 0) {
         poolQueueRef.current = [];
-        localStorage.removeItem(STORAGE_REVIEW_SESSION);
-        if (todayStr) {
-          localStorage.setItem('kelime_avi_review_completed_' + todayStr, 'true');
+        if (!isExtraReviewRef.current) {
+          localStorage.removeItem(STORAGE_REVIEW_SESSION);
+          if (todayStr) {
+            localStorage.setItem('kelime_avi_review_completed_' + todayStr, 'true');
+          }
         }
         setPhase('summary');
+        if (isExtraReviewRef.current) {
+          setIsExtraCompleted(true);
+        }
         sound.playLevelUp();
         fireCelebration();
-        if (onSessionCompleted) {
+        if (!isExtraReviewRef.current && onSessionCompleted) {
           onSessionCompleted().then(res => {
             if (res?.earnedFreeze) setEarnedFreeze(true);
           });
@@ -273,8 +305,13 @@ export const ReviewView: React.FC<Props> = ({
 
       if (!result) {
         poolQueueRef.current = [];
-        localStorage.removeItem(STORAGE_REVIEW_SESSION);
+        if (!isExtraReviewRef.current) {
+          localStorage.removeItem(STORAGE_REVIEW_SESSION);
+        }
         setPhase('summary');
+        if (isExtraReviewRef.current) {
+          setIsExtraCompleted(true);
+        }
         return;
       }
 
@@ -439,6 +476,75 @@ export const ReviewView: React.FC<Props> = ({
     }
   }, [dueQueue, allWordsMap, allProgress, dailyReviewLimit, pickNextQuestion, todayStr, dailyLogs]);
 
+  // Ekstra Tekrar Başlat: O an öğrenilen ve pekişen tüm kelimelerden pratik havuzu oluştur
+  // 0/6 SRS aşaması ilerlemez, seri bozulmaz
+  const startExtraReview = useCallback(() => {
+    const learnedWords: Word[] = [];
+    const seenIds = new Set<number>();
+
+    if (allProgress && allProgress.length > 0) {
+      allProgress.forEach(p => {
+        if ((p.status === 'learning' || p.status === 'mastered') && !seenIds.has(p.wordId)) {
+          const w = allWordsMap.get(p.wordId);
+          if (w) {
+            learnedWords.push(w);
+            seenIds.add(w.id);
+          }
+        }
+      });
+    }
+
+    let pool = learnedWords;
+    if (pool.length === 0) {
+      pool = Array.from(allWordsMap.values());
+    }
+
+    if (pool.length === 0) return;
+
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const limit = Math.max(1, dailyReviewLimit || 40);
+    const selectedWords = shuffled.slice(0, Math.min(shuffled.length, limit));
+
+    const items: ReviewSessionState[] = selectedWords.map(w => {
+      const prog = allProgress?.find(p => p.wordId === w.id) || {
+        wordId: w.id,
+        step: 0,
+        streakDays: 0,
+        dueDate: todayStr || '',
+        status: 'learning' as const,
+        lapses: 0,
+        totalCorrect: 0,
+        totalWrong: 0,
+        updatedAt: Date.now()
+      };
+      return {
+        progress: prog,
+        word: w,
+        choicePassed: false,
+        typingPassed: false,
+        failedAny: false,
+        choicePassedAtStep: null,
+        lastAskedStep: null,
+        lastMistake: prog.lastMistake
+      };
+    });
+
+    const target = items.length;
+    isExtraReviewRef.current = true;
+    setIsExtraReview(true);
+    setIsExtraCompleted(false);
+    setSessionTarget(target);
+    setSessionList(items);
+    setPhase('study');
+    setCombo(0);
+    setGlobalStep(1);
+    lastWordIdRef.current = null;
+    poolQueueRef.current = [];
+    bufferLastAskedRef.current.clear();
+    prefetchHints(items.map(i => i.word), Array.from(allWordsMap.values()));
+    pickNextQuestion(items, 1, null, target);
+  }, [allProgress, allWordsMap, dailyReviewLimit, pickNextQuestion, todayStr]);
+
   // Reveal next English hint (Eş anlamlı / Benzer anlamlı / Zıt anlamlı)
   const handleRevealNextHint = () => {
     if (!currentQuestion) return;
@@ -525,11 +631,17 @@ export const ReviewView: React.FC<Props> = ({
             : item
         );
         setSessionList(updatedList);
-        if (onRecordMistake) {
+        if (!isExtraReviewRef.current && onRecordMistake) {
           onRecordMistake(targetWord.id, chosenMistake);
         }
       } else {
         bufferLastAskedRef.current.set(targetWord.id, globalStep);
+
+        // KULLANICI KURALI: Eğer kullanıcı şıklı olarak yanlış bilirse 6/6 yaptığı kelimeyi 5/6 ya düşsün (öğrenilenler kısmına düşer)
+        const prog = allProgress?.find(p => p.wordId === targetWord.id);
+        if (prog?.status === 'mastered' && onDemoteMasteredWord) {
+          onDemoteMasteredWord(targetWord.id, chosenMistake);
+        }
       }
 
       // Increment wrong count for hints logic
@@ -549,7 +661,16 @@ export const ReviewView: React.FC<Props> = ({
         return updated;
       });
 
-      setInlineFeedback({ status: 'wrong', correctAnswer: targetWord.tr });
+      const prog = allProgress?.find(p => p.wordId === targetWord.id);
+      const wasDemoted = isRefresherOrFiller && prog?.status === 'mastered';
+
+      setInlineFeedback({
+        status: 'wrong',
+        correctAnswer: targetWord.tr,
+        nearExplanation: wasDemoted
+          ? '⚠️ 6/6 seviyesinden 5/6 seviyesine düşürüldü (Öğrenilenler havuzuna geri alındı).'
+          : undefined
+      });
       // Kullanıcı "Geç" butonuna basınca ilerler
     }
   };
@@ -578,7 +699,10 @@ export const ReviewView: React.FC<Props> = ({
       );
       setSessionList(updatedList);
 
-      await onReviewAnswer(targetWord.id, !hadFailed, false);
+      // Ekstra tekrarda SRS (0/6) aşaması ilerletilmez ve kullanıcının serisi bozulmaz
+      if (!isExtraReviewRef.current) {
+        await onReviewAnswer(targetWord.id, !hadFailed, false);
+      }
 
       setInlineFeedback({ status: 'correct', correctAnswer: targetWord.tr });
 
@@ -608,7 +732,7 @@ export const ReviewView: React.FC<Props> = ({
       );
       setSessionList(updatedList);
 
-      if (onRecordMistake) {
+      if (!isExtraReviewRef.current && onRecordMistake) {
         onRecordMistake(targetWord.id, typedMistake);
       }
 
@@ -654,12 +778,24 @@ export const ReviewView: React.FC<Props> = ({
         <p className="text-slate-400 text-sm mb-6">
           Şu an tekrar edilecek bekleyen kelimen bulunmuyor.
         </p>
-        <button
-          onClick={onClose}
-          className="px-6 py-2.5 bg-black text-[#FFE600] font-black uppercase border-2 border-black shadow-[3px_3px_0px_0px_#FFE600] active:translate-x-0.5 active:translate-y-0.5"
-        >
-          ANA SAYFAYA DÖN
-        </button>
+        <div className="space-y-3 w-full max-w-xs">
+          <button
+            onClick={startExtraReview}
+            className="w-full py-3.5 bg-[#00F0FF] hover:bg-[#5ce1e6] active:translate-x-[2px] active:translate-y-[2px] border-2 border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_#000] active:shadow-none flex items-center justify-center space-x-2 transition-all text-black"
+          >
+            <Sparkles size={18} strokeWidth={2.5} />
+            <span>EKSTRA TEKRAR YAP</span>
+          </button>
+          <button
+            onClick={() => {
+              onRefreshDue();
+              onClose();
+            }}
+            className="w-full py-2.5 bg-black text-[#FFE600] font-black uppercase border-2 border-black shadow-[3px_3px_0px_0px_#FFE600] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+          >
+            ANA SAYFAYA DÖN
+          </button>
+        </div>
       </div>
     );
   }
@@ -674,6 +810,8 @@ export const ReviewView: React.FC<Props> = ({
           todayStr={todayStr}
           earnedFreeze={earnedFreeze}
           onClose={onClose}
+          onStartExtraReview={startExtraReview}
+          isExtraCompleted={isExtraCompleted}
         />
       );
     }
@@ -685,29 +823,30 @@ export const ReviewView: React.FC<Props> = ({
         </div>
         <div className="space-y-2">
           <div className="inline-block bg-[#FFE600] border-2 border-black px-3 py-1 shadow-[3px_3px_0px_0px_#000]">
-            <h2 className="text-2xl sm:text-3xl font-black text-black uppercase">{sessionTarget} TEKRAR TAMAMLANDI!</h2>
+            <h2 className="text-2xl sm:text-3xl font-black text-black uppercase">
+              {isExtraCompleted ? 'EKSTRA TEKRAR TAMAMLANDI!' : `${sessionTarget} TEKRAR TAMAMLANDI!`}
+            </h2>
           </div>
           <p className="text-zinc-800 font-bold text-xs max-w-xs mx-auto">
-            Günün tekrarlarını önce şıklarla, ardından klavyeyle yazarak başarıyla tazeledin.
+            {isExtraCompleted
+              ? 'Öğrendiğin tüm kelimeleri ekstra pratik yaparak tazeledin. Serin ve aşamaların korundu!'
+              : 'Günün tekrarlarını önce şıklarla, ardından klavyeyle yazarak başarıyla tazeledin.'}
           </p>
         </div>
 
         <div className="space-y-3 pt-2 max-w-sm mx-auto">
-          {!(todayStr && localStorage.getItem('kelime_avi_review_completed_' + todayStr) === 'true') && (
-            <button
-              onClick={() => {
-                initializedRef.current = false;
-                poolQueueRef.current = [];
-                onRefreshDue();
-              }}
-              className="w-full py-4 bg-black text-[#FFE600] hover:bg-zinc-800 active:translate-x-[2px] active:translate-y-[2px] border-2 border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_#FFE600] active:shadow-none flex items-center justify-center space-x-2 transition-all"
-            >
-              <RotateCcw size={18} strokeWidth={3} />
-              <span>BİR TUR DAHA TEKRAR ET</span>
-            </button>
-          )}
           <button
-            onClick={onClose}
+            onClick={startExtraReview}
+            className="w-full py-4 bg-[#00F0FF] hover:bg-[#5ce1e6] active:translate-x-[2px] active:translate-y-[2px] border-2 border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_#000] active:shadow-none flex items-center justify-center space-x-2 transition-all"
+          >
+            <Sparkles size={18} strokeWidth={2.5} />
+            <span>{isExtraCompleted ? 'YENİDEN EKSTRA TEKRAR YAP' : 'EKSTRA TEKRAR YAP'}</span>
+          </button>
+          <button
+            onClick={() => {
+              onRefreshDue();
+              onClose();
+            }}
             className="w-full py-3.5 bg-white text-black hover:bg-zinc-100 active:translate-x-[2px] active:translate-y-[2px] border-2 border-black font-black uppercase text-sm shadow-[3px_3px_0px_0px_#000] active:shadow-none transition-all"
           >
             ANA SAYFAYA DÖN
@@ -743,6 +882,11 @@ export const ReviewView: React.FC<Props> = ({
                   ? 'ŞIKLI TEKRAR'
                   : 'KLAVYEYLE YAZ'}
               </span>
+              {isExtraReview && (
+                <span className="text-[10px] bg-[#00F0FF] text-black font-black px-1.5 py-0.5 border border-black shadow-[1px_1px_0px_0px_#000]">
+                  ⚡ EKSTRA TEKRAR
+                </span>
+              )}
               {currentQuestion?.type === 'typing' && (
                 <Keyboard size={13} strokeWidth={2.5} className="text-black inline" />
               )}
@@ -791,10 +935,17 @@ export const ReviewView: React.FC<Props> = ({
                     <span>KOLAY HATIRLATMA</span>
                   </span>
                 ) : currentQuestion.isFiller ? (
-                  <span className="bg-[#FFE600] border border-black px-2 py-0.5 uppercase flex items-center space-x-1">
-                    <RefreshCw size={12} strokeWidth={3} />
-                    <span>ARA PEKİŞTİRME</span>
-                  </span>
+                  isCurrentMastered ? (
+                    <span className="bg-[#BBF7D0] text-black border border-black px-2 py-0.5 uppercase flex items-center space-x-1">
+                      <Sparkles size={12} strokeWidth={3} />
+                      <span>6/6 HATIRLATMA PEKİŞTİRMESİ</span>
+                    </span>
+                  ) : (
+                    <span className="bg-[#FFE600] border border-black px-2 py-0.5 uppercase flex items-center space-x-1">
+                      <RefreshCw size={12} strokeWidth={3} />
+                      <span>ARA PEKİŞTİRME</span>
+                    </span>
+                  )
                 ) : currentQuestion.type === 'typing' ? (
                   <span className="bg-[#00F0FF] border border-black px-2 py-0.5 uppercase flex items-center space-x-1">
                     <Keyboard size={12} strokeWidth={3} />

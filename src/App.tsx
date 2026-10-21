@@ -586,6 +586,26 @@ export const App: React.FC = () => {
     alert('Kelime tekrar havuzuna geri alındı!');
   };
 
+  // Demote a mastered (6/6) word to 5/6 (step: 4, status: 'learning') when failed in review buffer check
+  const handleDemoteMasteredWord = async (wordId: number, mistake?: string) => {
+    const existing = await db.progress.get(wordId);
+    if (!existing || existing.status !== 'mastered') return;
+
+    const demoted: Progress = {
+      ...existing,
+      status: 'learning',
+      step: 4, // 5/6 seviyesi (0-indexed step 4 -> ADIM 5/6 olarak görünür)
+      dueDate: today,
+      lastMistake: mistake ? mistake.trim() : existing.lastMistake,
+      totalWrong: (existing.totalWrong || 0) + 1,
+      lapses: (existing.lapses || 0) + 1,
+      updatedAt: Date.now()
+    };
+
+    await db.progress.put(demoted);
+    setAllProgress(prev => prev.map(p => p.wordId === wordId ? demoted : p));
+  };
+
   // Update Settings
   const handleUpdateSettings = async (patch: Partial<UserSettings>) => {
     const updated = { ...settings, ...patch };
@@ -806,6 +826,7 @@ export const App: React.FC = () => {
                 todayStr={today}
                 onReviewAnswer={handleReviewWordAnswer}
                 onRecordMistake={handleRecordMistake}
+                onDemoteMasteredWord={handleDemoteMasteredWord}
                 onSessionCompleted={handleSessionCompleted}
                 onClose={() => setCurrentTab('home')}
                 onRefreshDue={loadData}

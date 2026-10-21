@@ -82,10 +82,9 @@ export function syncAndSelectNextQuestion<T extends GenericSessionItem>(params: 
   // Eğer uncompleted sayısı < 5 ise en az 5 elemana tamamlayacak kadar buffer ekle
   if (uncompCount < 5) {
     const neededBuffers = 5 - uncompCount;
-    // Buffer adaylarını karıştırarak seç (her zaman baştaki aynı kelime gelmesin)
+    // Buffer adaylarını sırasını koruyarak seç (önceden harmanlanmış düzeni korur)
     const availableBuffers = candidateBuffers
-      .filter(w => !existingQueueIds.has(w.id) && !uncompletedIds.has(w.id))
-      .sort(() => Math.random() - 0.5);
+      .filter(w => !existingQueueIds.has(w.id) && !uncompletedIds.has(w.id));
 
     for (const w of availableBuffers) {
       const currentBufferCount = queue.filter(q => q.isBuffer).length;
@@ -244,8 +243,8 @@ export function syncAndSelectNextQuestion<T extends GenericSessionItem>(params: 
     );
 
     if (freshBuffers.length > 0) {
-      const randomFresh = freshBuffers[Math.floor(Math.random() * freshBuffers.length)];
-      nextQueue.push({ wordId: randomFresh.id, isBuffer: true });
+      const nextFresh = freshBuffers[0];
+      nextQueue.push({ wordId: nextFresh.id, isBuffer: true });
     } else {
       // Eğer havuzda başka tampon kalmadıysa mecburen mevcut olanı arkaya at
       nextQueue.push(pickedItem);
