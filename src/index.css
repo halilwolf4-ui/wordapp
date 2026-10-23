@@ -6,6 +6,7 @@
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 12px);
   }
+
   .pt-safe {
     padding-top: env(safe-area-inset-top, 12px);
   }
@@ -15,12 +16,14 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-html, body {
+html,
+body {
   overscroll-behavior-y: none;
   height: 100%;
   background-color: #FDFBF7;
@@ -41,19 +44,18 @@ html, body {
 }
 
 .brutal-stripes {
-  background: repeating-linear-gradient(
-    -45deg,
-    #000000,
-    #000000 10px,
-    #FFE600 10px,
-    #FFE600 20px
-  );
+  background: repeating-linear-gradient(-45deg,
+      #000000,
+      #000000 10px,
+      #FFE600 10px,
+      #FFE600 20px);
 }
 
 /* Tactile Brutalist Click Effect */
 .brutal-press {
   transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
+
 .brutal-press:active {
   transform: translate(3px, 3px) !important;
   box-shadow: 1px 1px 0px #000000 !important;
@@ -66,18 +68,41 @@ html, body {
 
 /* Modern Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes scaleUp {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes pulseGlow {
-  0%, 100% { opacity: 0.8; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.04); }
+
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
 }
 
 /* Choice Selection Correct Pop Animation */
@@ -85,9 +110,11 @@ html, body {
   0% {
     transform: scale(0.96);
   }
+
   40% {
     transform: scale(1.03);
   }
+
   100% {
     transform: scale(1);
   }
@@ -95,21 +122,28 @@ html, body {
 
 /* Choice Selection Wrong Shake Animation */
 @keyframes wrongShake {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateX(0);
   }
+
   15% {
     transform: translateX(-7px);
   }
+
   30% {
     transform: translateX(6px);
   }
+
   45% {
     transform: translateX(-5px);
   }
+
   60% {
     transform: translateX(4px);
   }
+
   75% {
     transform: translateX(-2px);
   }
@@ -121,13 +155,16 @@ html, body {
     transform: scale(0) rotate(-20deg);
     opacity: 0;
   }
+
   60% {
     transform: scale(1.35) rotate(6deg);
     opacity: 1;
   }
+
   80% {
     transform: scale(0.92) rotate(-2deg);
   }
+
   100% {
     transform: scale(1) rotate(0);
     opacity: 1;
@@ -140,10 +177,12 @@ html, body {
     transform: scale(0) rotate(20deg);
     opacity: 0;
   }
+
   60% {
     transform: scale(1.25) rotate(-6deg);
     opacity: 1;
   }
+
   100% {
     transform: scale(1) rotate(0);
     opacity: 1;
@@ -152,10 +191,13 @@ html, body {
 
 /* Guiding Pulse Beacon (for true correct answer when user clicked wrong) */
 @keyframes beaconPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
     border-color: rgba(16, 185, 129, 0.7);
   }
+
   50% {
     box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
     border-color: rgba(16, 185, 129, 1);
@@ -167,6 +209,7 @@ html, body {
     transform: scale(0.8);
     opacity: 1;
   }
+
   100% {
     transform: scale(2);
     opacity: 0;
@@ -304,8 +347,9 @@ html.dark .bg-zinc-100 {
 /* Subtitle and muted text on dark surfaces */
 html.dark .text-zinc-600,
 html.dark .text-zinc-700,
-html.dark .text-zinc-800 {
-  color: #A1A1AA !important;
+html.dark .text-zinc-800,
+html.dark .text-zinc-900 {
+  color: #F4F4F5 !important;
 }
 
 /* ========================================================
@@ -319,6 +363,7 @@ html.dark .text-black {
 .circular-progress-stroke {
   color: #000000;
 }
+
 html.dark .circular-progress-stroke {
   color: var(--brutal-dark-accent, #FFE600) !important;
 }
@@ -448,6 +493,7 @@ html.dark .bg-black {
   background-color: #000000 !important;
   color: #FFFFFF !important;
 }
+
 html.dark .bg-black * {
   color: #FFFFFF !important;
 }
@@ -464,13 +510,16 @@ html.dark header .header-pill {
   color: #FFFFFF !important;
   border-color: #000000 !important;
 }
+
 html.dark header .header-pill * {
   color: #FFFFFF !important;
 }
+
 html.dark header .header-pill .flame-icon {
   color: #FF5722 !important;
   fill: #FF5722 !important;
 }
+
 html.dark header .header-pill [data-sun-icon] {
   color: #FFE600 !important;
   fill: #FFE600 !important;
@@ -485,6 +534,7 @@ html.dark nav {
 html.dark nav button {
   color: #D4D4D8 !important;
 }
+
 html.dark nav button:hover {
   color: #FFFFFF !important;
 }
@@ -508,6 +558,7 @@ html.dark .nav-active-tab {
   background-color: var(--brutal-dark-accent, #FFE600) !important;
   color: #000000 !important;
 }
+
 html.dark .nav-active-tab * {
   color: #000000 !important;
 }
@@ -516,21 +567,27 @@ html.dark .nav-active-tab * {
 html.dark .shadow-\[1px_1px_0px_0px_\#000\] {
   box-shadow: 1px 1px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
 }
+
 html.dark .shadow-\[2px_2px_0px_0px_\#000\] {
   box-shadow: 2px 2px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
 }
+
 html.dark .shadow-\[3px_3px_0px_0px_\#000\] {
   box-shadow: 3px 3px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
 }
+
 html.dark .shadow-\[4px_4px_0px_0px_\#000\] {
   box-shadow: 4px 4px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
 }
+
 html.dark .shadow-\[5px_5px_0px_0px_\#000\] {
   box-shadow: 5px 5px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
 }
+
 html.dark .shadow-\[6px_6px_0px_0px_\#000\] {
   box-shadow: 6px 6px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
 }
+
 html.dark .shadow-\[8px_8px_0px_0px_\#000\] {
   box-shadow: 8px 8px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
 }

@@ -21,6 +21,7 @@ import { SettingsView } from './views/SettingsView';
 import { SpeedRoundView } from './views/SpeedRoundView';
 import { PassaparolaView } from './views/PassaparolaView';
 import { ClozeTestView } from './views/ClozeTestView';
+import { YdsYokdilView } from './views/YdsYokdilView';
 
 export const App: React.FC = () => {
   // Initialization state
@@ -42,6 +43,7 @@ export const App: React.FC = () => {
   const [isSpeedRoundOpen, setIsSpeedRoundOpen] = useState(false);
   const [isPassaparolaOpen, setIsPassaparolaOpen] = useState(false);
   const [isClozeTestOpen, setIsClozeTestOpen] = useState(false);
+  const [isYdsYokdilOpen, setIsYdsYokdilOpen] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   // Keyboard awareness listener
@@ -699,7 +701,7 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen min-h-[100dvh] bg-[#FDFBF7] text-black flex flex-col selection:bg-[#FFE600] selection:text-black">
       {/* 7-Day Backup Reminder - Only on Home tab, never during active tests */}
-      {currentTab === 'home' && !isKeyboardVisible && !isSpeedRoundOpen && !isPassaparolaOpen && !isClozeTestOpen && (
+      {currentTab === 'home' && !isKeyboardVisible && !isSpeedRoundOpen && !isPassaparolaOpen && !isClozeTestOpen && !isYdsYokdilOpen && (
         <BackupReminderBanner
           lastBackupDate={settings.lastBackupDate}
           onBackupCompleted={loadData}
@@ -707,7 +709,7 @@ export const App: React.FC = () => {
       )}
 
       {/* Sticky Top Header - Hidden during active learning, review, overlays, or keyboard typing */}
-      {!isKeyboardVisible && currentTab !== 'learn' && currentTab !== 'review' && !isSpeedRoundOpen && !isPassaparolaOpen && !isClozeTestOpen && (
+      {!isKeyboardVisible && currentTab !== 'learn' && currentTab !== 'review' && !isSpeedRoundOpen && !isPassaparolaOpen && !isClozeTestOpen && !isYdsYokdilOpen && (
         <Header
           profile={profile}
           isDark={settings.theme === 'dark'}
@@ -758,6 +760,19 @@ export const App: React.FC = () => {
             }}
             onClose={() => setIsPassaparolaOpen(false)}
           />
+        ) : isYdsYokdilOpen ? (
+          <YdsYokdilView
+            allWords={allWords}
+            onAddXp={async (amount) => {
+              const newXp = profile.xp + amount;
+              const newLevel = calculateLevel(newXp);
+              const updatedProf = { ...profile, xp: newXp, level: newLevel };
+              await db.profile.put(updatedProf);
+              setProfile(updatedProf);
+            }}
+            onAddCustomWord={handleAddCustomWord}
+            onClose={() => setIsYdsYokdilOpen(false)}
+          />
         ) : isClozeTestOpen ? (
           <ClozeTestView
             dueQueue={dueQueue}
@@ -797,6 +812,7 @@ export const App: React.FC = () => {
                 onStartSpeedRound={() => setIsSpeedRoundOpen(true)}
                 onStartPassaparola={() => setIsPassaparolaOpen(true)}
                 onStartClozeTest={() => setIsClozeTestOpen(true)}
+                onStartYdsYokdil={() => setIsYdsYokdilOpen(true)}
               />
             </div>
 

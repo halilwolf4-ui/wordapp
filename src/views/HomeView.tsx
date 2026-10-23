@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Sparkles, Repeat, CheckCircle2, BookOpen, Flame, Zap } from 'lucide-react';
+import { Play, Sparkles, Repeat, CheckCircle2, BookOpen, Flame, Zap, GraduationCap } from 'lucide-react';
 import { UserProfile, UserSettings } from '../types';
 
 interface Props {
@@ -20,6 +20,7 @@ interface Props {
   onStartSpeedRound: () => void;
   onStartPassaparola: () => void;
   onStartClozeTest: () => void;
+  onStartYdsYokdil: () => void;
 }
 
 export const HomeView: React.FC<Props> = ({
@@ -38,7 +39,8 @@ export const HomeView: React.FC<Props> = ({
   onStartLearn,
   onStartSpeedRound,
   onStartPassaparola,
-  onStartClozeTest
+  onStartClozeTest,
+  onStartYdsYokdil
 }) => {
   // Goal ring percentage
   const goalPercent = Math.min(100, Math.round((todayCorrect / Math.max(1, dailyGoal)) * 100));
@@ -244,6 +246,32 @@ export const HomeView: React.FC<Props> = ({
           </div>
         </button>
       </div>
+
+      {/* YDS - YÖKDİL Card */}
+      <button
+        onClick={onStartYdsYokdil}
+        className="bg-[#00F0FF] border-[3px] border-black p-3.5 text-left transition-all active:translate-x-[2px] active:translate-y-[2px] shadow-[4px_4px_0px_0px_#000] active:shadow-[1px_1px_0px_0px_#000] group flex items-center justify-between"
+      >
+        <div className="flex items-center space-x-3 min-w-0">
+          <div className="w-9 h-9 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center justify-center text-black shrink-0">
+            <GraduationCap size={20} strokeWidth={2.5} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center space-x-2">
+              <h4 className="text-xs sm:text-sm font-black uppercase text-black tracking-tight">YDS - YÖKDİL</h4>
+              <span className="text-[10px] font-black px-2 py-0.5 bg-black text-[#FFE600] uppercase border border-black tracking-wider">
+                FEN & SOSYAL
+              </span>
+            </div>
+            <p className="text-[11px] font-bold text-zinc-900 mt-0.5 truncate">
+              Çıkmış Sorular • Tıkla-Öğren Kelime Yakalama
+            </p>
+          </div>
+        </div>
+        <div className="w-7 h-7 bg-white border-2 border-black text-black flex items-center justify-center shadow-[1.5px_1.5px_0px_0px_#000] shrink-0 ml-2 group-hover:bg-black group-hover:text-white transition-colors">
+          <Play size={11} className="fill-current ml-0.5" />
+        </div>
+      </button>
 
       {/* Cloze Test Card */}
       <button

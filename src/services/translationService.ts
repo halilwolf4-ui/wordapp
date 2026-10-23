@@ -69,6 +69,30 @@ export async function getSentenceTranslation(
     return memoryCache.get(fullText)!;
   }
 
+  // 1. Try Google Translate API (instant, high quota, natural results)
+  try {
+    const gUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=tr&dt=t&q=${encodeURIComponent(fullText)}`;
+    const gRes = await fetch(gUrl);
+    if (gRes.ok) {
+      const gData = await gRes.json();
+      if (Array.isArray(gData) && Array.isArray(gData[0])) {
+        const translated = gData[0]
+          .map((item: unknown) => (Array.isArray(item) ? item[0] : ''))
+          .filter(Boolean)
+          .join('')
+          .trim();
+        if (translated) {
+          memoryCache.set(fullText, translated);
+          saveCacheToStorage();
+          return translated;
+        }
+      }
+    }
+  } catch (gErr) {
+    console.warn('Google Translate sentence fetch error:', gErr);
+  }
+
+  // 2. Fallback to MyMemory API
   try {
     const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(fullText)}&langpair=en|tr`;
     const res = await fetch(url);
