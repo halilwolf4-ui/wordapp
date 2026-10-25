@@ -177,13 +177,35 @@ export function selectDailyNewWordsQueue(
 ): Word[] {
   const categorySet = new Set(enabledCategories);
 
-  // Words that have no progress yet or status == 'new'
-  const availableWords = allWords.filter(w => {
-    if (existingProgressWordIds.has(w.id)) return false;
-    // Word must belong to at least one enabled category or be custom / reword
+  // Set of all English words that already have progress (learned, learning, mastered)
+  const existingProgressEns = new Set<string>();
+  for (const w of allWords) {
+    if (existingProgressWordIds.has(w.id)) {
+      const enKey = (w.en || '').trim().toLowerCase();
+      if (enKey) existingProgressEns.add(enKey);
+    }
+  }
+
+  // Filter available words:
+  // - Must not have progress by ID or by English word text
+  // - Must belong to enabled categories or be custom/reword
+  // - Deduplicate by English word so the same word never appears twice in the queue
+  const seenEnsInQueue = new Set<string>();
+  const availableWords: Word[] = [];
+
+  for (const w of allWords) {
+    if (existingProgressWordIds.has(w.id)) continue;
+    const cleanEn = (w.en || '').trim().toLowerCase();
+    if (!cleanEn) continue;
+    if (existingProgressEns.has(cleanEn)) continue;
+    if (seenEnsInQueue.has(cleanEn)) continue;
+
     const hasCategory = w.categories && w.categories.some(c => categorySet.has(c));
-    return hasCategory || w.isCustom || w.categories.includes('custom') || !!w.reword;
-  });
+    if (hasCategory || w.isCustom || w.categories?.includes('custom') || !!w.reword) {
+      seenEnsInQueue.add(cleanEn);
+      availableWords.push(w);
+    }
+  }
 
   // Sort by custom priority: User custom (0) -> Reword words (1) -> Dictionary words (2)
   availableWords.sort((a, b) => {

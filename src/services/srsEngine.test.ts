@@ -143,4 +143,30 @@ describe('SRS Repetition Engine', () => {
     const morning = new Date(2026, 9, 8, 4, 1, 0);
     expect(getEffectiveDate(morning)).toBe('2026-10-08');
   });
+
+  it('prevents duplicate English words in selectDailyNewWordsQueue and excludes already learned words by English text', () => {
+    const allWords: Word[] = [
+      { id: 1, en: 'dismiss', tr: 'reddetmek', examples: [], categories: ['top100'] },
+      { id: 2, en: 'dismiss', tr: 'kovmak', examples: [], categories: ['top100'] },
+      { id: 3, en: 'happy', tr: 'mutlu', examples: [], categories: ['top100'] },
+      { id: 4, en: 'happy', tr: 'mesut', examples: [], categories: ['custom'], isCustom: true },
+      { id: 5, en: 'brave', tr: 'cesur', examples: [], categories: ['top100'] }
+    ];
+
+    // Suppose user already learned id: 3 ('happy')
+    const existingProgressWordIds = new Set([3]);
+
+    const queue = selectDailyNewWordsQueue(allWords, existingProgressWordIds, ['top100', 'custom'], 10, true);
+
+    // 'dismiss' should only appear once
+    const dismissMatches = queue.filter(w => w.en.toLowerCase() === 'dismiss');
+    expect(dismissMatches.length).toBe(1);
+
+    // 'happy' should not appear at all because it's already in progress
+    const happyMatches = queue.filter(w => w.en.toLowerCase() === 'happy');
+    expect(happyMatches.length).toBe(0);
+
+    // 'brave' should appear
+    expect(queue.some(w => w.en === 'brave')).toBe(true);
+  });
 });

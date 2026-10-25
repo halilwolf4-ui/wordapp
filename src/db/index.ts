@@ -77,6 +77,122 @@ export async function requestStoragePersistence(): Promise<boolean> {
 }
 
 /**
+/**
+ * Automatically merges and cleans up any duplicate words in existing IndexedDB.
+ * Preserves user progress, custom status, examples, and combines multiple meanings.
+ */
+export async function deduplicateDatabaseWords(database: WordDatabase = db): Promise<void> {
+  const dedupKey = 'kelime_avi_db_dedup_v1';
+  if (typeof localStorage !== 'undefined' && localStorage.getItem(dedupKey) === 'true') {
+    return;
+  }
+
+  try {
+    const allDbWords = await database.words.toArray();
+    if (!allDbWords || allDbWords.length === 0) return;
+
+    const allProgressList = await database.progress.toArray();
+    const progressMap = new Map(allProgressList.map(p => [p.wordId, p]));
+
+    const byEn = new Map<string, Word[]>();
+    for (const w of allDbWords) {
+      const key = (w.en || '').trim().toLowerCase();
+      if (!key) continue;
+      if (!byEn.has(key)) byEn.set(key, []);
+      byEn.get(key)!.push(w);
+    }
+
+    let hasDuplicates = false;
+    for (const [, group] of byEn.entries()) {
+      if (group.length <= 1) continue;
+      hasDuplicates = true;
+
+      // Determine primary word:
+      // 1. One that has progress
+      // 2. Or is custom
+      // 3. Or lowest id
+      group.sort((a, b) => {
+        const progA = progressMap.get(a.id);
+        const progB = progressMap.get(b.id);
+        if (progA && !progB) return -1;
+        if (!progA && progB) return 1;
+        if (a.isCustom && !b.isCustom) return -1;
+        if (!a.isCustom && b.isCustom) return 1;
+        return a.id - b.id;
+      });
+
+      const primary = { ...group[0] };
+      const duplicates = group.slice(1);
+
+      // Merge translations
+      const trParts: string[] = [];
+      const seenTr = new Set<string>();
+      for (const item of group) {
+        const parts = (item.tr || '').split(/[,;]+/).map(s => s.trim()).filter(Boolean);
+        for (const p of parts) {
+          const lower = p.toLowerCase();
+          if (!seenTr.has(lower)) {
+            seenTr.add(lower);
+            trParts.push(p);
+          }
+        }
+      }
+      primary.tr = trParts.join(', ');
+
+      // Merge categories
+      const catSet = new Set(primary.categories || []);
+      for (const item of duplicates) {
+        (item.categories || []).forEach(c => catSet.add(c));
+      }
+      primary.categories = Array.from(catSet);
+
+      // Merge examples
+      const seenEx = new Set((primary.examples || []).map(e => (e.en || '').trim().toLowerCase()));
+      if (!primary.examples) primary.examples = [];
+      for (const item of duplicates) {
+        for (const ex of (item.examples || [])) {
+          const exKey = (ex.en || '').trim().toLowerCase();
+          if (exKey && !seenEx.has(exKey)) {
+            seenEx.add(exKey);
+            primary.examples.push(ex);
+          }
+        }
+      }
+
+      if (!primary.ipa) {
+        const withIpa = duplicates.find(item => !!item.ipa);
+        if (withIpa) primary.ipa = withIpa.ipa;
+      }
+
+      // Save merged primary
+      await database.words.put(primary);
+
+      // Transfer progress if duplicate had progress and primary didn't
+      const primaryProg = progressMap.get(primary.id);
+      for (const dup of duplicates) {
+        const dupProg = progressMap.get(dup.id);
+        if (dupProg && !primaryProg) {
+          await database.progress.put({ ...dupProg, wordId: primary.id });
+        }
+        if (dupProg) {
+          await database.progress.delete(dup.id);
+        }
+        await database.words.delete(dup.id);
+      }
+    }
+
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(dedupKey, 'true');
+    }
+    if (hasDuplicates) {
+      console.log('[Database] Cleaned up duplicate words in IndexedDB');
+    }
+  } catch (err) {
+    console.warn('[Database] Error deduplicating words:', err);
+  }
+}
+
+/**
  * Initialize database and import words.json if words table is empty.
  */
 export async function initializeDatabase(onProgress?: (progress: number, message: string) => void): Promise<void> {
@@ -95,6 +211,7 @@ export async function initializeDatabase(onProgress?: (progress: number, message
 
   const wordCount = await db.words.count();
   if (wordCount > 0) {
+    await deduplicateDatabaseWords(db);
     return; // Already initialized
   }
 
@@ -111,7 +228,7 @@ export async function initializeDatabase(onProgress?: (progress: number, message
   const data = await res.json();
   const rawWords: Word[] = data.words || [];
 
-  onProgress?.(50, 'Kelimeler veritabanına aktarılıyor (6120 kelime)...');
+  onProgress?.(50, 'Kelimeler veritabanına aktarılıyor...');
   // Bulk add words in chunks for smooth performance
   const chunkSize = 1000;
   for (let i = 0; i < rawWords.length; i += chunkSize) {

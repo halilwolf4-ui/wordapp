@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { db, initializeDatabase, DEFAULT_SETTINGS, DEFAULT_PROFILE } from './db';
+import { db, initializeDatabase, deduplicateDatabaseWords, DEFAULT_SETTINGS, DEFAULT_PROFILE } from './db';
 import { Word, Progress, UserSettings, UserProfile, DailyLog } from './types';
 import { selectDailyReviewQueue, selectDailyNewWordsQueue, calculateNextProgress } from './services/srsEngine';
 import { getEffectiveDate, daysBetween, addDays } from './services/dateUtils';
@@ -113,6 +113,7 @@ export const App: React.FC = () => {
 
   // Reload all data from IndexedDB
   const loadData = useCallback(async () => {
+    await deduplicateDatabaseWords(db);
     const loadedWords = await db.words.toArray();
     let loadedProgress = await db.progress.toArray();
 
@@ -506,14 +507,73 @@ export const App: React.FC = () => {
     }
   };
 
-  // Add custom word (directly assigned to 'learning' queue)
+  // Add custom word (directly assigned to 'learning' queue, strictly prevents duplicates)
   const handleAddCustomWord = async (wordData: Omit<Word, 'id'>, silent: boolean = false) => {
-    // Generate unique ID >= 1000000
+    const cleanEn = (wordData.en || '').trim();
+    if (!cleanEn) return;
+
+    // Check if word already exists in allWords (case-insensitive)
+    const existingWord = allWords.find(w => w.en.trim().toLowerCase() === cleanEn.toLowerCase());
+
+    if (existingWord) {
+      const existingProg = allProgress.find(p => p.wordId === existingWord.id);
+
+      // If already in progress (learning or mastered)
+      if (existingProg) {
+        if (!silent) {
+          alert(`"${cleanEn}" kelimesi zaten listenizde kayıtlı! Bir kelime iki kez eklenemez.`);
+        }
+        return;
+      }
+
+      // Word exists in dictionary but not yet in learning progress:
+      // Activate the existing word directly instead of creating a duplicate word record!
+      const updatedWord: Word = {
+        ...existingWord,
+        isCustom: true,
+        categories: Array.from(new Set([...(existingWord.categories || []), 'custom'])),
+        tr: wordData.tr ? wordData.tr : existingWord.tr,
+        examples: (wordData.examples && wordData.examples.length > 0) ? wordData.examples : existingWord.examples,
+        emoji: wordData.emoji || existingWord.emoji,
+        ipa: wordData.ipa || existingWord.ipa
+      };
+
+      await db.words.put(updatedWord);
+      setAllWords(prev => prev.map(w => w.id === existingWord.id ? updatedWord : w));
+
+      const customProgress: Progress = {
+        wordId: existingWord.id,
+        step: 0,
+        streakDays: 0,
+        dueDate: today,
+        lastReviewDate: undefined,
+        status: 'learning',
+        lapses: 0,
+        totalCorrect: 0,
+        totalWrong: 0,
+        updatedAt: Date.now()
+      };
+      await db.progress.put(customProgress);
+      setAllProgress(prev => [...prev.filter(p => p.wordId !== existingWord.id), customProgress]);
+
+      const updatedBadges = checkBadges(profile, allProgress.length + 1, profile.streak, true);
+      const updatedProf = { ...profile, unlockedBadges: updatedBadges };
+      await db.profile.put(updatedProf);
+      setProfile(updatedProf);
+
+      if (!silent) {
+        alert(`"${cleanEn}" kelimesi sözlükte mevcuttu ve 'Öğreniliyor' listenize eklendi!`);
+      }
+      return;
+    }
+
+    // Completely new word
     const highestId = allWords.reduce((max, w) => Math.max(max, w.id), 0);
     const newId = Math.max(1000001, highestId + 1);
 
     const newWord: Word = {
       ...wordData,
+      en: cleanEn,
       id: newId,
       categories: ['custom'],
       isCustom: true,

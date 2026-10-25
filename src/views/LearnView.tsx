@@ -475,9 +475,21 @@ export const LearnView: React.FC<Props> = ({
     }
 
     // 3. No active study: show discovery to find targetWordsCount unknown words
-    const unselectedCandidates = wordsQueue.filter(
-      w => !initialBasket.some(b => b.id === w.id)
+    const basketEns = new Set(initialBasket.map(b => (b.en || '').trim().toLowerCase()));
+    const learnedEns = new Set(
+      allProgress
+        ? allProgress.map(p => allWordsMap.get(p.wordId)?.en.trim().toLowerCase()).filter(Boolean)
+        : []
     );
+    const seenCandidates = new Set<string>();
+    const unselectedCandidates = wordsQueue.filter(w => {
+      const enKey = (w.en || '').trim().toLowerCase();
+      if (!enKey) return false;
+      if (initialBasket.some(b => b.id === w.id)) return false;
+      if (basketEns.has(enKey) || learnedEns.has(enKey) || seenCandidates.has(enKey)) return false;
+      seenCandidates.add(enKey);
+      return true;
+    });
 
     // If no candidate words remain in discovery pool, but we have words waiting:
     if (unselectedCandidates.length === 0 && initialBasket.length > 0) {
@@ -832,7 +844,19 @@ export const LearnView: React.FC<Props> = ({
     setHintStats({});
     setCurrentWordHints([]);
     setCandidateIndex(0);
-    setCandidateList(wordsQueue);
+    const learnedEns = new Set(
+      allProgress
+        ? allProgress.map(p => allWordsMap.get(p.wordId)?.en.trim().toLowerCase()).filter(Boolean)
+        : []
+    );
+    const seenCandidates = new Set<string>();
+    const freshCandidates = wordsQueue.filter(w => {
+      const enKey = (w.en || '').trim().toLowerCase();
+      if (!enKey || learnedEns.has(enKey) || seenCandidates.has(enKey)) return false;
+      seenCandidates.add(enKey);
+      return true;
+    });
+    setCandidateList(freshCandidates);
     setIsFlipped(false);
     setPhase('discovery');
     setCombo(0);
