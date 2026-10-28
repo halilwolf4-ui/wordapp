@@ -1,0 +1,4135 @@
+[
+  {
+    "id": "yokdil-voc-1",
+    "word": "abandon",
+    "tr": "terk etmek, vazgeçmek, bırakmak",
+    "synonyms": [
+      "give up",
+      "leave",
+      "forsake",
+      "quit"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-2",
+    "word": "abandonment",
+    "tr": "terk etme, vazgeçme, bırakılma",
+    "synonyms": [
+      "desertion",
+      "renunciation",
+      "leaving"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-3",
+    "word": "absence",
+    "tr": "yokluk, bulunmama, eksiklik",
+    "synonyms": [
+      "lack",
+      "shortage",
+      "deficiency",
+      "nonexistence"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-4",
+    "word": "abundance",
+    "tr": "bolluk, bereket, çokluk",
+    "synonyms": [
+      "plenty",
+      "profusion",
+      "wealth",
+      "affluence"
+    ],
+    "years": [
+      2023,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-5",
+    "word": "abundant",
+    "tr": "bol, çok, bereketli",
+    "synonyms": [
+      "plentiful",
+      "ample",
+      "copious",
+      "rich"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-6",
+    "word": "abuse",
+    "tr": "kötüye kullanmak, istismar etmek",
+    "synonyms": [
+      "misuse",
+      "exploit",
+      "mistreat",
+      "maltreat"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-7",
+    "word": "accessible",
+    "tr": "erişilebilir, ulaşılabilir",
+    "synonyms": [
+      "reachable",
+      "available",
+      "attainable",
+      "approachable"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-8",
+    "word": "accommodate",
+    "tr": "barındırmak, uyum sağlamak, yer sağlamak",
+    "synonyms": [
+      "house",
+      "lodge",
+      "adapt",
+      "fit"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-9",
+    "word": "account for",
+    "tr": "açıklamak, oluşturmak (% olarak)",
+    "synonyms": [
+      "explain",
+      "constitute",
+      "make up",
+      "justify"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-10",
+    "word": "accumulation",
+    "tr": "birikim, yığılma, toplama",
+    "synonyms": [
+      "collection",
+      "build-up",
+      "amassing",
+      "gathering"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-11",
+    "word": "accurately",
+    "tr": "doğru bir şekilde, kesin olarak",
+    "synonyms": [
+      "precisely",
+      "correctly",
+      "exactly",
+      "rightly"
+    ],
+    "years": [
+      2025,
+      2024,
+      2023,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-12",
+    "word": "acknowledge",
+    "tr": "kabul etmek, tanımak, doğrulamak",
+    "synonyms": [
+      "admit",
+      "accept",
+      "recognise",
+      "confess"
+    ],
+    "years": [
+      2023
+    ]
+  },
+  {
+    "id": "yokdil-voc-13",
+    "word": "acquisition",
+    "tr": "edinim, kazanım, elde etme",
+    "synonyms": [
+      "obtaining",
+      "attainment",
+      "gain",
+      "purchase"
+    ],
+    "years": [
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-14",
+    "word": "adapted",
+    "tr": "uyarlanmış, adapte olmuş",
+    "synonyms": [
+      "adjusted",
+      "modified",
+      "acclimatised",
+      "suited"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-15",
+    "word": "adequate",
+    "tr": "yeterli, kafi, uygun",
+    "synonyms": [
+      "sufficient",
+      "enough",
+      "satisfactory",
+      "decent"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-16",
+    "word": "adherence",
+    "tr": "bağlılık, sadakat, uyma",
+    "synonyms": [
+      "compliance",
+      "obedience",
+      "devotion",
+      "attachment"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-17",
+    "word": "adjustment",
+    "tr": "ayarlama, uyum, düzenleme",
+    "synonyms": [
+      "adaptation",
+      "modification",
+      "alteration",
+      "tuning"
+    ],
+    "years": [
+      2025,
+      2023
+    ]
+  },
+  {
+    "id": "yokdil-voc-18",
+    "word": "adopt",
+    "tr": "benimsemek, kabul etmek, evlat edinmek",
+    "synonyms": [
+      "embrace",
+      "accept",
+      "take on",
+      "endorse"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-19",
+    "word": "advancements",
+    "tr": "ilerlemeler, gelişmeler",
+    "synonyms": [
+      "progress",
+      "developments",
+      "breakthroughs",
+      "improvements"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-20",
+    "word": "advances",
+    "tr": "ilerlemeler, gelişmeler",
+    "synonyms": [
+      "progress",
+      "breakthroughs",
+      "developments",
+      "gains"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-21",
+    "word": "adversely",
+    "tr": "olumsuz şekilde, kötü yönde",
+    "synonyms": [
+      "negatively",
+      "harmfully",
+      "unfavorably",
+      "detrimentally"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-22",
+    "word": "advocate",
+    "tr": "savunmak, desteklemek / savunucu",
+    "synonyms": [
+      "support",
+      "defend",
+      "promote",
+      "champion"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-23",
+    "word": "affordable",
+    "tr": "uygun fiyatlı, satın alınabilir",
+    "synonyms": [
+      "inexpensive",
+      "reasonable",
+      "economical",
+      "low-cost"
+    ],
+    "years": [
+      2025,
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-24",
+    "word": "alteration",
+    "tr": "değişiklik, değişim, tadilat",
+    "synonyms": [
+      "change",
+      "modification",
+      "adjustment",
+      "variation"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-25",
+    "word": "although",
+    "tr": "-e rağmen, her ne kadar ... olsa da",
+    "synonyms": [
+      "though",
+      "even though",
+      "while",
+      "much as"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-26",
+    "word": "ambiguous",
+    "tr": "belirsiz, muğlak, iki anlamlı",
+    "synonyms": [
+      "vague",
+      "unclear",
+      "obscure",
+      "equivocal"
+    ],
+    "years": [
+      2025,
+      2024,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-27",
+    "word": "anticipation",
+    "tr": "beklenti, umut, öngörü",
+    "synonyms": [
+      "expectation",
+      "prediction",
+      "foresight",
+      "hope"
+    ],
+    "years": [
+      2025,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-28",
+    "word": "anxious",
+    "tr": "endişeli, kaygılı, istekli",
+    "synonyms": [
+      "worried",
+      "uneasy",
+      "apprehensive",
+      "concerned"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-29",
+    "word": "appeal",
+    "tr": "cezbetmek, başvurmak / çekicilik, çağrı",
+    "synonyms": [
+      "attract",
+      "charm",
+      "plea",
+      "request"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-30",
+    "word": "application",
+    "tr": "uygulama, başvuru, kullanım",
+    "synonyms": [
+      "implementation",
+      "practice",
+      "use",
+      "request"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-31",
+    "word": "applications",
+    "tr": "uygulamalar, başvurular",
+    "synonyms": [
+      "implementations",
+      "uses",
+      "practices",
+      "requests"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-32",
+    "word": "apply",
+    "tr": "uygulamak, başvurmak, geçerli olmak",
+    "synonyms": [
+      "implement",
+      "utilize",
+      "employ",
+      "request"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-33",
+    "word": "approach",
+    "tr": "yaklaşım, yöntem / yaklaşmak",
+    "synonyms": [
+      "method",
+      "attitude",
+      "strategy",
+      "near"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-34",
+    "word": "appropriate",
+    "tr": "uygun, yerinde, elverişli",
+    "synonyms": [
+      "suitable",
+      "proper",
+      "fitting",
+      "relevant"
+    ],
+    "years": [
+      2024,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-35",
+    "word": "arbitrarily",
+    "tr": "keyfi olarak, rastgele",
+    "synonyms": [
+      "randomly",
+      "capriciously",
+      "haphazardly",
+      "subjectively"
+    ],
+    "years": [
+      2023
+    ]
+  },
+  {
+    "id": "yokdil-voc-36",
+    "word": "arbitrary",
+    "tr": "keyfi, rastgele, nedensiz",
+    "synonyms": [
+      "random",
+      "capricious",
+      "unreasoned",
+      "subjective"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-37",
+    "word": "arising",
+    "tr": "ortaya çıkan, kaynaklanan",
+    "synonyms": [
+      "emerging",
+      "stemming",
+      "originating",
+      "resulting"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-38",
+    "word": "arranged",
+    "tr": "düzenlenmiş, ayarlanmış, planlanmış",
+    "synonyms": [
+      "organized",
+      "planned",
+      "ordered",
+      "scheduled"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-39",
+    "word": "assessment",
+    "tr": "değerlendirme, ölçme, tahmin",
+    "synonyms": [
+      "evaluation",
+      "appraisal",
+      "judgment",
+      "estimation"
+    ],
+    "years": [
+      2025,
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-40",
+    "word": "astonished",
+    "tr": "şaşkına dönmüş, hayrete düşmüş",
+    "synonyms": [
+      "amazed",
+      "astounded",
+      "stunned",
+      "surprised"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-41",
+    "word": "attribute",
+    "tr": "atfetmek, dayandırmak / özellik, nitelik",
+    "synonyms": [
+      "ascribe",
+      "credit",
+      "trait",
+      "feature"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-42",
+    "word": "attributed",
+    "tr": "atfedilen, dayandırılan, bağlanan",
+    "synonyms": [
+      "ascribed",
+      "credited",
+      "linked",
+      "assigned"
+    ],
+    "years": [
+      2025,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-43",
+    "word": "avoidance",
+    "tr": "kaçınma, sakınma",
+    "synonyms": [
+      "evasion",
+      "prevention",
+      "abstinence",
+      "shunning"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-44",
+    "word": "beneficial",
+    "tr": "faydalı, yararlı, kazançlı",
+    "synonyms": [
+      "useful",
+      "advantageous",
+      "helpful",
+      "favorable"
+    ],
+    "years": [
+      2025,
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-45",
+    "word": "biomass",
+    "tr": "biyokütle (organik enerji kaynağı)",
+    "synonyms": [
+      "organic matter",
+      "biological material",
+      "biofuel source"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-46",
+    "word": "bizarre",
+    "tr": "tuhaf, garip, acayip",
+    "synonyms": [
+      "weird",
+      "strange",
+      "peculiar",
+      "odd"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-47",
+    "word": "boast",
+    "tr": "övünmek, sahip olmak (iyi bir şeye)",
+    "synonyms": [
+      "brag",
+      "possess",
+      "feature",
+      "pride oneself on"
+    ],
+    "years": [
+      2023
+    ]
+  },
+  {
+    "id": "yokdil-voc-48",
+    "word": "boost",
+    "tr": "artırmak, güçlendirmek, yükseltmek",
+    "synonyms": [
+      "increase",
+      "enhance",
+      "promote",
+      "amplify"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-49",
+    "word": "breeding",
+    "tr": "üreme, yetiştirme, çoğalma",
+    "synonyms": [
+      "reproduction",
+      "rearing",
+      "propagation",
+      "raising"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-50",
+    "word": "bring about",
+    "tr": "neden olmak, yol açmak, beraberinde getirmek",
+    "synonyms": [
+      "cause",
+      "lead to",
+      "result in",
+      "trigger"
+    ],
+    "years": [
+      2025,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-51",
+    "word": "bring down",
+    "tr": "azaltmak, düşürmek, devirmek",
+    "synonyms": [
+      "reduce",
+      "lower",
+      "decrease",
+      "overthrow"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-52",
+    "word": "brought about",
+    "tr": "neden oldu, yol açtı, meydana getirdi",
+    "synonyms": [
+      "caused",
+      "triggered",
+      "generated",
+      "led to"
+    ],
+    "years": [
+      2024,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-53",
+    "word": "calculations",
+    "tr": "hesaplamalar, tahminler",
+    "synonyms": [
+      "computations",
+      "estimates",
+      "measurements",
+      "reckonings"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-54",
+    "word": "call for",
+    "tr": "gerektirmek, çağrıda bulunmak, talep etmek",
+    "synonyms": [
+      "require",
+      "demand",
+      "necessitate",
+      "entail"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-55",
+    "word": "call off",
+    "tr": "iptal etmek, durdurmak",
+    "synonyms": [
+      "cancel",
+      "abort",
+      "drop",
+      "terminate"
+    ],
+    "years": [
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-56",
+    "word": "call on",
+    "tr": "ziyaret etmek, başvurmak, rica etmek",
+    "synonyms": [
+      "visit",
+      "appeal to",
+      "ask",
+      "invoke"
+    ],
+    "years": [
+      2025,
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-57",
+    "word": "capture",
+    "tr": "yakalamak, ele geçirmek, esir almak",
+    "synonyms": [
+      "seize",
+      "catch",
+      "arrest",
+      "grasp"
+    ],
+    "years": [
+      2024,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-58",
+    "word": "carry out",
+    "tr": "yürütmek, gerçekleştirmek, uygulamak",
+    "synonyms": [
+      "conduct",
+      "perform",
+      "execute",
+      "implement"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-59",
+    "word": "centred on",
+    "tr": "... üzerine odaklanmış, merkezli",
+    "synonyms": [
+      "focused on",
+      "based on",
+      "revolved around",
+      "concentrated on"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-60",
+    "word": "challenge",
+    "tr": "zorluk, meydan okuma / karşı çıkmak",
+    "synonyms": [
+      "difficulty",
+      "obstacle",
+      "question",
+      "dispute"
+    ],
+    "years": [
+      2024,
+      2023
+    ]
+  },
+  {
+    "id": "yokdil-voc-61",
+    "word": "challenges",
+    "tr": "zorluklar, güçlükler, sorunlar",
+    "synonyms": [
+      "difficulties",
+      "obstacles",
+      "hardships",
+      "problems"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-62",
+    "word": "chronic",
+    "tr": "kronik, süreğen, müzmin",
+    "synonyms": [
+      "persistent",
+      "long-standing",
+      "constant",
+      "incurable"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-63",
+    "word": "classification",
+    "tr": "sınıflandırma, tasnif",
+    "synonyms": [
+      "categorization",
+      "grouping",
+      "taxonomy",
+      "sorting"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-64",
+    "word": "coherent",
+    "tr": "tutarlı, uyumlu, mantıklı",
+    "synonyms": [
+      "consistent",
+      "logical",
+      "rational",
+      "clear"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-65",
+    "word": "coincidental",
+    "tr": "tesadüfi, rastlantısal",
+    "synonyms": [
+      "accidental",
+      "random",
+      "chance",
+      "unplanned"
+    ],
+    "years": [
+      2023
+    ]
+  },
+  {
+    "id": "yokdil-voc-66",
+    "word": "collaboration",
+    "tr": "iş birliği, ortak çalışma",
+    "synonyms": [
+      "cooperation",
+      "partnership",
+      "teamwork",
+      "alliance"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-67",
+    "word": "collectively",
+    "tr": "topluca, ortaklaşa, birlikte",
+    "synonyms": [
+      "jointly",
+      "together",
+      "cooperatively",
+      "as a group"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-68",
+    "word": "commitment",
+    "tr": "bağlılık, taahhüt, adanmışlık",
+    "synonyms": [
+      "dedication",
+      "devotion",
+      "obligation",
+      "pledge"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-69",
+    "word": "commodity",
+    "tr": "ticari mal, emtia, ürün",
+    "synonyms": [
+      "good",
+      "product",
+      "merchandise",
+      "asset"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-70",
+    "word": "component",
+    "tr": "bileşen, parça, unsur",
+    "synonyms": [
+      "element",
+      "part",
+      "constituent",
+      "ingredient"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-71",
+    "word": "composition",
+    "tr": "bileşim, yapı, oluşum, eser",
+    "synonyms": [
+      "structure",
+      "make-up",
+      "constitution",
+      "formation"
+    ],
+    "years": [
+      2025,
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-72",
+    "word": "comprehension",
+    "tr": "anlama, kavrama, idrak",
+    "synonyms": [
+      "understanding",
+      "grasp",
+      "conception",
+      "apprehension"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-73",
+    "word": "comprehensively",
+    "tr": "kapsamlı bir şekilde, etraflıca",
+    "synonyms": [
+      "thoroughly",
+      "extensively",
+      "completely",
+      "fully"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-74",
+    "word": "compulsory",
+    "tr": "zorunlu, mecburi",
+    "synonyms": [
+      "mandatory",
+      "obligatory",
+      "required",
+      "requisite"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-75",
+    "word": "conceal",
+    "tr": "gizlemek, saklamak, örtbas etmek",
+    "synonyms": [
+      "hide",
+      "cover",
+      "disguise",
+      "mask"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-76",
+    "word": "concealed",
+    "tr": "gizlenmiş, saklı, üstü örtülü",
+    "synonyms": [
+      "hidden",
+      "covered",
+      "secret",
+      "disguised"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-77",
+    "word": "concentration",
+    "tr": "yoğunlaşma, konsantrasyon, derişim",
+    "synonyms": [
+      "focus",
+      "density",
+      "accumulation",
+      "attention"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-78",
+    "word": "concerns",
+    "tr": "endişeler, kaygılar / ilgilendirir",
+    "synonyms": [
+      "worries",
+      "anxieties",
+      "issues",
+      "matters"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-79",
+    "word": "conflicts",
+    "tr": "çatışmalar, anlaşmazlıklar, çelişkiler",
+    "synonyms": [
+      "disputes",
+      "clashes",
+      "disagreements",
+      "struggles"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-80",
+    "word": "conformity",
+    "tr": "uygunluk, uyum, itaat",
+    "synonyms": [
+      "compliance",
+      "obedience",
+      "agreement",
+      "accordance"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-81",
+    "word": "consequence",
+    "tr": "sonuç, netice, önem",
+    "synonyms": [
+      "result",
+      "outcome",
+      "effect",
+      "aftermath"
+    ],
+    "years": [
+      2023,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-82",
+    "word": "conservation",
+    "tr": "koruma, muhafaza (özellikle doğa)",
+    "synonyms": [
+      "preservation",
+      "protection",
+      "safeguarding",
+      "maintenance"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-83",
+    "word": "consider",
+    "tr": "düşünmek, hesaba katmak, olarak görmek",
+    "synonyms": [
+      "regard",
+      "contemplate",
+      "think about",
+      "deem"
+    ],
+    "years": [
+      2023
+    ]
+  },
+  {
+    "id": "yokdil-voc-84",
+    "word": "considered",
+    "tr": "düşünülen, kabul edilen, sayılan",
+    "synonyms": [
+      "regarded",
+      "deemed",
+      "viewed",
+      "thought"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-85",
+    "word": "contrary",
+    "tr": "aksi, zıt, karşıt",
+    "synonyms": [
+      "opposite",
+      "opposing",
+      "conflicting",
+      "adverse"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-86",
+    "word": "contribute",
+    "tr": "katkıda bulunmak, sebep olmak",
+    "synonyms": [
+      "donate",
+      "supply",
+      "add to",
+      "conduce"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-87",
+    "word": "contributions",
+    "tr": "katkılar, yardımlar, bağışlar",
+    "synonyms": [
+      "inputs",
+      "donations",
+      "additions",
+      "efforts"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-88",
+    "word": "conversion",
+    "tr": "dönüşüm, değiştirme, çevirme",
+    "synonyms": [
+      "transformation",
+      "change",
+      "adaptation",
+      "transition"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-89",
+    "word": "convertible",
+    "tr": "dönüştürülebilir, değiştirilebilir",
+    "synonyms": [
+      "changeable",
+      "adaptable",
+      "transformable",
+      "exchangeable"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-90",
+    "word": "correlation",
+    "tr": "ilişki, bağıntı, korelasyon",
+    "synonyms": [
+      "connection",
+      "relationship",
+      "link",
+      "association"
+    ],
+    "years": [
+      2025,
+      2023
+    ]
+  },
+  {
+    "id": "yokdil-voc-91",
+    "word": "correspondence",
+    "tr": "yazışma, uygunluk, benzerlik",
+    "synonyms": [
+      "communication",
+      "letters",
+      "similarity",
+      "agreement"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-92",
+    "word": "corruptible",
+    "tr": "yozlaşabilir, rüşvet alabilir, bozulabilir",
+    "synonyms": [
+      "dishonest",
+      "bribable",
+      "venal",
+      "decayable"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-93",
+    "word": "credible",
+    "tr": "inandırıcı, güvenilir, akla yatkın",
+    "synonyms": [
+      "believable",
+      "reliable",
+      "plausible",
+      "trustworthy"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-94",
+    "word": "critically",
+    "tr": "kritik derecede, ciddi biçimde, eleştirel olarak",
+    "synonyms": [
+      "severely",
+      "crucially",
+      "seriously",
+      "vitally"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-95",
+    "word": "crucial",
+    "tr": "çok önemli, hayati, kritik",
+    "synonyms": [
+      "vital",
+      "essential",
+      "critical",
+      "indispensable"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-96",
+    "word": "decline",
+    "tr": "azalma, düşüş / azalmak, reddetmek",
+    "synonyms": [
+      "decrease",
+      "drop",
+      "deteriorate",
+      "refuse"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-97",
+    "word": "declines",
+    "tr": "azalmalar, düşüşler / azalır, reddeder",
+    "synonyms": [
+      "decreases",
+      "drops",
+      "falls",
+      "reductions"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-98",
+    "word": "deliberately",
+    "tr": "kasten, bilerek,ตั้งใจ ile",
+    "synonyms": [
+      "intentionally",
+      "on purpose",
+      "purposely",
+      "consciously"
+    ],
+    "years": [
+      2023,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-99",
+    "word": "demanding",
+    "tr": "zorlu, zahmetli, çok şey bekleyen",
+    "synonyms": [
+      "challenging",
+      "tough",
+      "arduous",
+      "exacting"
+    ],
+    "years": [
+      2023
+    ]
+  },
+  {
+    "id": "yokdil-voc-100",
+    "word": "depletion",
+    "tr": "tükenme, azalma, bitme",
+    "synonyms": [
+      "exhaustion",
+      "reduction",
+      "consumption",
+      "draining"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-101",
+    "word": "detectable",
+    "tr": "tespit edilebilir, fark edilebilir",
+    "synonyms": [
+      "noticeable",
+      "perceptible",
+      "observable",
+      "measurable"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-102",
+    "word": "deterioration",
+    "tr": "bozulma, kötüleşme, gerileme",
+    "synonyms": [
+      "decline",
+      "degradation",
+      "worsening",
+      "decay"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-103",
+    "word": "determine",
+    "tr": "belirlemek, saptamak, karar vermek",
+    "synonyms": [
+      "identify",
+      "establish",
+      "decide",
+      "ascertain"
+    ],
+    "years": [
+      2025,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-104",
+    "word": "devastating",
+    "tr": "yıkıcı, tahrip edici, kahredici",
+    "synonyms": [
+      "destructive",
+      "disastrous",
+      "catastrophic",
+      "ruinous"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-105",
+    "word": "devastation",
+    "tr": "yıkım, tahribat, harap olma",
+    "synonyms": [
+      "destruction",
+      "ruin",
+      "havoc",
+      "desolation"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-106",
+    "word": "devoted",
+    "tr": "adanmış, sadık, düşkün",
+    "synonyms": [
+      "dedicated",
+      "loyal",
+      "committed",
+      "faithful"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-107",
+    "word": "distinctive",
+    "tr": "aykırı, ayırt edici, kendine özgü",
+    "synonyms": [
+      "unique",
+      "characteristic",
+      "peculiar",
+      "distinguishing"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-108",
+    "word": "distributing",
+    "tr": "dağıtma, yayma, bölüştürme",
+    "synonyms": [
+      "allocating",
+      "delivering",
+      "spreading",
+      "dispensing"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-109",
+    "word": "diverse",
+    "tr": "çeşitli, farklı, çok türlü",
+    "synonyms": [
+      "various",
+      "varied",
+      "distinct",
+      "manifold"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-110",
+    "word": "diversity",
+    "tr": "çeşitlilik, farklılık",
+    "synonyms": [
+      "variety",
+      "multiplicity",
+      "heterogeneity",
+      "range"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-111",
+    "word": "division",
+    "tr": "bölünme, paylaşım, bölüm",
+    "synonyms": [
+      "separation",
+      "split",
+      "partition",
+      "distribution"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-112",
+    "word": "domestication",
+    "tr": "evcilleştirme",
+    "synonyms": [
+      "taming",
+      "cultivation",
+      "breeding",
+      "training"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-113",
+    "word": "drastically",
+    "tr": "büyük ölçüde, sert biçimde, kökten",
+    "synonyms": [
+      "severely",
+      "dramatically",
+      "radically",
+      "sharply"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-114",
+    "word": "eager",
+    "tr": "istekli, hevesli, can atan",
+    "synonyms": [
+      "keen",
+      "enthusiastic",
+      "willing",
+      "anxious"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-115",
+    "word": "efficient",
+    "tr": "verimli, etkili, üretken",
+    "synonyms": [
+      "effective",
+      "productive",
+      "competent",
+      "capable"
+    ],
+    "years": [
+      2023,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-116",
+    "word": "efficiently",
+    "tr": "verimli bir şekilde, etkin olarak",
+    "synonyms": [
+      "effectively",
+      "productively",
+      "competently",
+      "smoothly"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-117",
+    "word": "elaborate",
+    "tr": "ayrıntılı, karmaşık / detaylandırmak",
+    "synonyms": [
+      "detailed",
+      "intricate",
+      "complex",
+      "sophisticated"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-118",
+    "word": "eliminate",
+    "tr": "elemek, ortadan kaldırmak, yok etmek",
+    "synonyms": [
+      "remove",
+      "eradicate",
+      "get rid of",
+      "exclude"
+    ],
+    "years": [
+      2024,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-119",
+    "word": "elimination",
+    "tr": "eleme, ortadan kaldırma, bertaraf etme",
+    "synonyms": [
+      "removal",
+      "eradication",
+      "exclusion",
+      "abolition"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-120",
+    "word": "emerge",
+    "tr": "ortaya çıkmak, belirmek, doğmak",
+    "synonyms": [
+      "appear",
+      "arise",
+      "come out",
+      "surface"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-121",
+    "word": "emit",
+    "tr": "yaymak, salmak (ışık, gaz, ısı vb.)",
+    "synonyms": [
+      "release",
+      "give off",
+      "discharge",
+      "radiate"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-122",
+    "word": "endurance",
+    "tr": "dayanıklılık, tahammül, sabır",
+    "synonyms": [
+      "stamina",
+      "resilience",
+      "perseverance",
+      "tolerance"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-123",
+    "word": "enhance",
+    "tr": "artırmak, geliştirmek, güçlendirmek",
+    "synonyms": [
+      "improve",
+      "boost",
+      "augment",
+      "strengthen"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-124",
+    "word": "enhancements",
+    "tr": "geliştirmeler, iyileştirmeler",
+    "synonyms": [
+      "improvements",
+      "upgrades",
+      "advancements",
+      "refinements"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-125",
+    "word": "enslavement",
+    "tr": "köleleştirme, tutsaklık",
+    "synonyms": [
+      "captivity",
+      "bondage",
+      "subjugation",
+      "servitude"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-126",
+    "word": "ensure",
+    "tr": "sağlamak, garantiye almak, temin etmek",
+    "synonyms": [
+      "guarantee",
+      "secure",
+      "make sure",
+      "assure"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-127",
+    "word": "equitable",
+    "tr": "adil, hakkaniyetli, eşitlikçi",
+    "synonyms": [
+      "fair",
+      "just",
+      "impartial",
+      "even-handed"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-128",
+    "word": "equivalent",
+    "tr": "eşdeğer, denk, karşılık",
+    "synonyms": [
+      "equal",
+      "comparable",
+      "corresponding",
+      "identical"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-129",
+    "word": "eradicate",
+    "tr": "kökünü kazımak, tamamen yok etmek",
+    "synonyms": [
+      "eliminate",
+      "wipe out",
+      "destroy",
+      "extirpate"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-130",
+    "word": "establishment",
+    "tr": "kuruluş, kurma, kurum",
+    "synonyms": [
+      "foundation",
+      "institution",
+      "creation",
+      "formation"
+    ],
+    "years": [
+      2024,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-131",
+    "word": "estimation",
+    "tr": "tahmin, değerlendirme, kanı",
+    "synonyms": [
+      "assessment",
+      "evaluation",
+      "approximation",
+      "judgment"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-132",
+    "word": "evaluation",
+    "tr": "değerlendirme, ölçme",
+    "synonyms": [
+      "assessment",
+      "appraisal",
+      "analysis",
+      "estimation"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-133",
+    "word": "evapotranspiration",
+    "tr": "buharlaşma-terleme (bitki ve topraktan su kaybı)",
+    "synonyms": [
+      "water vapor loss",
+      "transpiration",
+      "evaporation"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-134",
+    "word": "eventually",
+    "tr": "sonunda, nihayetinde, eninde sonunda",
+    "synonyms": [
+      "finally",
+      "ultimately",
+      "in the end",
+      "sooner or later"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-135",
+    "word": "evolution",
+    "tr": "evrim, gelişim, aşamalı değişim",
+    "synonyms": [
+      "development",
+      "progression",
+      "advancement",
+      "growth"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-136",
+    "word": "exception",
+    "tr": "istisna, kural dışı durum",
+    "synonyms": [
+      "anomaly",
+      "exclusion",
+      "special case",
+      "deviation"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-137",
+    "word": "expansion",
+    "tr": "genişleme, büyüme, yayılma",
+    "synonyms": [
+      "growth",
+      "enlargement",
+      "extension",
+      "spread"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-138",
+    "word": "exposed to",
+    "tr": "-e maruz kalmış, açık",
+    "synonyms": [
+      "subjected to",
+      "vulnerable to",
+      "open to",
+      "contacted with"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-139",
+    "word": "exposure",
+    "tr": "maruz kalma, teşhir, ortaya çıkma",
+    "synonyms": [
+      "contact",
+      "subjection",
+      "vulnerability",
+      "disclosure"
+    ],
+    "years": [
+      2023,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-140",
+    "word": "extensive",
+    "tr": "kapsamlı, geniş, çaplı",
+    "synonyms": [
+      "widespread",
+      "comprehensive",
+      "broad",
+      "vast"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-141",
+    "word": "extinction",
+    "tr": "nesli tükenme, yok olma",
+    "synonyms": [
+      "disappearance",
+      "annihilation",
+      "dying out",
+      "destruction"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-142",
+    "word": "facilitate",
+    "tr": "kolaylaştırmak, olanak sağlamak",
+    "synonyms": [
+      "ease",
+      "enable",
+      "assist",
+      "expedite"
+    ],
+    "years": [
+      2025,
+      2024,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-143",
+    "word": "figure out",
+    "tr": "çözmek, anlamak, akıl erdirmek",
+    "synonyms": [
+      "solve",
+      "understand",
+      "work out",
+      "make out"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-144",
+    "word": "filled out",
+    "tr": "doldurulmuş (form, belge vb.)",
+    "synonyms": [
+      "completed",
+      "filled in",
+      "answered",
+      "finished"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-145",
+    "word": "fluctuation",
+    "tr": "dalgalanma, istikrarsızlık, değişim",
+    "synonyms": [
+      "variation",
+      "instability",
+      "oscillation",
+      "shift"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-146",
+    "word": "forecast",
+    "tr": "tahmin etmek, öngörmek / tahmin",
+    "synonyms": [
+      "predict",
+      "foresee",
+      "project",
+      "estimate"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-147",
+    "word": "fragile",
+    "tr": "kırılgan, hassas, narin",
+    "synonyms": [
+      "delicate",
+      "vulnerable",
+      "weak",
+      "brittle"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-148",
+    "word": "fragility",
+    "tr": "kırılganlık, hassasiyet, zayıflık",
+    "synonyms": [
+      "vulnerability",
+      "delicacy",
+      "weakness",
+      "frailty"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-149",
+    "word": "frequent",
+    "tr": "sık, yaygın, alışılmış",
+    "synonyms": [
+      "common",
+      "regular",
+      "repeated",
+      "recurrent"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-150",
+    "word": "fundamental",
+    "tr": "temel, esas, asli",
+    "synonyms": [
+      "basic",
+      "essential",
+      "primary",
+      "crucial"
+    ],
+    "years": [
+      2025,
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-151",
+    "word": "generate",
+    "tr": "üretmek, oluşturmak, meydana getirmek",
+    "synonyms": [
+      "produce",
+      "create",
+      "yield",
+      "bring about"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-152",
+    "word": "give up",
+    "tr": "vazgeçmek, bırakmak, pes etmek",
+    "synonyms": [
+      "abandon",
+      "quit",
+      "stop",
+      "surrender"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-153",
+    "word": "goes through",
+    "tr": "geçirmek, yaşamak, deneyimlemek",
+    "synonyms": [
+      "undergoes",
+      "experiences",
+      "endures",
+      "suffers"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-154",
+    "word": "gradually",
+    "tr": "yavaş yavaş, aşamalı olarak, giderek",
+    "synonyms": [
+      "slowly",
+      "steadily",
+      "step by step",
+      "progressively"
+    ],
+    "years": [
+      2023,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-155",
+    "word": "harmful",
+    "tr": "zararlı, kötü etkili",
+    "synonyms": [
+      "detrimental",
+      "damaging",
+      "injurious",
+      "adverse"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-156",
+    "word": "hesitation",
+    "tr": "tereddüt, duraksama, çekinme",
+    "synonyms": [
+      "reluctance",
+      "doubt",
+      "uncertainty",
+      "indecision"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-157",
+    "word": "highlight",
+    "tr": "vurgulamak, dikkat çekmek, öne çıkarmak",
+    "synonyms": [
+      "emphasize",
+      "underscore",
+      "stress",
+      "spotlight"
+    ],
+    "years": [
+      2025,
+      2023
+    ]
+  },
+  {
+    "id": "yokdil-voc-158",
+    "word": "identify",
+    "tr": "tanımlamak, belirlemek, tespit etmek",
+    "synonyms": [
+      "recognize",
+      "detect",
+      "determine",
+      "pinpoint"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-159",
+    "word": "imperceptible",
+    "tr": "fark edilemez, algılanamaz, çok küçük",
+    "synonyms": [
+      "unnoticeable",
+      "invisible",
+      "subtle",
+      "undetectable"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-160",
+    "word": "implementation",
+    "tr": "uygulama, yürürlüğe koyma, icra",
+    "synonyms": [
+      "execution",
+      "application",
+      "enforcement",
+      "realization"
+    ],
+    "years": [
+      2025,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-161",
+    "word": "impression",
+    "tr": "izlenim, etki, intiba",
+    "synonyms": [
+      "perception",
+      "feeling",
+      "impact",
+      "notion"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-162",
+    "word": "impressive",
+    "tr": "etkileyici, görkemli, hayranlık uyandırıcı",
+    "synonyms": [
+      "remarkable",
+      "striking",
+      "extraordinary",
+      "imposing"
+    ],
+    "years": [
+      2023
+    ]
+  },
+  {
+    "id": "yokdil-voc-163",
+    "word": "improvement",
+    "tr": "gelişme, iyileştirme, ilerleme",
+    "synonyms": [
+      "enhancement",
+      "progress",
+      "advancement",
+      "betterment"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-164",
+    "word": "incidence",
+    "tr": "görülme sıklığı, olay oranı",
+    "synonyms": [
+      "occurrence",
+      "prevalence",
+      "frequency",
+      "rate"
+    ],
+    "years": [
+      2025,
+      2024,
+      2023
+    ]
+  },
+  {
+    "id": "yokdil-voc-165",
+    "word": "incidentally",
+    "tr": "tesadüfen, bu arada, sırası gelmişken",
+    "synonyms": [
+      "by the way",
+      "accidentally",
+      "coincidentally",
+      "by chance"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-166",
+    "word": "indispensable",
+    "tr": "vazgeçilmez, elzem, çok gerekli",
+    "synonyms": [
+      "essential",
+      "vital",
+      "crucial",
+      "necessary"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-167",
+    "word": "inevitable",
+    "tr": "kaçınılmaz, mukadder",
+    "synonyms": [
+      "unavoidable",
+      "inescapable",
+      "certain",
+      "destined"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-168",
+    "word": "inevitably",
+    "tr": "kaçınılmaz olarak, ister istemez",
+    "synonyms": [
+      "unavoidably",
+      "necessarily",
+      "certainly",
+      "surely"
+    ],
+    "years": [
+      2025,
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-169",
+    "word": "injurious",
+    "tr": "zararlı, incitici, yıpratıcı",
+    "synonyms": [
+      "harmful",
+      "detrimental",
+      "damaging",
+      "deleterious"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-170",
+    "word": "innovation",
+    "tr": "yenilik, icat, inovasyon",
+    "synonyms": [
+      "novelty",
+      "invention",
+      "modernization",
+      "breakthrough"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-171",
+    "word": "innovations",
+    "tr": "yenilikler, buluşlar",
+    "synonyms": [
+      "inventions",
+      "novelties",
+      "breakthroughs",
+      "advances"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-172",
+    "word": "integrate",
+    "tr": "bütünleştirmek, birleştirmek, kaynaştırmak",
+    "synonyms": [
+      "combine",
+      "merge",
+      "incorporate",
+      "unify"
+    ],
+    "years": [
+      2025,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-173",
+    "word": "intensely",
+    "tr": "yoğun bir şekilde, şiddetle",
+    "synonyms": [
+      "deeply",
+      "strongly",
+      "fiercely",
+      "extremely"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-174",
+    "word": "interact",
+    "tr": "etkileşime girmek, iletişim kurmak",
+    "synonyms": [
+      "communicate",
+      "connect",
+      "cooperate",
+      "interrelate"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-175",
+    "word": "intervention",
+    "tr": "müdahale, aracılık, karışma",
+    "synonyms": [
+      "interference",
+      "involvement",
+      "mediation",
+      "action"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-176",
+    "word": "irrelevant",
+    "tr": "ilgisiz, alakasız, konu dışı",
+    "synonyms": [
+      "unrelated",
+      "inapplicable",
+      "immaterial",
+      "beside the point"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-177",
+    "word": "irreparably",
+    "tr": "onarılamaz biçimde, telafi edilemez şekilde",
+    "synonyms": [
+      "irreversibly",
+      "permanently",
+      "beyond repair",
+      "hopelessly"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-178",
+    "word": "irreversible",
+    "tr": "geri döndürülemez, değiştirilemez",
+    "synonyms": [
+      "permanent",
+      "irrevocable",
+      "irreparable",
+      "unalterable"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-179",
+    "word": "justification",
+    "tr": "gerekçe, haklı çıkarma, mazeret",
+    "synonyms": [
+      "reason",
+      "explanation",
+      "rationale",
+      "defense"
+    ],
+    "years": [
+      2025,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-180",
+    "word": "launch",
+    "tr": "başlatmak, piyasaya sürmek, fırlatmak",
+    "synonyms": [
+      "initiate",
+      "introduce",
+      "start",
+      "begin"
+    ],
+    "years": [
+      2025,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-181",
+    "word": "launched",
+    "tr": "başlatıldı, fırlatıldı, piyasaya sürüldü",
+    "synonyms": [
+      "started",
+      "initiated",
+      "introduced",
+      "established"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-182",
+    "word": "left out",
+    "tr": "dışarıda bırakılmış, dahil edilmemiş",
+    "synonyms": [
+      "excluded",
+      "omitted",
+      "skipped",
+      "overlooked"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-183",
+    "word": "lies in",
+    "tr": "...-de yatmak, ...-den kaynaklanmak",
+    "synonyms": [
+      "consists in",
+      "resides in",
+      "stems from",
+      "depends on"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-184",
+    "word": "loyally",
+    "tr": "sadakatle, bağlılıkla",
+    "synonyms": [
+      "faithfully",
+      "devotedly",
+      "staunchly",
+      "reliably"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-185",
+    "word": "made out",
+    "tr": "anlaşıldı, seçildi, çıkarıldı",
+    "synonyms": [
+      "figured out",
+      "understood",
+      "discerned",
+      "perceived"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-186",
+    "word": "magnify",
+    "tr": "büyütmek, abartmak, artırmak",
+    "synonyms": [
+      "enlarge",
+      "amplify",
+      "exaggerate",
+      "intensify"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-187",
+    "word": "maintenance",
+    "tr": "bakım, sürdürme, koruma",
+    "synonyms": [
+      "upkeep",
+      "preservation",
+      "continuation",
+      "conservation"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-188",
+    "word": "make up",
+    "tr": "oluşturmak, uydurmak, telafi etmek",
+    "synonyms": [
+      "constitute",
+      "compose",
+      "invent",
+      "compensate"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-189",
+    "word": "manageable",
+    "tr": "yönetilebilir, başa çıkılabilir, idare edilebilir",
+    "synonyms": [
+      "controllable",
+      "feasible",
+      "workable",
+      "easy"
+    ],
+    "years": [
+      2025,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-190",
+    "word": "mandatory",
+    "tr": "zorunlu, mecburi, şart",
+    "synonyms": [
+      "compulsory",
+      "obligatory",
+      "required",
+      "binding"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-191",
+    "word": "manipulate",
+    "tr": "yönlendirmek, çıkarı için kullanmak, işlemek",
+    "synonyms": [
+      "control",
+      "influence",
+      "exploit",
+      "handle"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-192",
+    "word": "mindset",
+    "tr": "zihniyet, düşünce yapısı, kafa yapısı",
+    "synonyms": [
+      "mentality",
+      "attitude",
+      "outlook",
+      "perspective"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-193",
+    "word": "monitor",
+    "tr": "izlemek, gözlemlemek, denetlemek",
+    "synonyms": [
+      "observe",
+      "track",
+      "watch",
+      "supervise"
+    ],
+    "years": [
+      2025,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-194",
+    "word": "necessitate",
+    "tr": "gerektirmek, zorunlu kılmak",
+    "synonyms": [
+      "require",
+      "demand",
+      "call for",
+      "entail"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-195",
+    "word": "neglect",
+    "tr": "ihmal etmek, göz ardı etmek / ihmal",
+    "synonyms": [
+      "ignore",
+      "disregard",
+      "overlook",
+      "abandon"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-196",
+    "word": "negotiation",
+    "tr": "müzakere, görüşme, pazarlık",
+    "synonyms": [
+      "discussion",
+      "bargaining",
+      "talks",
+      "diplomacy"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-197",
+    "word": "notorious",
+    "tr": "kötü şöhretli, adı çıkmış",
+    "synonyms": [
+      "infamous",
+      "ill-famed",
+      "disreputable",
+      "scandalous"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-198",
+    "word": "objection",
+    "tr": "itiraz, karşı çıkma",
+    "synonyms": [
+      "protest",
+      "opposition",
+      "disapproval",
+      "dissent"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-199",
+    "word": "obligation",
+    "tr": "yükümlülük, zorunluluk, mecburiyet",
+    "synonyms": [
+      "duty",
+      "responsibility",
+      "commitment",
+      "requirement"
+    ],
+    "years": [
+      2025,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-200",
+    "word": "obligations",
+    "tr": "yükümlülükler, görevler, sorumluluklar",
+    "synonyms": [
+      "duties",
+      "responsibilities",
+      "commitments",
+      "requirements"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-201",
+    "word": "occupation",
+    "tr": "meslek, iş, işgal",
+    "synonyms": [
+      "profession",
+      "vocation",
+      "job",
+      "invasion"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-202",
+    "word": "operate",
+    "tr": "çalışmak, işletmek, ameliyat yapmak",
+    "synonyms": [
+      "function",
+      "work",
+      "run",
+      "manage"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-203",
+    "word": "opportunity",
+    "tr": "fırsat, olanak, imkan",
+    "synonyms": [
+      "chance",
+      "occasion",
+      "prospect",
+      "opening"
+    ],
+    "years": [
+      2025,
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-204",
+    "word": "organise",
+    "tr": "düzenlemek, organize etmek, kurmak",
+    "synonyms": [
+      "arrange",
+      "coordinate",
+      "structure",
+      "plan"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-205",
+    "word": "otherwise",
+    "tr": "aksi takdirde, yoksa, başka türlü",
+    "synonyms": [
+      "or else",
+      "if not",
+      "differently",
+      "apart from that"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-206",
+    "word": "perceive",
+    "tr": "algılamak, fark etmek, anlamak",
+    "synonyms": [
+      "notice",
+      "sense",
+      "discern",
+      "recognize"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-207",
+    "word": "perceptible",
+    "tr": "algılanabilir, fark edilebilir, hissedilir",
+    "synonyms": [
+      "noticeable",
+      "detectable",
+      "observable",
+      "visible"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-208",
+    "word": "pinpoint",
+    "tr": "tam olarak belirlemek, nokta atışı bulmak",
+    "synonyms": [
+      "identify",
+      "locate",
+      "specify",
+      "detect"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-209",
+    "word": "precious",
+    "tr": "değerli, kıymetli",
+    "synonyms": [
+      "valuable",
+      "priceless",
+      "treasured",
+      "costly"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-210",
+    "word": "precision",
+    "tr": "kesinlik, doğruluk, hassasiyet",
+    "synonyms": [
+      "accuracy",
+      "exactness",
+      "correctness",
+      "rigor"
+    ],
+    "years": [
+      2025,
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-211",
+    "word": "preliminary",
+    "tr": "ön, hazırlık niteliğinde, başlangıç",
+    "synonyms": [
+      "initial",
+      "preparatory",
+      "introductory",
+      "prior"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-212",
+    "word": "prevalence",
+    "tr": "yaygınlık, görülme sıklığı",
+    "synonyms": [
+      "commonness",
+      "frequency",
+      "widespreadness",
+      "incidence"
+    ],
+    "years": [
+      2025,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-213",
+    "word": "prevent",
+    "tr": "önlemek, engel olmak, mani olmak",
+    "synonyms": [
+      "stop",
+      "avert",
+      "hinder",
+      "inhibit"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-214",
+    "word": "priority",
+    "tr": "öncelik, üstünlük",
+    "synonyms": [
+      "precedence",
+      "preference",
+      "urgency",
+      "prime concern"
+    ],
+    "years": [
+      2025,
+      2024,
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-215",
+    "word": "proficiency",
+    "tr": "yetkinlik, ustalık, yeterlilik",
+    "synonyms": [
+      "expertise",
+      "skill",
+      "competence",
+      "mastery"
+    ],
+    "years": [
+      2025,
+      2024,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-216",
+    "word": "prohibit",
+    "tr": "yasaklamak, engel olmak",
+    "synonyms": [
+      "ban",
+      "forbid",
+      "outlaw",
+      "prevent"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-217",
+    "word": "promote",
+    "tr": "teşvik etmek, desteklemek, terfi ettirmek",
+    "synonyms": [
+      "encourage",
+      "foster",
+      "boost",
+      "advance"
+    ],
+    "years": [
+      2023
+    ]
+  },
+  {
+    "id": "yokdil-voc-218",
+    "word": "promotion",
+    "tr": "teşvik, tanıtım, terfi",
+    "synonyms": [
+      "encouragement",
+      "advancement",
+      "advertising",
+      "elevation"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-219",
+    "word": "pulled down",
+    "tr": "yıkıldı, indirildi (bina vb.)",
+    "synonyms": [
+      "demolished",
+      "destroyed",
+      "knocked down",
+      "torn down"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-220",
+    "word": "put through",
+    "tr": "(telefonu) bağlamak, maruz bırakmak",
+    "synonyms": [
+      "connect",
+      "subject to",
+      "make undergo"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-221",
+    "word": "quarrel",
+    "tr": "tartışma, kavga, ağız dalaşı",
+    "synonyms": [
+      "argument",
+      "dispute",
+      "disagreement",
+      "clash"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-222",
+    "word": "range",
+    "tr": "çeşitlilik, aralık, menzil / değişmek",
+    "synonyms": [
+      "scope",
+      "spectrum",
+      "variety",
+      "span"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-223",
+    "word": "recognise",
+    "tr": "tanımak, kabul etmek, fark etmek",
+    "synonyms": [
+      "identify",
+      "acknowledge",
+      "realize",
+      "notice"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-224",
+    "word": "recognition",
+    "tr": "tanıma, kabul, takdir",
+    "synonyms": [
+      "acknowledgment",
+      "identification",
+      "appreciation",
+      "credit"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-225",
+    "word": "regulate",
+    "tr": "düzenlemek, denetlemek, ayarlamak",
+    "synonyms": [
+      "control",
+      "adjust",
+      "supervise",
+      "govern"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-226",
+    "word": "regulations",
+    "tr": "düzenlemeler, yönetmelikler, kurallar",
+    "synonyms": [
+      "rules",
+      "laws",
+      "directives",
+      "guidelines"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-227",
+    "word": "reliable",
+    "tr": "güvenilir, sağlam",
+    "synonyms": [
+      "dependable",
+      "trustworthy",
+      "credible",
+      "consistent"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-228",
+    "word": "relieved of",
+    "tr": "...-den kurtulmuş, yükü alınmış",
+    "synonyms": [
+      "freed from",
+      "released from",
+      "unburdened",
+      "exempted"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-229",
+    "word": "reluctantly",
+    "tr": "isteksizce, gönülsüzce",
+    "synonyms": [
+      "unwillingly",
+      "hesitantly",
+      "grudgingly",
+      "half-heartedly"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-230",
+    "word": "remove",
+    "tr": "kaldırmak, çıkarmak, gidermek",
+    "synonyms": [
+      "eliminate",
+      "take away",
+      "delete",
+      "extract"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-231",
+    "word": "represent",
+    "tr": "temsil etmek, simgelemek, göstermek",
+    "synonyms": [
+      "stand for",
+      "symbolize",
+      "depict",
+      "exemplify"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-232",
+    "word": "requirement",
+    "tr": "gereklilik, şart, ihtiyaç",
+    "synonyms": [
+      "necessity",
+      "prerequisite",
+      "condition",
+      "demand"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-233",
+    "word": "resilience",
+    "tr": "dayanıklılık, esneklik, çabuk toparlanma",
+    "synonyms": [
+      "toughness",
+      "endurance",
+      "adaptability",
+      "strength"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-234",
+    "word": "resistance",
+    "tr": "direnç, karşı koyma, mukavemet",
+    "synonyms": [
+      "opposition",
+      "defiance",
+      "immunity",
+      "endurance"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-235",
+    "word": "resolve",
+    "tr": "çözmek, karar vermek / kararlılık",
+    "synonyms": [
+      "solve",
+      "settle",
+      "determine",
+      "fix"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-236",
+    "word": "restore",
+    "tr": "yenilemek, eski haline getirmek, onarmak",
+    "synonyms": [
+      "revive",
+      "repair",
+      "reestablish",
+      "recover"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-237",
+    "word": "restrictions",
+    "tr": "kısıtlamalar, sınırlamalar",
+    "synonyms": [
+      "limitations",
+      "constraints",
+      "curbs",
+      "restraints"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-238",
+    "word": "reverse",
+    "tr": "tersine çevirmek, geri almak / ters, zıt",
+    "synonyms": [
+      "invert",
+      "overturn",
+      "undo",
+      "opposite"
+    ],
+    "years": [
+      2025,
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-239",
+    "word": "revival",
+    "tr": "canlanma, yeniden doğuş, uyanış",
+    "synonyms": [
+      "rebirth",
+      "recovery",
+      "resurgence",
+      "renewal"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-240",
+    "word": "run into",
+    "tr": "tesadüfen karşılaşmak, (sorunla) karşılaşmak",
+    "synonyms": [
+      "encounter",
+      "come across",
+      "bump into",
+      "face"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-241",
+    "word": "safely",
+    "tr": "güvenli bir şekilde, emniyetle",
+    "synonyms": [
+      "securely",
+      "harmlessly",
+      "without risk",
+      "soundly"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-242",
+    "word": "sanction",
+    "tr": "yaptırım, ceza / onaylamak",
+    "synonyms": [
+      "penalty",
+      "punishment",
+      "embargo",
+      "approval"
+    ],
+    "years": [
+      2025,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-243",
+    "word": "severely",
+    "tr": "şiddetli bir şekilde, ağır biçimde",
+    "synonyms": [
+      "seriously",
+      "harshly",
+      "critically",
+      "gravely"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-244",
+    "word": "shift",
+    "tr": "değişim, kayma, vardiya / değiştirmek",
+    "synonyms": [
+      "change",
+      "move",
+      "transition",
+      "alteration"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-245",
+    "word": "smoothly",
+    "tr": "sorunsuzca, pürüzsüzce, kolayca",
+    "synonyms": [
+      "effortlessly",
+      "seamlessly",
+      "fluently",
+      "easily"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-246",
+    "word": "sparsely",
+    "tr": "seyrek olarak, tek tük, az",
+    "synonyms": [
+      "thinly",
+      "scarcely",
+      "scatteredly",
+      "meagerly"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-247",
+    "word": "speculate",
+    "tr": "tahmin yürütmek, kurgulamak",
+    "synonyms": [
+      "conjecture",
+      "guess",
+      "hypothesize",
+      "theorize"
+    ],
+    "years": [
+      2025,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-248",
+    "word": "spontaneously",
+    "tr": "kendiliğinden, aniden, doğal olarak",
+    "synonyms": [
+      "naturally",
+      "impulsively",
+      "automatically",
+      "unplanned"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-249",
+    "word": "spread",
+    "tr": "yaymak, yayılmak / yayılma, artış",
+    "synonyms": [
+      "disseminate",
+      "expand",
+      "distribute",
+      "propagate"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-250",
+    "word": "structure",
+    "tr": "yapı, bina, düzen / yapılandırmak",
+    "synonyms": [
+      "framework",
+      "construction",
+      "organization",
+      "system"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-251",
+    "word": "substitute",
+    "tr": "yerine koymak, vekalet etmek / yedek, ikame",
+    "synonyms": [
+      "replace",
+      "alternative",
+      "surrogate",
+      "swap"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-252",
+    "word": "successive",
+    "tr": "ardışık, peş peşe gelen",
+    "synonyms": [
+      "consecutive",
+      "sequential",
+      "following",
+      "continuous"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-253",
+    "word": "sufficient",
+    "tr": "yeterli, kafi",
+    "synonyms": [
+      "adequate",
+      "enough",
+      "ample",
+      "satisfactory"
+    ],
+    "years": [
+      2023
+    ]
+  },
+  {
+    "id": "yokdil-voc-254",
+    "word": "sufficiently",
+    "tr": "yeterince, kafi derecede",
+    "synonyms": [
+      "adequately",
+      "enough",
+      "satisfactorily",
+      "amply"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-255",
+    "word": "susceptibility",
+    "tr": "duyarlılık, yatkınlık, savunmasızlık",
+    "synonyms": [
+      "vulnerability",
+      "sensitivity",
+      "predisposition",
+      "proneness"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-256",
+    "word": "sustain",
+    "tr": "sürdürmek, devam ettirmek, desteklemek",
+    "synonyms": [
+      "maintain",
+      "preserve",
+      "support",
+      "keep up"
+    ],
+    "years": [
+      2025,
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-257",
+    "word": "sustainable",
+    "tr": "sürdürülebilir, devam ettirilebilir",
+    "synonyms": [
+      "viable",
+      "renewable",
+      "maintainable",
+      "endurable"
+    ],
+    "years": [
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-258",
+    "word": "switch on",
+    "tr": "açmak, çalıştırmak (cihaz, ışık vb.)",
+    "synonyms": [
+      "turn on",
+      "activate",
+      "start",
+      "power up"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-259",
+    "word": "take in",
+    "tr": "anlamak, soğurmak/emmek, kandırmak",
+    "synonyms": [
+      "absorb",
+      "comprehend",
+      "deceive",
+      "include"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-260",
+    "word": "take off",
+    "tr": "havalanmak, çıkarmak (kıyafet), hızla başarılı olmak",
+    "synonyms": [
+      "depart",
+      "remove",
+      "soar",
+      "succeed"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-261",
+    "word": "take on",
+    "tr": "üstlenmek (sorumluluk), işe almak, bürünmek",
+    "synonyms": [
+      "undertake",
+      "assume",
+      "hire",
+      "accept"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-262",
+    "word": "take over",
+    "tr": "devralmak, kontrolü ele geçirmek",
+    "synonyms": [
+      "assume control",
+      "seize",
+      "succeed",
+      "acquire"
+    ],
+    "years": [
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-263",
+    "word": "target",
+    "tr": "hedef, amaç / hedeflemek",
+    "synonyms": [
+      "goal",
+      "objective",
+      "aim",
+      "purpose"
+    ],
+    "years": [
+      2025,
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-264",
+    "word": "tendency",
+    "tr": "eğilim, meyil, yönelim",
+    "synonyms": [
+      "inclination",
+      "trend",
+      "propensity",
+      "proclivity"
+    ],
+    "years": [
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-265",
+    "word": "threat",
+    "tr": "tehdit, tehlike, gözdağı",
+    "synonyms": [
+      "danger",
+      "menace",
+      "hazard",
+      "risk"
+    ],
+    "years": [
+      2023,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-266",
+    "word": "threatening",
+    "tr": "tehdit edici, tehlikeli, korkutucu",
+    "synonyms": [
+      "menacing",
+      "intimidating",
+      "ominous",
+      "dangerous"
+    ],
+    "years": [
+      2023,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-267",
+    "word": "transformation",
+    "tr": "dönüşüm, değişim, başkalaşım",
+    "synonyms": [
+      "conversion",
+      "change",
+      "metamorphosis",
+      "alteration"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-268",
+    "word": "treatment",
+    "tr": "tedavi, muamele, işleme",
+    "synonyms": [
+      "therapy",
+      "cure",
+      "care",
+      "handling"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-269",
+    "word": "trigger",
+    "tr": "tetiklemek, başlatmak, neden olmak",
+    "synonyms": [
+      "cause",
+      "spark",
+      "provoke",
+      "initiate"
+    ],
+    "years": [
+      2025,
+      2024,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-270",
+    "word": "triumph",
+    "tr": "zafer, büyük başarı",
+    "synonyms": [
+      "victory",
+      "conquest",
+      "success",
+      "achievement"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-271",
+    "word": "turn down",
+    "tr": "reddetmek, geri çevirmek, (sesi) kısmak",
+    "synonyms": [
+      "reject",
+      "refuse",
+      "decline",
+      "lower"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-272",
+    "word": "unattainable",
+    "tr": "ulaşılamaz, elde edilemez, erişilmez",
+    "synonyms": [
+      "unreachable",
+      "unachievable",
+      "impossible",
+      "inaccessible"
+    ],
+    "years": [
+      2024
+    ]
+  },
+  {
+    "id": "yokdil-voc-273",
+    "word": "unconsciously",
+    "tr": "bilinçsizce, farkında olmadan",
+    "synonyms": [
+      "unknowingly",
+      "unintentionally",
+      "instinctively",
+      "automatically"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-274",
+    "word": "underestimate",
+    "tr": "küçümsemek, hafife almak",
+    "synonyms": [
+      "underrate",
+      "undervalue",
+      "belittle",
+      "minimize"
+    ],
+    "years": [
+      2023
+    ]
+  },
+  {
+    "id": "yokdil-voc-275",
+    "word": "underestimated",
+    "tr": "küçümsenen, hafife alınan",
+    "synonyms": [
+      "underrated",
+      "undervalued",
+      "minimized",
+      "overlooked"
+    ],
+    "years": [
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-276",
+    "word": "validate",
+    "tr": "doğrulamak, geçerli kılmak, onaylamak",
+    "synonyms": [
+      "confirm",
+      "verify",
+      "substantiate",
+      "prove"
+    ],
+    "years": [
+      2025,
+      2024,
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-277",
+    "word": "validation",
+    "tr": "doğrulama, geçerlilik onayı, kanıtlama",
+    "synonyms": [
+      "confirmation",
+      "verification",
+      "proof",
+      "approval"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-278",
+    "word": "various",
+    "tr": "çeşitli, muhtelif, türlü",
+    "synonyms": [
+      "diverse",
+      "varied",
+      "numerous",
+      "different"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-279",
+    "word": "viable",
+    "tr": "uygulanabilir, yaşayabilir, geçerli",
+    "synonyms": [
+      "feasible",
+      "workable",
+      "sustainable",
+      "practical"
+    ],
+    "years": [
+      2025
+    ]
+  },
+  {
+    "id": "yokdil-voc-280",
+    "word": "vital",
+    "tr": "hayati, çok önemli, vazgeçilmez",
+    "synonyms": [
+      "crucial",
+      "essential",
+      "indispensable",
+      "critical"
+    ],
+    "years": [
+      2025,
+      2024,
+      2023,
+      2022,
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-281",
+    "word": "vulnerability",
+    "tr": "savunmasızlık, kırılganlık, hassasiyet",
+    "synonyms": [
+      "susceptibility",
+      "weakness",
+      "fragility",
+      "defenselessness"
+    ],
+    "years": [
+      2023,
+      2022
+    ]
+  },
+  {
+    "id": "yokdil-voc-282",
+    "word": "vulnerable",
+    "tr": "savunmasız, kırılgan, açık (tehlikeye)",
+    "synonyms": [
+      "susceptible",
+      "fragile",
+      "defenseless",
+      "exposed"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-283",
+    "word": "weakness",
+    "tr": "zayıflık, güçsüzlük, kusur",
+    "synonyms": [
+      "flaw",
+      "vulnerability",
+      "fragility",
+      "shortcoming"
+    ],
+    "years": [
+      2021
+    ]
+  },
+  {
+    "id": "yokdil-voc-284",
+    "word": "worn out",
+    "tr": "yıpranmış, aşınmış, bitkin",
+    "synonyms": [
+      "exhausted",
+      "depleted",
+      "tired",
+      "run-down"
+    ],
+    "years": [
+      2022
+    ]
+  }
+]
