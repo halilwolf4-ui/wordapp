@@ -76,36 +76,39 @@ body {
       #FFFFFF 8px);
 }
 
-/* Liquid Wave Animation for Water-Filling Badges */
+/* Liquid Wave Animation for Water-Filling Badges (Hardware accelerated) */
 @keyframes liquidWave {
   0% {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
 
   100% {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
 .animate-liquid-wave {
-  animation: none !important;
+  animation: liquidWave 3s linear infinite;
+  will-change: transform;
 }
 
-/* Golden Shimmer for Solid Gold Unlocked Badges */
+/* Golden Shimmer for Solid Gold Unlocked Badges (GPU composited) */
 @keyframes goldShimmer {
-
   0%,
   100% {
-    filter: brightness(1);
+    opacity: 0.95;
+    transform: scale3d(1, 1, 1);
   }
 
   50% {
-    filter: brightness(1.08);
+    opacity: 1;
+    transform: scale3d(1.02, 1.02, 1);
   }
 }
 
 .animate-gold-shimmer {
-  animation: none !important;
+  animation: goldShimmer 2.6s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 /* Soft dot pattern */
@@ -370,14 +373,13 @@ textarea:focus {
 }
 
 @keyframes floatSlow {
-
   0%,
   100% {
-    transform: translateY(0px);
+    transform: translate3d(0, 0, 0);
   }
 
   50% {
-    transform: translateY(-5px);
+    transform: translate3d(0, -5px, 0);
   }
 }
 
@@ -390,7 +392,8 @@ textarea:focus {
 }
 
 .animate-pulseGlow {
-  animation: none !important;
+  animation: pulseGlow 2.2s ease-in-out infinite;
+  will-change: transform;
 }
 
 .animate-correct-pop {
@@ -410,7 +413,8 @@ textarea:focus {
 }
 
 .animate-float {
-  animation: none !important;
+  animation: floatSlow 3s ease-in-out infinite;
+  will-change: transform;
 }
 
 /* ========================================================

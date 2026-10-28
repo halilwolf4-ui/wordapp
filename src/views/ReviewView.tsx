@@ -591,8 +591,9 @@ export const ReviewView: React.FC<Props> = ({
     const isRefresherOrFiller = currentQuestion.isRefresher || currentQuestion.isFiller;
 
     if (isCorrect) {
+      sound.playCorrect(combo + 1);
+      fireCelebration();
       const nextCombo = combo + 1;
-      sound.playCorrect(nextCombo);
       setCombo(nextCombo);
       onComboUpdate?.(nextCombo);
 
@@ -693,8 +694,9 @@ export const ReviewView: React.FC<Props> = ({
     const isCorrect = detailed.isCorrect;
 
     if (isCorrect) {
+      sound.playCorrect(combo + 1);
+      fireCelebration();
       const nextCombo = combo + 1;
-      sound.playCorrect(nextCombo);
       setCombo(nextCombo);
       onComboUpdate?.(nextCombo);
 
@@ -706,18 +708,19 @@ export const ReviewView: React.FC<Props> = ({
       );
       setSessionList(updatedList);
 
-      // Ekstra tekrarda SRS (0/6) aşaması ilerletilmez ve kullanıcının serisi bozulmaz
-      if (!isExtraReviewRef.current) {
-        await onReviewAnswer(targetWord.id, !hadFailed, false);
-      }
-
+      // Show feedback instantly; the DB write + app-wide re-render runs after the feedback animation
       setInlineFeedback({ status: 'correct', correctAnswer: targetWord.tr });
 
       const nextStep = globalStep + 1;
       setGlobalStep(nextStep);
       saveReviewSession(updatedList, nextStep);
 
-      feedbackTimerRef.current = setTimeout(() => {
+      const isExtra = isExtraReviewRef.current;
+      feedbackTimerRef.current = setTimeout(async () => {
+        // Ekstra tekrarda SRS (0/6) aşaması ilerletilmez ve kullanıcının serisi bozulmaz
+        if (!isExtra) {
+          await onReviewAnswer(targetWord.id, !hadFailed, false);
+        }
         pickNextQuestion(updatedList, nextStep, targetWord.id, sessionTarget);
       }, 350);
     } else {
@@ -1059,7 +1062,7 @@ export const ReviewView: React.FC<Props> = ({
 
                   return (
                     <QuizOptionButton
-                      key={idx}
+                      key={`${currentQuestion.word.id}-${idx}`}
                       index={idx}
                       text={opt}
                       isSelected={isSelected}

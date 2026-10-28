@@ -681,8 +681,9 @@ export const LearnView: React.FC<Props> = ({
     const isCorrect = checkTurkishAnswer(option, targetWord.tr);
 
     if (isCorrect) {
+      sound.playCorrect(combo + 1);
+      fireCelebration();
       const nextCombo = combo + 1;
-      sound.playCorrect(nextCombo);
       setCombo(nextCombo);
       onComboUpdate?.(nextCombo);
 
@@ -764,8 +765,9 @@ export const LearnView: React.FC<Props> = ({
     const isCorrect = detailed.isCorrect;
 
     if (isCorrect) {
+      sound.playCorrect(combo + 1);
+      fireCelebration();
       const nextCombo = combo + 1;
-      sound.playCorrect(nextCombo);
       setCombo(nextCombo);
       onComboUpdate?.(nextCombo);
 
@@ -775,15 +777,15 @@ export const LearnView: React.FC<Props> = ({
       );
       setSessionList(updatedList);
 
-      await onCompleteWord(targetWord, true);
-
+      // Show feedback instantly; the DB write + app-wide re-render runs after the feedback animation
       setInlineFeedback({ status: 'correct', correctAnswer: targetWord.tr });
 
       const nextStep = globalStep + 1;
       setGlobalStep(nextStep);
       saveSession(updatedList, nextStep);
 
-      feedbackTimerRef.current = setTimeout(() => {
+      feedbackTimerRef.current = setTimeout(async () => {
+        await onCompleteWord(targetWord, true);
         pickNextQuestion(updatedList, nextStep, targetWord.id);
       }, 350);
     } else {
@@ -1277,7 +1279,7 @@ export const LearnView: React.FC<Props> = ({
 
                   return (
                     <QuizOptionButton
-                      key={idx}
+                      key={`${currentQuestion.word.id}-${idx}`}
                       index={idx}
                       text={opt}
                       isSelected={isSelected}

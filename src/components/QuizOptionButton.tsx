@@ -89,16 +89,16 @@ export const QuizOptionButton: React.FC<QuizOptionButtonProps> = ({
       type="button"
       disabled={disabled}
       onClick={handleClick}
-      className={`group relative w-full rounded-[22px] text-left transition-all duration-200 select-none flex items-center justify-between gap-3 ${paddingClass} ${containerStyle} ${animationClass}`}
+      className={`group relative w-full rounded-[22px] text-left transition-colors duration-150 select-none flex items-center justify-between gap-3 ${paddingClass} ${containerStyle} ${animationClass}`}
     >
       <div className="flex items-center space-x-3.5 min-w-0 flex-1">
         <span
-          className={`shrink-0 rounded-full flex items-center justify-center font-extrabold transition-all ${pillClass} ${badgeStyle}`}
+          className={`shrink-0 rounded-full flex items-center justify-center font-extrabold transition-colors ${pillClass} ${badgeStyle}`}
         >
           {letter}
         </span>
 
-        <span className={`leading-snug break-words flex-1 tracking-tight transition-all ${textClass}`}>
+        <span className={`leading-snug break-words flex-1 tracking-tight ${textClass}`}>
           {text}
         </span>
       </div>

@@ -19,20 +19,19 @@ const GOLD_PALETTE = [
 ];
 
 /**
- * Lightweight, mobile-friendly celebration confetti
+ * Celebration confetti (fires on typing correct answers and round completions)
  */
 export function fireCelebration(): void {
   try {
     confetti({
-      particleCount: 28,
+      particleCount: 45,
       spread: 70,
       origin: { x: 0.5, y: 0.65 },
       startVelocity: 35,
       colors: VIBRANT_PALETTE,
       shapes: ['circle', 'square'],
       scalar: 0.95,
-      ticks: 110,
-      disableForReducedMotion: true,
+      ticks: 120,
       zIndex: 9999
     });
   } catch {
@@ -41,21 +40,20 @@ export function fireCelebration(): void {
 }
 
 /**
- * Lightweight level-up & milestone celebration
+ * Level-up & milestone celebration
  */
 export function fireLevelUp(): void {
   try {
     confetti({
-      particleCount: 35,
+      particleCount: 65,
       spread: 85,
       origin: { x: 0.5, y: 0.6 },
       startVelocity: 38,
-      ticks: 120,
+      ticks: 130,
       zIndex: 9999,
       colors: VIBRANT_PALETTE,
       shapes: ['circle', 'square'],
-      scalar: 1,
-      disableForReducedMotion: true
+      scalar: 1
     });
   } catch {}
 }
@@ -66,24 +64,35 @@ export function fireLevelUp(): void {
 export function fireStreakCelebration(): void {
   try {
     confetti({
-      particleCount: 30,
+      particleCount: 50,
       spread: 75,
       origin: { x: 0.5, y: 0.7 },
       colors: GOLD_PALETTE,
       shapes: ['circle', 'square'],
       scalar: 1,
       startVelocity: 35,
-      ticks: 110,
-      disableForReducedMotion: true,
+      ticks: 120,
       zIndex: 9999
     });
   } catch {}
 }
 
 /**
- * No-op on per-question taps to prevent 2D canvas frame drops on mobile devices.
- * CSS hardware-accelerated transforms provide instant tactile feedback instead.
+ * Sparkle burst at the exact position of the tapped correct option
  */
-export function fireMicroSpark(_xRatio?: number, _yRatio?: number): void {
-  // Intentionally disabled for mobile 60fps performance
+export function fireMicroSpark(xRatio: number = 0.5, yRatio: number = 0.5): void {
+  try {
+    confetti({
+      particleCount: 18,
+      spread: 55,
+      origin: { x: xRatio, y: yRatio },
+      startVelocity: 22,
+      colors: VIBRANT_PALETTE,
+      shapes: ['circle', 'square'],
+      scalar: 0.8,
+      ticks: 70,
+      gravity: 1.1,
+      zIndex: 9999
+    });
+  } catch {}
 }

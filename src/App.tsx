@@ -342,9 +342,10 @@ export const App: React.FC = () => {
 
   // Real-time combo update to track highest combo and unlock combo badges immediately
   const handleComboUpdate = async (currentCombo: number) => {
-    if (currentCombo <= 0) return;
     const prevMax = profile.maxCombo || 0;
-    const nextMax = Math.max(prevMax, currentCombo);
+    // Only touch the DB on badge milestones / every 5th: a write per tap re-renders the whole app
+    if (currentCombo <= prevMax || currentCombo % 5 !== 0) return;
+    const nextMax = currentCombo;
     const learnedCnt = allProgress.filter(p => p.status === 'learning' || p.status === 'mastered').length;
     const masteredCnt = allProgress.filter(p => p.status === 'mastered').length;
     const newBadges = checkBadges(
