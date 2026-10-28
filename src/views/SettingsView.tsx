@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { UserSettings } from '../types';
+import { DEFAULT_CATEGORY_NAMES } from '../db';
 import { exportBackupFile, inspectBackupFile, restoreBackup, BackupPreview } from '../services/backup';
 import { sound } from '../services/audio';
 import { Download, Upload, Volume2, Sliders, ShieldCheck, Check, ArrowLeft, Sparkles, RotateCcw, Moon, Sun, Palette } from 'lucide-react';
@@ -110,6 +111,8 @@ export const SettingsView: React.FC<Props> = ({
     }
   };
 
+  const mergedCategories = { ...DEFAULT_CATEGORY_NAMES, ...categoryNames };
+
   return (
     <div className="space-y-4 pb-28 pt-2 select-none text-black">
       {/* Top Header */}
@@ -122,6 +125,42 @@ export const SettingsView: React.FC<Props> = ({
         </button>
         <h2 className="text-xl font-black text-black uppercase tracking-tight">AYARLAR</h2>
         <div className="w-8" />
+      </div>
+
+      {/* Category Management (Placed at top for instant mobile access) */}
+      <div className="bg-white border-4 border-black p-4 sm:p-5 space-y-3 shadow-[6px_6px_0px_0px_#000] text-black">
+        <h3 className="text-sm font-black text-black uppercase flex items-center space-x-2 tracking-tight border-b-2 border-black pb-2">
+          <Sliders size={16} strokeWidth={2.5} className="text-black" />
+          <span>KATEGORİ SEÇİMİ ({settings.enabledCategories?.length || 0} AÇIK)</span>
+        </h3>
+        <p className="text-xs font-bold text-zinc-700">
+          Çalışmak istediğin kelime gruplarını açıp kapatabilirsin.
+        </p>
+
+        <div className="grid grid-cols-2 gap-2 pt-1 max-h-80 overflow-y-auto pr-1">
+          {Object.entries(mergedCategories).map(([key, name]) => {
+            const isEnabled = settings.enabledCategories?.includes(key);
+            const isYokdil = key === 'yokdil_asiri_onemli' || key === 'yokdil_yds';
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => toggleCategory(key)}
+                data-light-pill={isEnabled ? 'true' : undefined}
+                className={`p-2.5 border-2 border-black text-left text-xs font-black uppercase flex items-center justify-between transition-all ${
+                  isYokdil ? 'col-span-2' : ''
+                } ${
+                  isEnabled
+                    ? 'bg-[#BBF7D0] text-black shadow-[2px_2px_0px_0px_#000]'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-300 opacity-75'
+                }`}
+              >
+                <span className={isYokdil ? 'pr-1' : 'truncate pr-1'}>{name || key}</span>
+                {isEnabled && <Check size={14} strokeWidth={3} className="text-black shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* 1. Appearance, Night Mode & Color Tool (Görünüm & Gece Modu & Renk Aleti) */}
@@ -441,37 +480,6 @@ export const SettingsView: React.FC<Props> = ({
             onChange={handleFileSelect}
             className="hidden"
           />
-        </div>
-      </div>
-
-      {/* Category Management */}
-      <div className="bg-white border-4 border-black p-5 space-y-4 shadow-[6px_6px_0px_0px_#000] text-black">
-        <h3 className="text-sm font-black text-black uppercase flex items-center space-x-2 tracking-tight border-b-2 border-black pb-2">
-          <Sliders size={16} strokeWidth={2.5} className="text-black" />
-          <span>KATEGORİ SEÇİMİ ({settings.enabledCategories?.length || 0} AÇIK)</span>
-        </h3>
-        <p className="text-xs font-bold text-zinc-700">
-          Çalışmak istediğin kelime gruplarını açıp kapatabilirsin.
-        </p>
-
-        <div className="grid grid-cols-2 gap-2 pt-1 max-h-64 overflow-y-auto pr-1">
-          {Object.entries(categoryNames).map(([key, name]) => {
-            const isEnabled = settings.enabledCategories?.includes(key);
-            return (
-              <button
-                key={key}
-                onClick={() => toggleCategory(key)}
-                className={`p-2.5 border-2 border-black text-left text-xs font-black uppercase flex items-center justify-between transition-all ${
-                  isEnabled
-                    ? 'bg-[#BBF7D0] text-black shadow-[2px_2px_0px_0px_#000]'
-                    : 'bg-zinc-100 text-zinc-500 opacity-60'
-                }`}
-              >
-                <span className="truncate pr-1">{name || key}</span>
-                {isEnabled && <Check size={14} strokeWidth={3} className="text-black shrink-0" />}
-              </button>
-            );
-          })}
         </div>
       </div>
 

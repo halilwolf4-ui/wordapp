@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { db, initializeDatabase, deduplicateDatabaseWords, DEFAULT_SETTINGS, DEFAULT_PROFILE } from './db';
+import { db, initializeDatabase, deduplicateDatabaseWords, syncYokdilCategoriesToDb, DEFAULT_SETTINGS, DEFAULT_PROFILE, DEFAULT_CATEGORY_NAMES } from './db';
 import { Word, Progress, UserSettings, UserProfile, DailyLog } from './types';
 import { selectDailyReviewQueue, selectDailyNewWordsQueue, calculateNextProgress } from './services/srsEngine';
 import { getEffectiveDate, daysBetween, addDays } from './services/dateUtils';
@@ -35,7 +35,7 @@ export const App: React.FC = () => {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([]);
-  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({});
+  const [categoryNames, setCategoryNames] = useState<Record<string, string>>(DEFAULT_CATEGORY_NAMES);
 
   // Navigation & overlays
   const [currentTab, setCurrentTab] = useState<NavTab>('home');
@@ -101,11 +101,14 @@ export const App: React.FC = () => {
 
   // Load category names from words.json on mount
   useEffect(() => {
-    fetch('/words.json')
+    const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+      ? import.meta.env.BASE_URL
+      : `${import.meta.env.BASE_URL}/`;
+    fetch(`${baseUrl}words.json?v=yokdil2`)
       .then(res => res.json())
       .then(data => {
         if (data.categoryNames) {
-          setCategoryNames(data.categoryNames);
+          setCategoryNames({ ...DEFAULT_CATEGORY_NAMES, ...data.categoryNames });
         }
       })
       .catch(err => console.warn('Category names fetch error:', err));
@@ -114,6 +117,7 @@ export const App: React.FC = () => {
   // Reload all data from IndexedDB
   const loadData = useCallback(async () => {
     await deduplicateDatabaseWords(db);
+    await syncYokdilCategoriesToDb(db);
     const loadedWords = await db.words.toArray();
     let loadedProgress = await db.progress.toArray();
 
@@ -873,6 +877,7 @@ export const App: React.FC = () => {
                 onStartPassaparola={() => setIsPassaparolaOpen(true)}
                 onStartClozeTest={() => setIsClozeTestOpen(true)}
                 onStartYdsYokdil={() => setIsYdsYokdilOpen(true)}
+                onOpenSettings={() => setIsSettingsOpen(true)}
               />
             </div>
 
@@ -941,7 +946,14 @@ export const App: React.FC = () => {
       {!isSettingsOpen && !isSpeedRoundOpen && !isPassaparolaOpen && !isClozeTestOpen && !isKeyboardVisible && currentTab !== 'learn' && currentTab !== 'review' && (
         <Navbar
           currentTab={currentTab}
-          onTabChange={setCurrentTab}
+          onTabChange={(tab) => {
+            setIsSettingsOpen(false);
+            setIsYdsYokdilOpen(false);
+            setIsSpeedRoundOpen(false);
+            setIsPassaparolaOpen(false);
+            setIsClozeTestOpen(false);
+            setCurrentTab(tab);
+          }}
           dueCount={dueQueue.length}
           newCount={newWordsQueue.length}
         />

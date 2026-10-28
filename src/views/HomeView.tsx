@@ -28,6 +28,7 @@ interface Props {
   onStartPassaparola: () => void;
   onStartClozeTest: () => void;
   onStartYdsYokdil: () => void;
+  onOpenSettings?: () => void;
 }
 
 export const HomeView: React.FC<Props> = ({
@@ -40,6 +41,7 @@ export const HomeView: React.FC<Props> = ({
   totalWordsCount,
   customWordsCount,
   profile,
+  settings,
   isLearnCompletedToday = false,
   isReviewCompletedToday = false,
   onStartReview,
@@ -47,7 +49,8 @@ export const HomeView: React.FC<Props> = ({
   onStartSpeedRound,
   onStartPassaparola,
   onStartClozeTest,
-  onStartYdsYokdil
+  onStartYdsYokdil,
+  onOpenSettings
 }) => {
   const [gender, setGender] = useCharacterGender();
   const currentStage = getStageForLevel(profile.level);
@@ -445,6 +448,26 @@ export const HomeView: React.FC<Props> = ({
               <circle cx="66" cy="38" r="3" fill="#FBBF24" />
             </svg>
           </button>
+
+          {onOpenSettings && (
+            <button
+              onClick={onOpenSettings}
+              data-light-pill="true"
+              className="w-full rounded-[20px] bg-[#BBF7D0] hover:bg-[#86EFAC] px-5 py-3.5 text-left text-[#0F172A] flex items-center justify-between shadow-[0_8px_20px_-6px_rgba(74,222,128,0.35)] border border-emerald-300"
+            >
+              <div>
+                <span className="text-[15px] font-extrabold block leading-tight text-[#0F172A]">
+                  📚 Kategori Seçimi ({settings?.enabledCategories?.length || 0} Açık)
+                </span>
+                <span className="text-xs font-bold text-[#064E3B] mt-0.5 block">
+                  YÖKDİL / YDS - AŞIRI ÖNEMLİ, YÖKDİL / YDS, Oxford 3000-5000
+                </span>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-[#0F172A] text-white text-xs font-black shrink-0">
+                SEÇ ➔
+              </span>
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -22,6 +22,33 @@ export class WordDatabase extends Dexie {
 
 export const db = new WordDatabase();
 
+export const DEFAULT_CATEGORY_NAMES: Record<string, string> = {
+  yokdil_asiri_onemli: 'YÖKDİL / YDS - AŞIRI ÖNEMLİ',
+  yokdil_yds: 'YÖKDİL / YDS',
+  basic_verbs: 'Temel fiiller',
+  colors: 'Renkler',
+  family: 'Aile',
+  irregular_verbs: 'Düzensiz fiiller',
+  money: 'Para',
+  numbers: 'Sayma sayıları',
+  numbers_ordinals: 'Sıra sayıları',
+  oxford3000_a1: 'Oxford 3000 - A1',
+  oxford3000_a2: 'Oxford 3000 - A2',
+  oxford3000_b1: 'Oxford 3000 - B1',
+  oxford3000_b2: 'Oxford 3000 - B2',
+  oxford5000_b2: 'Oxford 5000 - B2',
+  oxford5000_c1: 'Oxford 5000 - C1',
+  time: 'Zaman',
+  time_days_of_week: 'Haftanın günleri',
+  time_months: 'Yılın ayları',
+  time_seasons: 'Yılın sezonu',
+  top100: 'NGSL 1-100',
+  top1000: 'NGSL 101-1000',
+  top3000: 'NGSL 1001-3000',
+  town: 'Şehir',
+  custom: 'Kelimelerim'
+};
+
 export const DEFAULT_SETTINGS: UserSettings = {
   id: 1,
   dailyNewTarget: 10,
@@ -197,7 +224,7 @@ export async function deduplicateDatabaseWords(database: WordDatabase = db): Pro
  * Syncs YÖKDİL / YDS and YÖKDİL / YDS - AŞIRI ÖNEMLİ categories and words into an existing IndexedDB.
  */
 export async function syncYokdilCategoriesToDb(database: WordDatabase = db): Promise<void> {
-  const syncKey = 'kelime_avi_yokdil_cat_sync_v1';
+  const syncKey = 'kelime_avi_yokdil_cat_sync_v2';
   if (typeof localStorage !== 'undefined' && localStorage.getItem(syncKey) === 'true') {
     return;
   }
@@ -206,7 +233,7 @@ export async function syncYokdilCategoriesToDb(database: WordDatabase = db): Pro
     const baseUrl = import.meta.env.BASE_URL.endsWith('/')
       ? import.meta.env.BASE_URL
       : `${import.meta.env.BASE_URL}/`;
-    const res = await fetch(`${baseUrl}words.json`);
+    const res = await fetch(`${baseUrl}words.json?v=yokdil2`, { cache: 'no-store' });
     if (!res.ok) return;
 
     const data = await res.json();
