@@ -144,6 +144,7 @@ export const App: React.FC = () => {
       streak: loadedProfile.streak,
       speedScore: loadedProfile.highScoreSpeedRound,
       masteredCount: masteredCnt,
+      comboCount: loadedProfile.maxCombo || 0,
       hasCustomWord: loadedWords.some(w => !!w.isCustom)
     });
     if (syncedBadges.length !== (loadedProfile.unlockedBadges?.length || 0)) {
@@ -334,9 +335,41 @@ export const App: React.FC = () => {
       streak,
       speedScore: speedScore ?? currentProf.highScoreSpeedRound,
       masteredCount,
-      comboCount,
+      comboCount: Math.max(comboCount || 0, currentProf.maxCombo || 0),
       hasCustomWord: isCustomWordCreated || allWords.some(w => !!w.isCustom)
     });
+  };
+
+  // Real-time combo update to track highest combo and unlock combo badges immediately
+  const handleComboUpdate = async (currentCombo: number) => {
+    if (currentCombo <= 0) return;
+    const prevMax = profile.maxCombo || 0;
+    const nextMax = Math.max(prevMax, currentCombo);
+    const learnedCnt = allProgress.filter(p => p.status === 'learning' || p.status === 'mastered').length;
+    const masteredCnt = allProgress.filter(p => p.status === 'mastered').length;
+    const newBadges = checkBadges(
+      profile,
+      learnedCnt,
+      profile.streak,
+      false,
+      profile.highScoreSpeedRound,
+      masteredCnt,
+      nextMax
+    );
+
+    const hasNewBadge = newBadges.length > (profile.unlockedBadges?.length || 0);
+    if (nextMax > prevMax || hasNewBadge) {
+      if (hasNewBadge) {
+        sound.playLevelUp();
+      }
+      const updatedProf: UserProfile = {
+        ...profile,
+        maxCombo: nextMax,
+        unlockedBadges: newBadges
+      };
+      await db.profile.put(updatedProf);
+      setProfile(updatedProf);
+    }
   };
 
   // Add XP, check level up & record logs
@@ -360,6 +393,7 @@ export const App: React.FC = () => {
     let updatedProf = await updateStreakAndActivity(profile, today);
     const learnedCount = allProgress.filter(p => p.status === 'learning' || p.status === 'mastered').length;
     const masteredCountTotal = allProgress.filter(p => p.status === 'mastered').length + (isMastered ? 1 : 0);
+    const nextMaxCombo = Math.max(profile.maxCombo || 0, comboCount);
     const newBadges = checkBadges(
       updatedProf,
       learnedCount + (isNewLearned ? 1 : 0),
@@ -367,13 +401,14 @@ export const App: React.FC = () => {
       false,
       updatedProf.highScoreSpeedRound,
       masteredCountTotal,
-      comboCount
+      nextMaxCombo
     );
 
     updatedProf = {
       ...updatedProf,
       xp: nextXp,
       level: nextLevel,
+      maxCombo: nextMaxCombo,
       unlockedBadges: newBadges
     };
     await db.profile.put(updatedProf);
@@ -413,7 +448,7 @@ export const App: React.FC = () => {
   };
 
   // Handle Learn mode word completion (passed both multiple choice and typing)
-  const handleLearnWordComplete = async (word: Word, isCorrect: boolean) => {
+  const handleLearnWordComplete = async (word: Word, isCorrect: boolean, comboCount: number = 1) => {
     const existingProg = await db.progress.get(word.id);
     // Enters the 21-day repetition queue with dueDate = today so it is immediately reviewable today!
     const nextProgress: Progress = {
@@ -435,7 +470,7 @@ export const App: React.FC = () => {
       return [...filtered, nextProgress];
     });
 
-    await recordAnswerResult(isCorrect, true);
+    await recordAnswerResult(isCorrect, true, comboCount);
   };
 
   // Permanently mark word as known when swiped 'Biliyorum' in discovery
@@ -477,7 +512,13 @@ export const App: React.FC = () => {
   };
 
   // Handle Review mode word answer
-  const handleReviewWordAnswer = async (wordId: number, isCorrect: boolean, isPartial: boolean, lastMistake?: string) => {
+  const handleReviewWordAnswer = async (
+    wordId: number,
+    isCorrect: boolean,
+    isPartial: boolean,
+    lastMistake?: string,
+    comboCount: number = 1
+  ) => {
     const existingProg = await db.progress.get(wordId);
     const { nextProgress } = calculateNextProgress(existingProg || null, wordId, isCorrect, today, lastMistake);
 
@@ -493,7 +534,7 @@ export const App: React.FC = () => {
       return [...filtered, nextProgress];
     });
 
-    await recordAnswerResult(isCorrect, false, 1, becameMastered);
+    await recordAnswerResult(isCorrect, false, comboCount, becameMastered);
   };
 
   // Record single last mistake on a word (without bloating DB, only saves the latest one)
@@ -809,6 +850,7 @@ export const App: React.FC = () => {
             allWords={allWords}
             highScore={profile.highScoreSpeedRound}
             onUpdateHighScore={handleUpdateHighScore}
+            onComboUpdate={handleComboUpdate}
             onClose={() => setIsSpeedRoundOpen(false)}
           />
         ) : isPassaparolaOpen ? (
@@ -834,6 +876,7 @@ export const App: React.FC = () => {
               await db.profile.put(updatedProf);
               setProfile(updatedProf);
             }}
+            onComboUpdate={handleComboUpdate}
             onAddCustomWord={handleAddCustomWord}
             onClose={() => setIsYdsYokdilOpen(false)}
           />
@@ -851,6 +894,7 @@ export const App: React.FC = () => {
               await db.profile.put(updatedProf);
               setProfile(updatedProf);
             }}
+            onComboUpdate={handleComboUpdate}
             onAddCustomWord={handleAddCustomWord}
             onClose={() => setIsClozeTestOpen(false)}
           />
@@ -895,6 +939,7 @@ export const App: React.FC = () => {
                 onMarkWordLearning={handleMarkWordLearning}
                 onRecordMistake={handleRecordMistake}
                 onSessionCompleted={handleSessionCompleted}
+                onComboUpdate={handleComboUpdate}
                 onClose={() => setCurrentTab('home')}
                 onRefreshBatch={loadData}
               />
@@ -913,6 +958,7 @@ export const App: React.FC = () => {
                 onRecordMistake={handleRecordMistake}
                 onDemoteMasteredWord={handleDemoteMasteredWord}
                 onSessionCompleted={handleSessionCompleted}
+                onComboUpdate={handleComboUpdate}
                 onClose={() => setCurrentTab('home')}
                 onRefreshDue={loadData}
               />

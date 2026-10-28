@@ -278,13 +278,13 @@ export const PassaparolaView: React.FC<Props> = ({
           {/* Circular Wheel */}
           <div className="relative w-[230px] h-[230px] mx-auto select-none shrink-0 my-auto bg-white border-3 border-black rounded-full shadow-[5px_5px_0px_0px_#000]">
             {/* SVG backdrop for ring */}
-            <svg className="w-full h-full pointer-events-none absolute inset-0">
+            <svg className="w-full h-full pointer-events-none absolute inset-0 text-slate-300 dark:text-slate-600">
               <circle
                 cx={centerCoord}
                 cy={centerCoord}
                 r={circleRadius}
                 fill="none"
-                stroke="#000"
+                stroke="currentColor"
                 strokeWidth="2"
                 strokeDasharray="4 4"
               />

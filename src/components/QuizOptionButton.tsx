@@ -68,8 +68,8 @@ export const QuizOptionButton: React.FC<QuizOptionButtonProps> = ({
     badgeStyle = 'bg-[#12B886] text-white';
   } else if (isDimmed) {
     containerStyle =
-      'bg-slate-50/70 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 text-slate-400 opacity-45 cursor-default shadow-none';
-    badgeStyle = 'bg-slate-200/70 dark:bg-slate-800 text-slate-400';
+      'bg-slate-50/90 dark:bg-[#1A2336] border border-slate-200/70 dark:border-white/10 text-slate-500 dark:text-slate-300 opacity-75 cursor-default shadow-none';
+    badgeStyle = 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-200';
   }
 
   const paddingClass = hasFeedback

@@ -21,7 +21,7 @@ export const Header: React.FC<Props> = ({
   const stageInfo = getStageForLevel(profile.level);
 
   return (
-    <header className="sticky top-0 z-30 bg-[#F7F8FC]/90 dark:bg-[#0B0F19]/90 backdrop-blur-xl px-4 pt-3.5 pb-2.5 select-none">
+    <header className="sticky top-0 z-30 bg-[#F7F8FC] dark:bg-[#0B0F19] px-4 pt-3.5 pb-2.5 select-none">
       <div className="max-w-md mx-auto flex items-center justify-between gap-2.5">
         {/* Left: Evolving Character Avatar & Greeting */}
         <div className="flex items-center space-x-3 min-w-0">

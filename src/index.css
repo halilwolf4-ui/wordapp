@@ -88,7 +88,7 @@ body {
 }
 
 .animate-liquid-wave {
-  animation: liquidWave 2.6s linear infinite;
+  animation: none !important;
 }
 
 /* Golden Shimmer for Solid Gold Unlocked Badges */
@@ -105,7 +105,7 @@ body {
 }
 
 .animate-gold-shimmer {
-  animation: goldShimmer 3s ease-in-out infinite;
+  animation: none !important;
 }
 
 /* Soft dot pattern */
@@ -229,9 +229,8 @@ body {
    FLUID SPRING INTERACTION PHYSICS
    ======================================================== */
 button {
-  transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1),
-    box-shadow 0.2s cubic-bezier(0.32, 0.72, 0, 1),
-    opacity 0.2s ease !important;
+  transition: transform 0.14s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.14s ease !important;
 }
 
 button:active:not(:disabled) {
@@ -244,7 +243,7 @@ textarea {
   border-radius: 18px !important;
   border: 1.5px solid #E2E8F0 !important;
   box-shadow: 0 4px 12px rgba(17, 24, 39, 0.03) !important;
-  transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 
 input:not([type="checkbox"]):not([type="color"]):focus,
@@ -388,35 +387,35 @@ textarea:focus {
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  animation: fadeIn 0.18s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
 .animate-scaleUp {
-  animation: scaleUp 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: scaleUp 0.18s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
 .animate-pulseGlow {
-  animation: pulseGlow 2.2s ease-in-out infinite;
+  animation: none !important;
 }
 
 .animate-correct-pop {
-  animation: correctPop 0.36s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: correctPop 0.22s ease-out forwards;
 }
 
 .animate-wrong-shake {
-  animation: wrongShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+  animation: wrongShake 0.26s ease-out forwards;
 }
 
 .animate-check-bounce {
-  animation: checkBounce 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: checkBounce 0.2s ease-out forwards;
 }
 
 .animate-x-bounce {
-  animation: xBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: xBounce 0.2s ease-out forwards;
 }
 
 .animate-float {
-  animation: floatSlow 3.5s ease-in-out infinite;
+  animation: none !important;
 }
 
 /* ========================================================
@@ -440,7 +439,8 @@ html.dark .bg-white[data-light-pill="true"] {
   color: #0F172A !important;
 }
 
-html.dark .bg-\[\#FDFBF7\] {
+html.dark .bg-\[\#FDFBF7\],
+html.dark .bg-zinc-50 {
   background-color: #0F172A !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
   color: #F9FAFB !important;
@@ -471,49 +471,16 @@ html.dark .text-zinc-900 {
   color: #F3F4F6 !important;
 }
 
+html.dark .text-zinc-500 {
+  color: #9CA3AF !important;
+}
+
 html.dark input:not([type="checkbox"]):not([type="color"]),
 html.dark select,
 html.dark textarea {
   background-color: #1E293B !important;
   border-color: rgba(255, 255, 255, 0.12) !important;
   color: #F9FAFB !important;
-}
-
-/* CRITICAL FIX: Any light/pastel surface in Dark Mode MUST keep dark text (#0F172A)
-   for itself and all nested children so text is NEVER white-on-pastel! */
-html.dark .bg-\[\#FFE600\],
-html.dark .bg-\[\#FFE600\] *,
-html.dark .bg-\[\#FEF08A\],
-html.dark .bg-\[\#FEF08A\] *,
-html.dark .bg-\[\#00F0FF\],
-html.dark .bg-\[\#00F0FF\] *,
-html.dark .bg-\[\#BAE6FD\],
-html.dark .bg-\[\#BAE6FD\] *,
-html.dark .bg-\[\#C084FC\],
-html.dark .bg-\[\#C084FC\] *,
-html.dark .bg-\[\#DDD6FE\],
-html.dark .bg-\[\#DDD6FE\] *,
-html.dark .bg-\[\#BBF7D0\],
-html.dark .bg-\[\#BBF7D0\] *,
-html.dark .bg-\[\#86EFAC\],
-html.dark .bg-\[\#86EFAC\] *,
-html.dark .bg-\[\#4ADE80\],
-html.dark .bg-\[\#4ADE80\] *,
-html.dark .bg-\[\#E5E0D8\],
-html.dark .bg-\[\#E5E0D8\] *,
-html.dark .bg-\[\#FF69B4\],
-html.dark .bg-\[\#FF69B4\] *,
-html.dark .bg-amber-400,
-html.dark .bg-amber-400 *,
-html.dark .bg-emerald-400,
-html.dark .bg-emerald-400 *,
-html.dark .bg-zinc-100:not(.dark\:bg-zinc-800):not(.dark\:bg-zinc-700),
-html.dark .bg-zinc-100:not(.dark\:bg-zinc-800):not(.dark\:bg-zinc-700) *,
-html.dark .bg-zinc-200:not(.dark\:bg-zinc-800):not(.dark\:bg-zinc-700),
-html.dark .bg-zinc-200:not(.dark\:bg-zinc-800):not(.dark\:bg-zinc-700) *,
-html.dark [data-light-pill="true"],
-html.dark [data-light-pill="true"] * {
-  color: #0F172A !important;
 }
 
 /* Keep rose/pink alert banners dark-mode friendly and crisp */
@@ -534,10 +501,81 @@ html.dark .bg-\[\#F0FDF4\] {
   border-color: rgba(16, 185, 129, 0.35) !important;
 }
 
-/* Preserve white text on coral/dark buttons nested inside light containers */
-html.dark .bg-black,
-html.dark .bg-black *,
-html.dark .bg-\[\#FF5588\],
-html.dark .bg-\[\#FF5588\] * {
+/* CRITICAL FIX: Any light/pastel surface in Dark Mode MUST keep dark text (#0F172A)
+   for itself and all nested children so text is NEVER white-on-pastel! */
+html.dark body .bg-\[\#FFE600\],
+html.dark body .bg-\[\#FFE600\] *,
+html.dark body .bg-\[\#FEF08A\],
+html.dark body .bg-\[\#FEF08A\] *,
+html.dark body .bg-\[\#FDE047\],
+html.dark body .bg-\[\#FDE047\] *,
+html.dark body .bg-\[\#FFE45E\],
+html.dark body .bg-\[\#FFE45E\] *,
+html.dark body .bg-\[\#FFF4BD\],
+html.dark body .bg-\[\#FFF4BD\] *,
+html.dark body .bg-\[\#00F0FF\],
+html.dark body .bg-\[\#00F0FF\] *,
+html.dark body .bg-\[\#BAE6FD\],
+html.dark body .bg-\[\#BAE6FD\] *,
+html.dark body .bg-\[\#C084FC\],
+html.dark body .bg-\[\#C084FC\] *,
+html.dark body .bg-\[\#DDD6FE\],
+html.dark body .bg-\[\#DDD6FE\] *,
+html.dark body .bg-\[\#BBF7D0\],
+html.dark body .bg-\[\#BBF7D0\] *,
+html.dark body .bg-\[\#86EFAC\],
+html.dark body .bg-\[\#86EFAC\] *,
+html.dark body .bg-\[\#4ADE80\],
+html.dark body .bg-\[\#4ADE80\] *,
+html.dark body .bg-\[\#E5E0D8\],
+html.dark body .bg-\[\#E5E0D8\] *,
+html.dark body .bg-\[\#FF69B4\],
+html.dark body .bg-\[\#FF69B4\] *,
+html.dark body .bg-\[\#FECDD3\],
+html.dark body .bg-\[\#FECDD3\] *,
+html.dark body .bg-\[\#FFB1B8\],
+html.dark body .bg-\[\#FFB1B8\] *,
+html.dark body .bg-\[\#FB923C\],
+html.dark body .bg-\[\#FB923C\] *,
+html.dark body .bg-red-100,
+html.dark body .bg-red-100 *,
+html.dark body .bg-amber-400,
+html.dark body .bg-amber-400 *,
+html.dark body .bg-emerald-400,
+html.dark body .bg-emerald-400 *,
+html.dark body .bg-zinc-100:not(.dark\:bg-zinc-800):not(.dark\:bg-zinc-700):not(.dark\:bg-slate-800\/70),
+html.dark body .bg-zinc-100:not(.dark\:bg-zinc-800):not(.dark\:bg-zinc-700):not(.dark\:bg-slate-800\/70) *,
+html.dark body .bg-zinc-200:not(.dark\:bg-zinc-800):not(.dark\:bg-zinc-700):not(.dark\:bg-slate-800),
+html.dark body .bg-zinc-200:not(.dark\:bg-zinc-800):not(.dark\:bg-zinc-700):not(.dark\:bg-slate-800) *,
+html.dark body [data-light-pill="true"],
+html.dark body [data-light-pill="true"] *,
+html.dark body .hover\:bg-\[\#FFE600\]:hover,
+html.dark body .hover\:bg-\[\#FFE600\]:hover * {
+  color: #0F172A !important;
+}
+
+/* Preserve white text on coral/dark buttons & badges nested inside light containers */
+html.dark body .bg-black,
+html.dark body .bg-black *,
+html.dark body .bg-\[\#0F172A\],
+html.dark body .bg-\[\#0F172A\] *,
+html.dark body .bg-\[\#FF5588\],
+html.dark body .bg-\[\#FF5588\] *,
+html.dark body .bg-\[\#FF6B5B\],
+html.dark body .bg-\[\#FF6B5B\] *,
+html.dark body .bg-\[\#FF5E5B\],
+html.dark body .bg-\[\#FF5E5B\] *,
+html.dark body .bg-\[\#12B886\],
+html.dark body .bg-\[\#12B886\] *,
+html.dark body .bg-\[\#15803d\],
+html.dark body .bg-\[\#15803d\] *,
+html.dark body .bg-\[\#b91c1c\],
+html.dark body .bg-\[\#b91c1c\] * {
   color: #FFFFFF !important;
+}
+
+html.dark body .bg-\[\#FF5588\] [data-light-pill="true"],
+html.dark body .bg-\[\#FF5588\] [data-light-pill="true"] * {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
 }

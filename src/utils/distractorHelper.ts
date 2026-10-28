@@ -48,10 +48,38 @@ const ADJ_SUFFIXES = [
   'ory', 'wide', 'proof', 'like', 'some'
 ];
 
+interface WordMeta {
+  pos: PartOfSpeech;
+  domain: NounDomain | null;
+  level: number;
+  trClean: string;
+  trNorm: string;
+}
+
+const wordMetaCache = new WeakMap<Word, WordMeta>();
+
+function getWordMeta(w: Word): WordMeta {
+  let meta = wordMetaCache.get(w);
+  if (!meta) {
+    const pos = computeWordPos(w);
+    const domain = pos === 'noun' ? computeNounDomain(w) : null;
+    const level = computeWordLevel(w);
+    const trClean = w.tr.split(/[,;/]+/)[0].trim();
+    const trNorm = trClean.toLocaleLowerCase('tr-TR');
+    meta = { pos, domain, level, trClean, trNorm };
+    wordMetaCache.set(w, meta);
+  }
+  return meta;
+}
+
 /**
  * Detect Part of Speech for a word accurately using English & Turkish patterns
  */
 export function getWordPos(w: Word): PartOfSpeech {
+  return getWordMeta(w).pos;
+}
+
+function computeWordPos(w: Word): PartOfSpeech {
   const en = w.en.toLowerCase().trim();
   const tr = w.tr.toLowerCase().trim();
   const trPrimary = tr.split(/[,;/]+/)[0].trim();
@@ -129,6 +157,11 @@ function isEventOrProcessNoun(w: Word): boolean {
  * Detect Noun Semantic Domain (to avoid mixing "omurga" with "avukatlık", or "outbreak" with "parmaklık")
  */
 export function getNounDomain(w: Word): NounDomain {
+  const meta = getWordMeta(w);
+  return meta.domain ?? computeNounDomain(w);
+}
+
+function computeNounDomain(w: Word): NounDomain {
   const enTokens = w.en.toLowerCase().split(/[\s,;/.-]+/);
   const trTokens = w.tr.toLowerCase().split(/[\s,;/.-]+/);
   const allTokens = [...enTokens, ...trTokens];
@@ -155,6 +188,10 @@ export function getNounDomain(w: Word): NounDomain {
  * Difficulty / Level approximation (1 = A1 to 5 = C1/Advanced)
  */
 export function getWordLevel(w: Word): number {
+  return getWordMeta(w).level;
+}
+
+function computeWordLevel(w: Word): number {
   const cats = w.categories || [];
   if (cats.includes('custom') || !!w.reword || cats.includes('oxford5000_c1')) return 5;
   if (cats.includes('oxford5000_b2') || cats.includes('oxford3000_b2')) return 4;
@@ -174,74 +211,78 @@ export function getSmartDistractors(
   count: number = 3,
   sessionWords?: Word[]
 ): string[] {
-  const targetTrPrimary = targetWord.tr.split(/[,;/]+/)[0].trim();
-  const targetTrNorm = targetTrPrimary.toLocaleLowerCase('tr-TR');
-
-  const targetPos = getWordPos(targetWord);
-  const targetDomain = targetPos === 'noun' ? getNounDomain(targetWord) : null;
-  const targetLevel = getWordLevel(targetWord);
+  const targetMeta = getWordMeta(targetWord);
+  const targetTrNorm = targetMeta.trNorm;
+  const targetPos = targetMeta.pos;
+  const targetDomain = targetMeta.domain;
+  const targetLevel = targetMeta.level;
 
   const selectedDistractors: string[] = [];
   const usedTrSet = new Set<string>([targetTrNorm]);
 
-  function pickFrom(pool: Word[], randomize: boolean = true) {
-    const sorted = pool.slice().sort((a, b) => {
-      const diffA = Math.abs(getWordLevel(a) - targetLevel);
-      const diffB = Math.abs(getWordLevel(b) - targetLevel);
-      if (diffA !== diffB) return diffA - diffB;
-      return randomize ? Math.random() - 0.5 : 0;
-    });
+  function pickFrom(pool: Word[]) {
+    if (pool.length === 0 || selectedDistractors.length >= count) return;
+    // Bucket by level difference (0..4) instead of O(N log N) sorting on 2500+ words
+    const buckets: Word[][] = [[], [], [], [], []];
+    for (let i = 0; i < pool.length; i++) {
+      const w = pool[i];
+      const diff = Math.min(4, Math.abs(getWordMeta(w).level - targetLevel));
+      buckets[diff].push(w);
+    }
 
-    for (const w of sorted) {
-      if (selectedDistractors.length >= count) break;
-      const trClean = w.tr.split(/[,;/]+/)[0].trim();
-      const trNorm = trClean.toLocaleLowerCase('tr-TR');
+    for (let d = 0; d < buckets.length && selectedDistractors.length < count; d++) {
+      const bucket = buckets[d];
+      let len = bucket.length;
+      while (len > 0 && selectedDistractors.length < count) {
+        const randIdx = Math.floor(Math.random() * len);
+        const w = bucket[randIdx];
+        bucket[randIdx] = bucket[len - 1];
+        len--;
 
-      if (!usedTrSet.has(trNorm) && trClean.length > 0) {
-        selectedDistractors.push(trClean);
-        usedTrSet.add(trNorm);
+        const meta = getWordMeta(w);
+        if (!usedTrSet.has(meta.trNorm) && meta.trClean.length > 0) {
+          selectedDistractors.push(meta.trClean);
+          usedTrSet.add(meta.trNorm);
+        }
       }
     }
   }
+
+  const isTargetVerbFamily = targetPos === 'verb' || targetPos === 'phrasal_verb';
 
   // Priority 1: Pick from current session words matching the exact same POS!
   if (sessionWords && sessionWords.length > 0) {
     const sessionMatchPool = sessionWords.filter(w => {
       if (w.id === targetWord.id) return false;
-      const wTr = w.tr.split(/[,;/]+/)[0].trim().toLocaleLowerCase('tr-TR');
-      if (wTr === targetTrNorm || wTr.length === 0) return false;
+      const meta = getWordMeta(w);
+      if (meta.trNorm === targetTrNorm || meta.trNorm.length === 0) return false;
 
-      const wPos = getWordPos(w);
-      const isTargetVerbFamily = targetPos === 'verb' || targetPos === 'phrasal_verb';
-      const isWVerbFamily = wPos === 'verb' || wPos === 'phrasal_verb';
+      const isWVerbFamily = meta.pos === 'verb' || meta.pos === 'phrasal_verb';
       if (isTargetVerbFamily !== isWVerbFamily) return false;
-      if (!isTargetVerbFamily && wPos !== targetPos) return false;
+      if (!isTargetVerbFamily && meta.pos !== targetPos) return false;
 
       // In nouns, avoid mixing body with profession/object
       if (targetPos === 'noun' && targetDomain && targetDomain !== 'general') {
-        const wDomain = getNounDomain(w);
-        if (wDomain !== targetDomain && wDomain !== 'general') return false;
+        if (meta.domain !== targetDomain && meta.domain !== 'general') return false;
       }
       return true;
     });
-    pickFrom(sessionMatchPool, true);
+    pickFrom(sessionMatchPool);
   }
 
   // Priority 2: Database matching exact POS and Domain (no "parmaklık/iplik" for abstract nouns)
   if (selectedDistractors.length < count) {
     const pool1 = allWords.filter(w => {
       if (w.id === targetWord.id) return false;
-      const wTr = w.tr.split(/[,;/]+/)[0].trim().toLocaleLowerCase('tr-TR');
-      if (wTr === targetTrNorm || wTr.length === 0) return false;
+      const meta = getWordMeta(w);
+      if (meta.trNorm === targetTrNorm || meta.trNorm.length === 0) return false;
 
-      const wPos = getWordPos(w);
-      const isTargetVerbFamily = targetPos === 'verb' || targetPos === 'phrasal_verb';
-      const isWVerbFamily = wPos === 'verb' || wPos === 'phrasal_verb';
+      const isWVerbFamily = meta.pos === 'verb' || meta.pos === 'phrasal_verb';
       if (isTargetVerbFamily !== isWVerbFamily) return false;
-      if (!isTargetVerbFamily && wPos !== targetPos) return false;
+      if (!isTargetVerbFamily && meta.pos !== targetPos) return false;
 
       if (targetPos === 'noun') {
-        const wDomain = getNounDomain(w);
+        const wDomain = meta.domain;
         if (targetDomain === 'event' && wDomain !== 'event') return false;
         if (targetDomain === 'body' && wDomain !== 'body') return false;
         if (targetDomain === 'profession' && wDomain !== 'profession') return false;
@@ -250,21 +291,20 @@ export function getSmartDistractors(
       }
       return true;
     });
-    pickFrom(pool1, true);
+    pickFrom(pool1);
   }
 
   // Priority 3: Fallback same POS
   if (selectedDistractors.length < count) {
     const pool2 = allWords.filter(w => {
       if (w.id === targetWord.id) return false;
-      const wPos = getWordPos(w);
-      const isTargetVerbFamily = targetPos === 'verb' || targetPos === 'phrasal_verb';
-      const isWVerbFamily = wPos === 'verb' || wPos === 'phrasal_verb';
+      const meta = getWordMeta(w);
+      const isWVerbFamily = meta.pos === 'verb' || meta.pos === 'phrasal_verb';
       if (isTargetVerbFamily !== isWVerbFamily) return false;
-      if (!isTargetVerbFamily && wPos !== targetPos) return false;
+      if (!isTargetVerbFamily && meta.pos !== targetPos) return false;
       return true;
     });
-    pickFrom(pool2, true);
+    pickFrom(pool2);
   }
 
   return selectedDistractors;

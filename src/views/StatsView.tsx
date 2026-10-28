@@ -17,33 +17,54 @@ function getBadgeProgress(
   totalWords: number,
   totalMastered: number
 ): { current: number; max: number; label: string } | null {
+  const maxCombo = profile.maxCombo || 0;
   switch (badgeId) {
-    case 'first_10': return { current: Math.min(10, totalWords), max: 10, label: `${Math.min(10, totalWords)}/10` };
-    case 'words_50': return { current: Math.min(50, totalWords), max: 50, label: `${Math.min(50, totalWords)}/50` };
+    // Words
+    case 'first_word': return { current: Math.min(1, totalWords), max: 1, label: `${Math.min(1, totalWords)}/1` };
+    case 'words_25': return { current: Math.min(25, totalWords), max: 25, label: `${Math.min(25, totalWords)}/25` };
     case 'words_100': return { current: Math.min(100, totalWords), max: 100, label: `${Math.min(100, totalWords)}/100` };
     case 'words_250': return { current: Math.min(250, totalWords), max: 250, label: `${Math.min(250, totalWords)}/250` };
     case 'words_500': return { current: Math.min(500, totalWords), max: 500, label: `${Math.min(500, totalWords)}/500` };
     case 'words_1000': return { current: Math.min(1000, totalWords), max: 1000, label: `${Math.min(1000, totalWords)}/1000` };
     case 'words_2000': return { current: Math.min(2000, totalWords), max: 2000, label: `${Math.min(2000, totalWords)}/2000` };
-    case 'words_3500': return { current: Math.min(3500, totalWords), max: 3500, label: `${Math.min(3500, totalWords)}/3500` };
+    case 'words_3000': return { current: Math.min(3000, totalWords), max: 3000, label: `${Math.min(3000, totalWords)}/3000` };
+
+    // Streaks
     case 'streak_3': return { current: Math.min(3, profile.streak), max: 3, label: `${Math.min(3, profile.streak)}/3` };
     case 'streak_7': return { current: Math.min(7, profile.streak), max: 7, label: `${Math.min(7, profile.streak)}/7` };
     case 'streak_14': return { current: Math.min(14, profile.streak), max: 14, label: `${Math.min(14, profile.streak)}/14` };
     case 'streak_21': return { current: Math.min(21, profile.streak), max: 21, label: `${Math.min(21, profile.streak)}/21` };
     case 'streak_30': return { current: Math.min(30, profile.streak), max: 30, label: `${Math.min(30, profile.streak)}/30` };
-    case 'streak_60': return { current: Math.min(60, profile.streak), max: 60, label: `${Math.min(60, profile.streak)}/60` };
+    case 'streak_50': return { current: Math.min(50, profile.streak), max: 50, label: `${Math.min(50, profile.streak)}/50` };
     case 'streak_100': return { current: Math.min(100, profile.streak), max: 100, label: `${Math.min(100, profile.streak)}/100` };
+
+    // Speed Round
+    case 'speed_10': return { current: Math.min(10, profile.highScoreSpeedRound), max: 10, label: `${Math.min(10, profile.highScoreSpeedRound)}/10` };
+    case 'speed_20': return { current: Math.min(20, profile.highScoreSpeedRound), max: 20, label: `${Math.min(20, profile.highScoreSpeedRound)}/20` };
+    case 'speed_30': return { current: Math.min(30, profile.highScoreSpeedRound), max: 30, label: `${Math.min(30, profile.highScoreSpeedRound)}/30` };
+    case 'speed_40': return { current: Math.min(40, profile.highScoreSpeedRound), max: 40, label: `${Math.min(40, profile.highScoreSpeedRound)}/40` };
     case 'speed_50': return { current: Math.min(50, profile.highScoreSpeedRound), max: 50, label: `${Math.min(50, profile.highScoreSpeedRound)}/50` };
     case 'speed_100': return { current: Math.min(100, profile.highScoreSpeedRound), max: 100, label: `${Math.min(100, profile.highScoreSpeedRound)}/100` };
-    case 'speed_150': return { current: Math.min(150, profile.highScoreSpeedRound), max: 150, label: `${Math.min(150, profile.highScoreSpeedRound)}/150` };
-    case 'speed_200': return { current: Math.min(200, profile.highScoreSpeedRound), max: 200, label: `${Math.min(200, profile.highScoreSpeedRound)}/200` };
-    case 'speed_300': return { current: Math.min(300, profile.highScoreSpeedRound), max: 300, label: `${Math.min(300, profile.highScoreSpeedRound)}/300` };
-    case 'speed_500': return { current: Math.min(500, profile.highScoreSpeedRound), max: 500, label: `${Math.min(500, profile.highScoreSpeedRound)}/500` };
-    case 'master_10': return { current: Math.min(10, totalMastered), max: 10, label: `${Math.min(10, totalMastered)}/10` };
+
+    // Mastered Words
     case 'master_50': return { current: Math.min(50, totalMastered), max: 50, label: `${Math.min(50, totalMastered)}/50` };
     case 'master_100': return { current: Math.min(100, totalMastered), max: 100, label: `${Math.min(100, totalMastered)}/100` };
+    case 'master_200': return { current: Math.min(200, totalMastered), max: 200, label: `${Math.min(200, totalMastered)}/200` };
     case 'master_500': return { current: Math.min(500, totalMastered), max: 500, label: `${Math.min(500, totalMastered)}/500` };
     case 'master_1000': return { current: Math.min(1000, totalMastered), max: 1000, label: `${Math.min(1000, totalMastered)}/1000` };
+
+    // Combos
+    case 'combo_10': return { current: Math.min(10, maxCombo), max: 10, label: `${Math.min(10, maxCombo)}/10` };
+    case 'combo_25': return { current: Math.min(25, maxCombo), max: 25, label: `${Math.min(25, maxCombo)}/25` };
+    case 'combo_50': return { current: Math.min(50, maxCombo), max: 50, label: `${Math.min(50, maxCombo)}/50` };
+    case 'combo_100': return { current: Math.min(100, maxCombo), max: 100, label: `${Math.min(100, maxCombo)}/100` };
+
+    // Custom Word Creator
+    case 'custom_creator': {
+      const has = profile.unlockedBadges.includes('custom_creator') ? 1 : 0;
+      return { current: has, max: 1, label: `${has}/1` };
+    }
+
     default: return null;
   }
 }

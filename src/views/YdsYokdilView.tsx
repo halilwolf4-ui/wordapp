@@ -40,6 +40,7 @@ import {
 interface Props {
   allWords: Word[];
   onAddXp?: (amount: number) => Promise<void>;
+  onComboUpdate?: (combo: number) => void;
   onAddCustomWord?: (word: Omit<Word, 'id'>, silent?: boolean) => Promise<void>;
   onClose: () => void;
 }
@@ -65,6 +66,7 @@ interface ActiveWordPopup {
 export const YdsYokdilView: React.FC<Props> = ({
   allWords,
   onAddXp,
+  onComboUpdate,
   onAddCustomWord,
   onClose
 }) => {
@@ -497,6 +499,7 @@ export const YdsYokdilView: React.FC<Props> = ({
       const newCombo = combo + 1;
       setCombo(newCombo);
       if (newCombo > maxCombo) setMaxCombo(newCombo);
+      onComboUpdate?.(newCombo);
       setScore(prev => prev + 1);
 
       const gainedXp = 10 + Math.min(newCombo * 2, 20);
@@ -576,7 +579,7 @@ export const YdsYokdilView: React.FC<Props> = ({
             handleWordTrigger(part, e.currentTarget);
           }}
           title="Tıklayarak anlamına bakın ve kelimelerinize kaydedin"
-          className="cursor-pointer hover:bg-[#FFE600] hover:text-black rounded-none px-0.5 transition-colors select-none inline-block active:scale-95 border-b border-dashed border-black/40"
+          className="cursor-pointer hover:bg-[#FFE600] hover:text-black rounded-none px-0.5 transition-colors select-none inline-block active:scale-95 border-b border-dashed border-black/40 dark:border-white/40"
           style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
         >
           {part}
@@ -1278,11 +1281,11 @@ export const YdsYokdilView: React.FC<Props> = ({
           <div className="grid grid-cols-3 gap-2 py-3 border-y-2 border-black mb-4">
             <div className="bg-zinc-50 p-2 border border-black">
               <span className="text-[10px] font-black uppercase text-zinc-500 block">DOĞRU</span>
-              <span className="text-lg font-black font-mono text-[#16a34a]">{score}</span>
+              <span className="text-lg font-black font-mono text-[#16a34a] dark:text-emerald-400">{score}</span>
             </div>
             <div className="bg-zinc-50 p-2 border border-black">
               <span className="text-[10px] font-black uppercase text-zinc-500 block">YANLIŞ</span>
-              <span className="text-lg font-black font-mono text-[#dc2626]">
+              <span className="text-lg font-black font-mono text-[#dc2626] dark:text-rose-400">
                 {totalCount - score}
               </span>
             </div>
@@ -1331,11 +1334,11 @@ export const YdsYokdilView: React.FC<Props> = ({
                     {renderInteractiveText(q.prompt)}
                   </p>
                   <div className="flex items-center space-x-3 text-[11px] font-bold">
-                    <span className="text-red-600">
+                    <span className="text-red-600 dark:text-rose-400">
                       Seçimin: <span className="font-black font-mono">({selected})</span>{' '}
                       {q.options[selected as 'A' | 'B' | 'C' | 'D' | 'E']}
                     </span>
-                    <span className="text-emerald-700 font-black">
+                    <span className="text-emerald-700 dark:text-emerald-400 font-black">
                       Doğru: <span className="font-mono">({q.answer})</span> {q.options[q.answer]}
                     </span>
                   </div>
@@ -1485,7 +1488,7 @@ export const YdsYokdilView: React.FC<Props> = ({
               btnClass = 'bg-[#FECDD3] border-red-700 text-black shadow-[3px_3px_0px_0px_#b91c1c]';
               letterBg = 'bg-[#b91c1c] text-white';
             } else {
-              btnClass = 'bg-zinc-100/60 opacity-60 text-zinc-600';
+              btnClass = 'bg-zinc-100/60 dark:bg-slate-800/70 opacity-75 text-zinc-600 dark:text-slate-300';
             }
           }
 
@@ -1529,7 +1532,7 @@ export const YdsYokdilView: React.FC<Props> = ({
                   <CheckCircle2 size={18} strokeWidth={3} />
                 </div>
                 <div>
-                  <span className="text-xs font-black uppercase text-emerald-800 block">DOĞRU CEVAP!</span>
+                  <span className="text-xs font-black uppercase text-emerald-800 dark:text-emerald-400 block">DOĞRU CEVAP!</span>
                   <span className="text-[11px] font-bold text-zinc-600">+{10 + Math.min(combo * 2, 20)} XP</span>
                 </div>
               </>
@@ -1539,7 +1542,7 @@ export const YdsYokdilView: React.FC<Props> = ({
                   <XCircle size={18} strokeWidth={3} />
                 </div>
                 <div>
-                  <span className="text-xs font-black uppercase text-red-800 block">YANLIŞ CEVAP</span>
+                  <span className="text-xs font-black uppercase text-red-800 dark:text-rose-400 block">YANLIŞ CEVAP</span>
                   <span className="text-[11px] font-bold text-zinc-600">
                     Doğru Seçenek: <strong className="font-mono text-black">({currentQ.answer})</strong>
                   </span>

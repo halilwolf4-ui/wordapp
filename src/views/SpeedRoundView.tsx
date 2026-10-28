@@ -9,6 +9,7 @@ interface Props {
   allWords: Word[];
   highScore: number;
   onUpdateHighScore: (score: number) => Promise<void>;
+  onComboUpdate?: (combo: number) => void;
   onClose: () => void;
 }
 
@@ -16,6 +17,7 @@ export const SpeedRoundView: React.FC<Props> = ({
   allWords,
   highScore,
   onUpdateHighScore,
+  onComboUpdate,
   onClose
 }) => {
   const [gameState, setGameState] = useState<'ready' | 'playing' | 'gameover'>('ready');
@@ -113,6 +115,7 @@ export const SpeedRoundView: React.FC<Props> = ({
       const nextScore = score + 1;
       setScore(nextScore);
       setCombo(nextCombo);
+      onComboUpdate?.(nextCombo);
       sound.playCorrect(nextCombo);
 
       // +1 second bonus

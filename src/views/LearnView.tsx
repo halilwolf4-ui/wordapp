@@ -43,6 +43,7 @@ interface Props {
   onMarkWordLearning?: (word: Word) => Promise<void>;
   onRecordMistake?: (wordId: number, mistake: string) => Promise<void>;
   onSessionCompleted?: () => Promise<{ earnedFreeze: boolean }>;
+  onComboUpdate?: (combo: number) => void;
   onClose: () => void;
   onRefreshBatch: () => void;
 }
@@ -89,6 +90,7 @@ export const LearnView: React.FC<Props> = ({
   onMarkWordLearning,
   onRecordMistake,
   onSessionCompleted,
+  onComboUpdate,
   onClose,
   onRefreshBatch
 }) => {
@@ -141,6 +143,7 @@ export const LearnView: React.FC<Props> = ({
   const typingInputRef = useRef<HTMLInputElement>(null);
   const poolQueueRef = useRef<PoolQueueItem[]>([]);
   const bufferLastAskedRef = useRef<Map<number, number>>(new Map());
+  const allWordsArr = useMemo(() => Array.from(allWordsMap.values()), [allWordsMap]);
 
   // Auto-focus and center typing input when keyboard appears
   useEffect(() => {
@@ -335,12 +338,11 @@ export const LearnView: React.FC<Props> = ({
       });
 
       // Load English hints for this word
-      getWordHints(chosenWord, Array.from(allWordsMap.values())).then(hints => {
+      getWordHints(chosenWord, allWordsArr).then(hints => {
         setCurrentWordHints(hints);
       });
 
       if (questionType === 'choice') {
-        const allWordsArr = Array.from(allWordsMap.values());
         const correctTr = chosenWord.tr.split(/[,;/]+/)[0].trim();
         const sessionWords = list.map(i => i.word);
         const smartDistractors = getSmartDistractors(chosenWord, allWordsArr, 3, sessionWords);
@@ -348,7 +350,7 @@ export const LearnView: React.FC<Props> = ({
         setChoiceOptions(opts);
       }
     },
-    [allWordsMap, onSessionCompleted, targetWordsCount, getBufferWords, todayStr]
+    [allWordsMap, allWordsArr, onSessionCompleted, targetWordsCount, getBufferWords, todayStr]
   );
 
   // Start study with given words
@@ -371,10 +373,10 @@ export const LearnView: React.FC<Props> = ({
       setGlobalStep(1);
       saveSession(list, 1);
       localStorage.removeItem(STORAGE_BASKET);
-      prefetchHints(words, Array.from(allWordsMap.values()));
+      prefetchHints(words, allWordsArr);
       pickNextQuestion(list, 1, null);
     },
-    [pickNextQuestion, allWordsMap]
+    [pickNextQuestion, allWordsArr]
   );
 
   // Initialize or resume on mount
@@ -679,8 +681,10 @@ export const LearnView: React.FC<Props> = ({
     const isCorrect = checkTurkishAnswer(option, targetWord.tr);
 
     if (isCorrect) {
-      sound.playCorrect(combo + 1);
-      setCombo(prev => prev + 1);
+      const nextCombo = combo + 1;
+      sound.playCorrect(nextCombo);
+      setCombo(nextCombo);
+      onComboUpdate?.(nextCombo);
 
       let updatedList = sessionList;
       if (!currentQuestion.isFiller) {
@@ -760,9 +764,10 @@ export const LearnView: React.FC<Props> = ({
     const isCorrect = detailed.isCorrect;
 
     if (isCorrect) {
-      sound.playCorrect(combo + 1);
-      setCombo(prev => prev + 1);
-      fireCelebration();
+      const nextCombo = combo + 1;
+      sound.playCorrect(nextCombo);
+      setCombo(nextCombo);
+      onComboUpdate?.(nextCombo);
 
       // Mark typingPassed = true -> OFFICIALLY LEARNED!
       const updatedList = sessionList.map(item =>
@@ -1156,13 +1161,7 @@ export const LearnView: React.FC<Props> = ({
                 : inlineFeedback?.status === 'wrong'
                 ? 'p-3.5 sm:p-4 space-y-2 sm:space-y-2.5'
                 : 'p-4 sm:p-5 space-y-3 sm:space-y-4'
-            } shadow-[4px_4px_0px_0px_#000] transition-all relative ${
-              inlineFeedback?.status === 'correct'
-                ? 'bg-[#F0FDF4]'
-                : inlineFeedback?.status === 'wrong'
-                ? 'bg-[#FFF1F2]'
-                : 'bg-white'
-            }`}
+            } shadow-[4px_4px_0px_0px_#000] transition-all relative`}
           >
             {/* Header / Word */}
             <div className="text-center space-y-1.5 sm:space-y-2">
@@ -1234,7 +1233,10 @@ export const LearnView: React.FC<Props> = ({
                       {formatCorrectAnswer(inlineFeedback.correctAnswer)}
                     </span>
                     {inlineFeedback.nearExplanation && (
-                      <span className="text-xs font-bold mt-1 text-black bg-white px-2 py-0.5 border border-black inline-block">
+                      <span
+                        data-light-pill="true"
+                        className="text-xs font-bold mt-1 text-[#0F172A] bg-white px-2 py-0.5 border border-black inline-block rounded-md"
+                      >
                         {inlineFeedback.nearExplanation}
                       </span>
                     )}

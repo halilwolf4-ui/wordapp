@@ -38,6 +38,7 @@ interface Props {
   allProgress?: Progress[];
   onReviewAnswer?: (wordId: number, isCorrect: boolean, isPartial: boolean) => Promise<void>;
   onAddXp?: (amount: number) => Promise<void>;
+  onComboUpdate?: (combo: number) => void;
   onAddCustomWord?: (word: Omit<Word, 'id'>, silent?: boolean) => Promise<void>;
   onClose: () => void;
 }
@@ -65,6 +66,7 @@ export const ClozeTestView: React.FC<Props> = ({
   allProgress,
   onReviewAnswer,
   onAddXp,
+  onComboUpdate,
   onAddCustomWord,
   onClose
 }) => {
@@ -395,6 +397,7 @@ export const ClozeTestView: React.FC<Props> = ({
         const nextCombo = combo + 1;
         setCombo(nextCombo);
         if (nextCombo > maxCombo) setMaxCombo(nextCombo);
+        onComboUpdate?.(nextCombo);
         setScore(prev => prev + 1);
 
         sound.playCorrect(nextCombo);
@@ -764,7 +767,7 @@ export const ClozeTestView: React.FC<Props> = ({
             handleWordTrigger(part, e.currentTarget);
           }}
           title="Tıklayarak anlamına bakın ve kelimelerinize ekleyin"
-          className="cursor-pointer hover:bg-[#FFE600] hover:text-black rounded-none px-0.5 transition-colors select-none inline-block active:scale-95 border-b border-dashed border-black/50"
+          className="cursor-pointer hover:bg-[#FFE600] hover:text-black rounded-none px-0.5 transition-colors select-none inline-block active:scale-95 border-b border-dashed border-black/50 dark:border-white/40"
           style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
         >
           {part}
@@ -927,7 +930,7 @@ export const ClozeTestView: React.FC<Props> = ({
               btnStyle = 'bg-[#FF5588] text-white border-3 border-black shadow-[3px_3px_0px_0px_#000]';
               badgeStyle = 'bg-white text-black border-2 border-black';
             } else {
-              btnStyle = 'bg-zinc-200 text-zinc-500 opacity-60 border-2 border-black shadow-none';
+              btnStyle = 'bg-zinc-200 dark:bg-slate-800 text-zinc-600 dark:text-slate-300 opacity-75 border-2 border-black shadow-none';
             }
           }
 

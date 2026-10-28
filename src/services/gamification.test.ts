@@ -30,6 +30,41 @@ describe('Gamification & Badges', () => {
     expect(ids).toContain('speed_40');
     expect(ids).toContain('speed_50');
     expect(ids).toContain('speed_100');
+
+    // Combos
+    expect(ids).toContain('combo_10');
+    expect(ids).toContain('combo_25');
+    expect(ids).toContain('combo_50');
+    expect(ids).toContain('combo_100');
+  });
+
+  it('unlocks combo milestones 10, 25, 50, and 100', () => {
+    let unlocked = checkUnlockedBadges({
+      currentBadges: [],
+      totalLearned: 0,
+      streak: 0,
+      comboCount: 15
+    });
+    expect(unlocked).toContain('combo_10');
+    expect(unlocked).not.toContain('combo_25');
+
+    unlocked = checkUnlockedBadges({
+      currentBadges: unlocked,
+      totalLearned: 0,
+      streak: 0,
+      comboCount: 52
+    });
+    expect(unlocked).toContain('combo_25');
+    expect(unlocked).toContain('combo_50');
+    expect(unlocked).not.toContain('combo_100');
+
+    unlocked = checkUnlockedBadges({
+      currentBadges: unlocked,
+      totalLearned: 0,
+      streak: 0,
+      comboCount: 100
+    });
+    expect(unlocked).toContain('combo_100');
   });
 
   it('unlocks word milestones progressively up to 3000 words', () => {

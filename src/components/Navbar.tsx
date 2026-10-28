@@ -17,7 +17,7 @@ export const Navbar: React.FC<Props> = ({
   newCount
 }) => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#151C2C]/95 backdrop-blur-xl pb-safe rounded-t-[30px] shadow-[0_-10px_35px_rgba(17,24,39,0.06)] border-t border-slate-100/80 dark:border-white/5">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#151C2C] pb-safe rounded-t-[30px] shadow-[0_-10px_35px_rgba(17,24,39,0.06)] border-t border-slate-100/80 dark:border-white/5">
       <div className="max-w-md mx-auto grid grid-cols-5 items-center px-3 py-2">
         {/* 1. Ana Sayfa */}
         <button

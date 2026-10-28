@@ -107,6 +107,21 @@ export function cleanEnglishWord(en: string): string {
   return en.trim().replace(/^to\s+/i, '').trim().toLowerCase();
 }
 
+const wordLookupCache = new WeakMap<Word[], Map<string, Word>>();
+let diskCacheMem: Record<string, WordHint[]> | null = null;
+
+function getWordMap(allWords: Word[]): Map<string, Word> {
+  let map = wordLookupCache.get(allWords);
+  if (!map) {
+    map = new Map<string, Word>();
+    for (const w of allWords) {
+      map.set(cleanEnglishWord(w.en), w);
+    }
+    wordLookupCache.set(allWords, map);
+  }
+  return map;
+}
+
 /**
  * Checks whether a word is at or below CEFR B1 level (A1, A2, B1).
  * Rejects C1, C2, obscure, or multi-word phrases so hints remain clean and recognizable.
@@ -117,9 +132,9 @@ export function isB1OrBelowWord(wordStr: string, allWords: Word[] = []): boolean
   // Multi-word phrases or special symbols should not be shown as concise single-word hints
   if (/[\s\-_/]/.test(clean)) return false;
 
-  // 1. Check in active dictionary
+  // 1. Check in active dictionary (O(1) via WeakMap)
   if (allWords && allWords.length > 0) {
-    const matched = allWords.find(w => cleanEnglishWord(w.en) === clean);
+    const matched = getWordMap(allWords).get(clean);
     if (matched) {
       const cats = matched.categories || [];
       // Explicitly reject C1
@@ -164,15 +179,18 @@ export function getCuratedSynonymHints(en: string): WordHint[] {
 }
 
 /**
- * Loads cached hints from localStorage into memory on startup.
+ * Loads cached hints from localStorage into memory once on startup.
  */
 function loadPersistentCache(): Record<string, WordHint[]> {
+  if (diskCacheMem) return diskCacheMem;
   if (typeof localStorage === 'undefined') return {};
   try {
     const raw = localStorage.getItem(STORAGE_CACHE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    diskCacheMem = raw ? JSON.parse(raw) : {};
+    return diskCacheMem!;
   } catch {
-    return {};
+    diskCacheMem = {};
+    return diskCacheMem;
   }
 }
 
@@ -386,9 +404,11 @@ export async function getWordHints(targetWord: Word, allWords: Word[] = []): Pro
 }
 
 /**
- * Silently pre-fetches and caches hints for a batch of words in the background.
+ * Silently pre-fetches and caches hints for the first few words without saturating mobile CPU/network.
  */
 export async function prefetchHints(words: Word[], allWords: Word[] = []): Promise<void> {
-  const promises = words.map(w => getWordHints(w, allWords).catch(() => []));
-  await Promise.all(promises);
+  const subset = words.slice(0, 4);
+  for (const w of subset) {
+    await getWordHints(w, allWords).catch(() => []);
+  }
 }

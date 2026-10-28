@@ -81,6 +81,7 @@ export const DEFAULT_PROFILE: UserProfile = {
   lastActiveDate: '',
   unlockedBadges: [],
   highScoreSpeedRound: 0,
+  maxCombo: 0,
   streakFreezes: 0,
   frozenDates: [],
   consecutiveCompletedDays: 0,

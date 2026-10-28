@@ -38,6 +38,8 @@ export const BADGES: BadgeDefinition[] = [
   // --- ÖZEL / DİĞER ROZETLER (Special) ---
   { id: 'combo_10', title: 'Kombo Çırağı', description: 'Üst üste 10 doğru cevap ver', icon: '🎯', category: 'special' },
   { id: 'combo_25', title: 'Kombo Kralı', description: 'Üst üste 25 doğru cevap ver', icon: '💥', category: 'special' },
+  { id: 'combo_50', title: 'Kombo Ustası', description: 'Üst üste 50 doğru cevap ver', icon: '⚡', category: 'special' },
+  { id: 'combo_100', title: 'Kombo Efsanesi', description: 'Üst üste 100 doğru cevap ver', icon: '🔥', category: 'special' },
   { id: 'custom_creator', title: 'Özgün Yazar', description: 'Kendi özel kelimeni ekle', icon: '✍️', category: 'special' }
 ];
 
@@ -50,7 +52,10 @@ export function xpForNextLevel(currentLevel: number): number {
 }
 
 export function getComboMultiplier(combo: number): number {
-  if (combo >= 15) return 2.5;
+  if (combo >= 100) return 4.0;
+  if (combo >= 50) return 3.0;
+  if (combo >= 25) return 2.5;
+  if (combo >= 15) return 2.2;
   if (combo >= 10) return 2.0;
   if (combo >= 5) return 1.5;
   if (combo >= 3) return 1.2;
@@ -106,8 +111,11 @@ export function checkUnlockedBadges(params: {
 
   // Special
   if (params.hasCustomWord) existing.add('custom_creator');
-  if ((params.comboCount || 0) >= 10) existing.add('combo_10');
-  if ((params.comboCount || 0) >= 25) existing.add('combo_25');
+  const combo = params.comboCount || 0;
+  if (combo >= 10) existing.add('combo_10');
+  if (combo >= 25) existing.add('combo_25');
+  if (combo >= 50) existing.add('combo_50');
+  if (combo >= 100) existing.add('combo_100');
 
   return Array.from(existing);
 }
