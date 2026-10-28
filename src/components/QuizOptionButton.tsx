@@ -13,6 +13,12 @@ interface QuizOptionButtonProps {
 }
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+const BADGE_COLORS = [
+  'bg-[#FFF0EF] text-[#FF5E5B]',
+  'bg-[#EDF2FF] text-[#5B8DEF]',
+  'bg-[#FFF8E1] text-[#F59E0B]',
+  'bg-[#E6FCF5] text-[#12B886]',
+];
 
 export const QuizOptionButton: React.FC<QuizOptionButtonProps> = ({
   index,
@@ -25,7 +31,6 @@ export const QuizOptionButton: React.FC<QuizOptionButtonProps> = ({
 }) => {
   const letter = OPTION_LETTERS[index] || String(index + 1);
 
-  // Determine state
   const isSelectedCorrect = hasFeedback && isSelected && isCorrect;
   const isSelectedWrong = hasFeedback && isSelected && !isCorrect;
   const isRevealedCorrect = hasFeedback && !isSelected && isCorrect;
@@ -33,95 +38,92 @@ export const QuizOptionButton: React.FC<QuizOptionButtonProps> = ({
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled) return;
-    
-    // If correct, fire micro sparkle at button click coordinates
     if (isCorrect) {
       const rect = e.currentTarget.getBoundingClientRect();
       const xRatio = (rect.left + rect.width / 2) / window.innerWidth;
       const yRatio = (rect.top + rect.height / 2) / window.innerHeight;
       fireMicroSpark(xRatio, yRatio);
     }
-    
     onSelect();
   };
 
-  // Base container styles
-  let containerStyle = 'bg-white border-2 sm:border-[3px] border-black text-black shadow-[2px_2px_0px_0px_#000] sm:shadow-[3px_3px_0px_0px_#000] hover:bg-[#FFFBEB] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none';
-  let badgeStyle = 'bg-[#FFE600] text-black border-2 border-black font-black shadow-[1px_1px_0px_0px_#000]';
+  let containerStyle =
+    'bg-white dark:bg-[#151C2C] border border-slate-100/90 dark:border-white/5 text-[#111827] dark:text-slate-100 shadow-[0_6px_20px_rgba(17,24,39,0.04)] hover:shadow-[0_8px_24px_rgba(17,24,39,0.07)]';
+  let badgeStyle = BADGE_COLORS[index % BADGE_COLORS.length];
   let animationClass = '';
 
   if (isSelectedCorrect) {
-    containerStyle = 'bg-[#4ADE80] border-2 sm:border-[3px] border-black text-black shadow-[2px_2px_0px_0px_#000] sm:shadow-[3px_3px_0px_0px_#000]';
-    badgeStyle = 'bg-black text-[#4ADE80] border-2 border-black font-black';
+    containerStyle =
+      'bg-[#E6FCF5] dark:bg-emerald-950/80 border-2 border-[#38D399] text-[#065F46] dark:text-emerald-100 shadow-[0_10px_24px_rgba(18,184,134,0.18)]';
+    badgeStyle = 'bg-[#12B886] text-white';
     animationClass = 'animate-correct-pop';
   } else if (isSelectedWrong) {
-    containerStyle = 'bg-[#FF5588] border-2 sm:border-[3px] border-black text-black shadow-[2px_2px_0px_0px_#000] sm:shadow-[3px_3px_0px_0px_#000]';
-    badgeStyle = 'bg-black text-[#FF5588] border-2 border-black font-black';
+    containerStyle =
+      'bg-[#FFF0EF] dark:bg-rose-950/80 border-2 border-[#FF7875] text-[#9F1239] dark:text-rose-100 shadow-[0_10px_24px_rgba(255,94,91,0.18)]';
+    badgeStyle = 'bg-[#FF5E5B] text-white';
     animationClass = 'animate-wrong-shake';
   } else if (isRevealedCorrect) {
-    containerStyle = 'bg-[#BBF7D0] border-2 sm:border-[3px] border-black text-black shadow-[2px_2px_0px_0px_#000] sm:shadow-[3px_3px_0px_0px_#000] ring-2 ring-black';
-    badgeStyle = 'bg-black text-white border-2 border-black font-black';
+    containerStyle =
+      'bg-[#E6FCF5] dark:bg-emerald-950/70 border-2 border-[#38D399] text-[#065F46] dark:text-emerald-100';
+    badgeStyle = 'bg-[#12B886] text-white';
   } else if (isDimmed) {
-    containerStyle = 'bg-zinc-200 border-2 sm:border-[3px] border-zinc-400 text-zinc-500 opacity-40 cursor-default shadow-none';
-    badgeStyle = 'bg-zinc-300 text-zinc-500 border-2 border-zinc-400 font-bold';
+    containerStyle =
+      'bg-slate-50/70 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 text-slate-400 opacity-45 cursor-default shadow-none';
+    badgeStyle = 'bg-slate-200/70 dark:bg-slate-800 text-slate-400';
   }
 
-  // Dynamic sizing: Spacious & comfortable during question, slightly tighter after answer feedback is revealed
   const paddingClass = hasFeedback
-    ? 'py-2 px-3 sm:py-2.5 sm:px-3.5 min-h-[42px]'
-    : 'py-3 px-3.5 sm:py-3.5 sm:px-4 min-h-[48px] sm:min-h-[52px]';
+    ? 'py-2.5 px-3.5 min-h-[46px]'
+    : 'py-3.5 px-4 min-h-[54px]';
 
   const pillClass = hasFeedback
-    ? 'w-7 h-7 sm:w-8 sm:h-8 text-xs'
-    : 'w-8 h-8 text-xs sm:text-sm';
+    ? 'w-8 h-8 text-xs'
+    : 'w-9 h-9 text-xs sm:text-sm';
 
   const textClass = hasFeedback
-    ? 'text-xs sm:text-sm font-black'
-    : 'text-sm sm:text-base font-black';
+    ? 'text-xs sm:text-sm font-bold'
+    : 'text-sm sm:text-[15px] font-bold';
 
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={handleClick}
-      className={`group relative w-full border text-left transition-all duration-150 select-none flex items-center justify-between gap-2.5 ${paddingClass} ${containerStyle} ${animationClass}`}
+      className={`group relative w-full rounded-[22px] text-left transition-all duration-200 select-none flex items-center justify-between gap-3 ${paddingClass} ${containerStyle} ${animationClass}`}
     >
-      <div className="flex items-center space-x-2.5 min-w-0 flex-1">
-        {/* Option Letter Pill */}
+      <div className="flex items-center space-x-3.5 min-w-0 flex-1">
         <span
-          className={`shrink-0 flex items-center justify-center font-black transition-all ${pillClass} ${badgeStyle}`}
+          className={`shrink-0 rounded-full flex items-center justify-center font-extrabold transition-all ${pillClass} ${badgeStyle}`}
         >
           {letter}
         </span>
 
-        {/* Option Text */}
         <span className={`leading-snug break-words flex-1 tracking-tight transition-all ${textClass}`}>
           {text}
         </span>
       </div>
 
-      {/* Right Feedback Indicator */}
       <div className="shrink-0 flex items-center justify-center pl-1">
         {isSelectedCorrect && (
-          <div className="w-6 h-6 sm:w-7 sm:h-7 bg-black text-[#4ADE80] border-2 border-black flex items-center justify-center shadow-[1px_1px_0px_0px_#000] animate-check-bounce">
-            <Check size={15} strokeWidth={3.5} />
+          <div className="w-7 h-7 rounded-full bg-[#12B886] text-white flex items-center justify-center shadow-sm animate-check-bounce">
+            <Check size={15} strokeWidth={3} />
           </div>
         )}
 
         {isSelectedWrong && (
-          <div className="w-6 h-6 sm:w-7 sm:h-7 bg-black text-[#FF5588] border-2 border-black flex items-center justify-center shadow-[1px_1px_0px_0px_#000] animate-x-bounce">
-            <X size={15} strokeWidth={3.5} />
+          <div className="w-7 h-7 rounded-full bg-[#FF5E5B] text-white flex items-center justify-center shadow-sm animate-x-bounce">
+            <X size={15} strokeWidth={3} />
           </div>
         )}
 
         {isRevealedCorrect && (
-          <div className="w-6 h-6 sm:w-7 sm:h-7 bg-white border-2 border-black text-black flex items-center justify-center shadow-[1px_1px_0px_0px_#000]">
+          <div className="w-7 h-7 rounded-full bg-[#12B886] text-white flex items-center justify-center shadow-sm">
             <Check size={15} strokeWidth={3} />
           </div>
         )}
 
         {!hasFeedback && (
-          <div className="w-4 h-4 border-2 border-black bg-white group-hover:bg-[#FFE600] transition-colors" />
+          <div className="w-5 h-5 rounded-full border-2 border-slate-200/80 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 group-hover:border-[#FF5E5B] group-hover:bg-[#FFF0EF] transition-colors" />
         )}
       </div>
     </button>

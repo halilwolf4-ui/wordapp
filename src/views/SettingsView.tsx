@@ -1,17 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { UserSettings, BrutalDarkPalette } from '../types';
+import { UserSettings } from '../types';
 import { exportBackupFile, inspectBackupFile, restoreBackup, BackupPreview } from '../services/backup';
 import { sound } from '../services/audio';
 import { Download, Upload, Volume2, Sliders, ShieldCheck, Check, ArrowLeft, Sparkles, RotateCcw, Moon, Sun, Palette } from 'lucide-react';
-
-const PALETTES: { id: BrutalDarkPalette; name: string; color: string; desc: string }[] = [
-  { id: 'cyber-yellow', name: 'SİBER SARI', color: '#FFE600', desc: 'Klasik Neon Sarı' },
-  { id: 'toxic-lime', name: 'ASİT YEŞİL', color: '#4ADE80', desc: 'Matrix Toksik Yeşil' },
-  { id: 'neon-pink', name: 'CYBER PEMBE', color: '#FF5588', desc: 'Vaporwave Fuşya' },
-  { id: 'cyan-glitch', name: 'BUZUL MAVİ', color: '#00F0FF', desc: 'Elektrik Glitch Camgöbeği' },
-  { id: 'ultraviolet', name: 'ULTRA MOR', color: '#C084FC', desc: 'Neon Ametist Moru' },
-  { id: 'monochrome', name: 'MONOKROM', color: '#FFFFFF', desc: 'Saf Siyah & Beyaz' },
-];
+import { useCharacterGender } from '../components/CharacterAvatar';
 
 interface Props {
   settings: UserSettings;
@@ -30,12 +22,12 @@ export const SettingsView: React.FC<Props> = ({
   onResetProgress,
   onClose
 }) => {
+  const [gender, setGender] = useCharacterGender();
   const [isExporting, setIsExporting] = useState(false);
   const [previewModal, setPreviewModal] = useState<BackupPreview | null>(null);
   const [mergeMode, setMergeMode] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [restoreSuccess, setRestoreSuccess] = useState(false);
-  const [customColor, setCustomColor] = useState(settings.customDarkColor || '#FFE600');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Export backup
@@ -139,169 +131,120 @@ export const SettingsView: React.FC<Props> = ({
             <Palette size={16} strokeWidth={2.5} />
             <span>GÖRÜNÜM & GECE MODU</span>
           </h3>
-          <span className="text-[10px] font-black uppercase bg-[#FFE600] px-2 py-0.5 border border-black shadow-[1px_1px_0px_0px_#000]">
-            NEO-BRUTALİST
+          <span
+            data-light-pill="true"
+            className="text-[10px] font-black uppercase bg-[#FFE600] text-[#0F172A] px-2.5 py-0.5 rounded-full"
+          >
+            KİNESTETİK 3B
           </span>
         </div>
 
         {/* Day / Night Mode Toggle */}
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={() => onUpdateSettings({ theme: 'light' })}
-            className={`p-3 border-3 border-black text-left font-black uppercase transition-all flex flex-col justify-between ${
+            data-light-pill={settings.theme !== 'dark' ? 'true' : undefined}
+            className={`p-3.5 rounded-[22px] text-left font-black uppercase transition-all flex flex-col justify-between ${
               settings.theme !== 'dark'
-                ? 'bg-[#FFE600] text-black shadow-[4px_4px_0px_0px_#000] -translate-y-0.5'
-                : 'bg-zinc-100 text-zinc-600 shadow-[2px_2px_0px_0px_#000] hover:bg-zinc-200'
+                ? 'bg-[#FFE600] text-[#0F172A] shadow-[0_10px_22px_-6px_rgba(250,204,21,0.45)] -translate-y-0.5'
+                : 'bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
             }`}
           >
             <div className="flex items-center justify-between mb-1.5">
-              <Sun size={20} strokeWidth={2.5} className="text-black" />
+              <Sun
+                size={20}
+                strokeWidth={2.5}
+                className={settings.theme !== 'dark' ? 'text-[#0F172A]' : 'text-amber-500'}
+              />
               {settings.theme !== 'dark' && (
-                <span className="text-[10px] bg-black text-[#FFE600] px-1.5 py-0.5 font-black">
+                <span className="text-[10px] bg-[#0F172A] text-white px-2 py-0.5 rounded-full font-black">
                   AKTİF
                 </span>
               )}
             </div>
-            <span className="text-xs font-black block">AÇIK MOD</span>
-            <span className="text-[10px] font-bold text-zinc-700 normal-case">Krem kanvas & siyah gölgeler</span>
+            <span className="text-xs font-extrabold block">AÇIK MOD</span>
+            <span
+              className={`text-[10px] font-semibold normal-case ${
+                settings.theme !== 'dark' ? 'text-slate-800' : 'text-slate-500 dark:text-slate-400'
+              }`}
+            >
+              Ferah beyaz & yumuşak kartlar
+            </span>
           </button>
 
           <button
             type="button"
             onClick={() => onUpdateSettings({ theme: 'dark' })}
-            className={`p-3 border-3 border-black text-left font-black uppercase transition-all flex flex-col justify-between ${
+            className={`p-3.5 rounded-[22px] text-left font-black uppercase transition-all flex flex-col justify-between ${
               settings.theme === 'dark'
-                ? 'bg-black text-[#FFE600] shadow-[4px_4px_0px_0px_#FFE600] -translate-y-0.5'
-                : 'bg-zinc-100 text-zinc-600 shadow-[2px_2px_0px_0px_#000] hover:bg-zinc-200'
+                ? 'bg-gradient-to-br from-[#FF6B5B] to-[#FF8E53] text-white shadow-[0_10px_24px_-6px_rgba(255,107,91,0.45)] -translate-y-0.5'
+                : 'bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
             }`}
           >
             <div className="flex items-center justify-between mb-1.5">
-              <Moon size={20} strokeWidth={2.5} className={settings.theme === 'dark' ? 'text-[#FFE600]' : 'text-black'} />
+              <Moon
+                size={20}
+                strokeWidth={2.5}
+                className={settings.theme === 'dark' ? 'text-white' : 'text-indigo-500'}
+              />
               {settings.theme === 'dark' && (
-                <span className="text-[10px] bg-[#FFE600] text-black px-1.5 py-0.5 font-black">
+                <span
+                  data-light-pill="true"
+                  className="text-[10px] bg-[#FFE600] text-[#0F172A] px-2 py-0.5 rounded-full font-black"
+                >
                   AKTİF
                 </span>
               )}
             </div>
-            <span className="text-xs font-black block">GECE MODU</span>
-            <span className="text-[10px] font-bold text-zinc-400 normal-case">Koyu kanvas & neon gölgeler</span>
+            <span className="text-xs font-extrabold block">GECE MODU</span>
+            <span
+              className={`text-[10px] font-semibold normal-case ${
+                settings.theme === 'dark' ? 'text-white/90' : 'text-slate-500 dark:text-slate-400'
+              }`}
+            >
+              Derin lacivert & canlı vurgular
+            </span>
           </button>
         </div>
 
-        {/* Dark Mode Color Palette Section */}
-        <div className="pt-2 border-t-2 border-black space-y-3">
+        {/* Character Gender Selection (Erkek / Kadın) */}
+        <div className="pt-3 border-t border-slate-200/80 dark:border-white/10 space-y-2.5">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-black uppercase block">
-              GECE MODU RENK PALETİ
+            <label className="text-xs font-extrabold uppercase block">
+              KARAKTER CİNSİYETİ (EVRİM AVATARI)
             </label>
-            <span className="text-[10px] font-bold text-zinc-600">
-              {settings.darkPalette === 'custom' ? 'Özel Renk Seçili' : '6 Hazır Stil'}
+            <span className="text-[10px] font-bold text-zinc-500 dark:text-slate-400">
+              Seviye atladıkça gizli evrimler açılır
             </span>
           </div>
 
-          {/* Palette Preset Grid */}
-          <div className="grid grid-cols-3 gap-2">
-            {PALETTES.map((pal) => {
-              const isSelected = (settings.darkPalette || 'cyber-yellow') === pal.id;
-              return (
-                <button
-                  key={pal.id}
-                  type="button"
-                  onClick={() => onUpdateSettings({ darkPalette: pal.id, theme: 'dark' })}
-                  className={`p-2 border-2 border-black text-center transition-all flex flex-col items-center justify-between relative ${
-                    isSelected
-                      ? 'bg-zinc-100 shadow-[3px_3px_0px_0px_#000] ring-2 ring-black font-black'
-                      : 'bg-white shadow-[1px_1px_0px_0px_#000] hover:bg-zinc-50'
-                  }`}
-                >
-                  <div
-                    className="w-full h-5 border border-black mb-1.5 flex items-center justify-center shadow-[1px_1px_0px_0px_#000]"
-                    style={{ backgroundColor: pal.color }}
-                  >
-                    {isSelected && (
-                      <Check size={12} strokeWidth={3} className="text-black" />
-                    )}
-                  </div>
-                  <span className="text-[10px] font-black uppercase block leading-tight text-black">
-                    {pal.name}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setGender('male')}
+              className={`p-3 rounded-[20px] font-extrabold text-xs flex items-center justify-center space-x-2 transition-all ${
+                gender === 'male'
+                  ? 'bg-[#3B82F6] text-white shadow-[0_8px_18px_-4px_rgba(59,130,246,0.45)]'
+                  : 'bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              <span className="text-base">👦</span>
+              <span>ERKEK KARAKTER</span>
+            </button>
 
-          {/* Color Tool (Renk Aleti) Card */}
-          <div className="p-3 bg-[#FDFBF7] border-2 border-black space-y-2 shadow-[2px_2px_0px_0px_#000]">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase text-black flex items-center space-x-1.5">
-                <Palette size={14} strokeWidth={2.5} />
-                <span>RENK ALETİ (ÖZEL RENK SEÇİCİ)</span>
-              </span>
-              {settings.darkPalette === 'custom' && (
-                <span className="text-[9px] bg-black text-[#FFE600] px-1.5 py-0.5 font-black uppercase">
-                  AKTİF
-                </span>
-              )}
-            </div>
-            <p className="text-[10px] font-bold text-zinc-600">
-              İstediğin herhangi bir rengi seç, tüm gece modu gölgeleri ve vurguları bu renge uyarlansın.
-            </p>
-
-            <div className="flex items-center space-x-2 pt-1">
-              {/* Native Color Picker */}
-              <div
-                className="relative w-10 h-10 border-2 border-black shrink-0 overflow-hidden shadow-[2px_2px_0px_0px_#000] cursor-pointer"
-                title="Renk Seçiciyi Aç"
-              >
-                <input
-                  type="color"
-                  value={customColor}
-                  onChange={(e) => {
-                    setCustomColor(e.target.value);
-                    onUpdateSettings({
-                      darkPalette: 'custom',
-                      customDarkColor: e.target.value,
-                      theme: 'dark'
-                    });
-                  }}
-                  className="absolute inset-[-10px] w-[60px] h-[60px] cursor-pointer opacity-100"
-                />
-              </div>
-
-              {/* Hex Code Input */}
-              <input
-                type="text"
-                value={customColor}
-                onChange={(e) => {
-                  setCustomColor(e.target.value);
-                  if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
-                    onUpdateSettings({
-                      darkPalette: 'custom',
-                      customDarkColor: e.target.value,
-                      theme: 'dark'
-                    });
-                  }
-                }}
-                placeholder="#FFE600"
-                className="flex-1 px-3 py-2 bg-white border-2 border-black font-mono font-black text-xs text-black uppercase shadow-[2px_2px_0px_0px_#000] focus:outline-none"
-              />
-
-              {/* Apply / Select Button */}
-              <button
-                type="button"
-                onClick={() =>
-                  onUpdateSettings({
-                    darkPalette: 'custom',
-                    customDarkColor: customColor,
-                    theme: 'dark'
-                  })
-                }
-                className="px-3 py-2 bg-black text-[#FFE600] border-2 border-black font-black uppercase text-xs shadow-[2px_2px_0px_0px_#FFE600] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
-              >
-                UYGULA
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setGender('female')}
+              className={`p-3 rounded-[20px] font-extrabold text-xs flex items-center justify-center space-x-2 transition-all ${
+                gender === 'female'
+                  ? 'bg-[#EC4899] text-white shadow-[0_8px_18px_-4px_rgba(236,72,153,0.45)]'
+                  : 'bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              <span className="text-base">👧</span>
+              <span>KADIN KARAKTER</span>
+            </button>
           </div>
         </div>
       </div>

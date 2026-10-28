@@ -327,12 +327,13 @@ export const ReviewView: React.FC<Props> = ({
 
       // Track encounter count for hints
       setHintStats(prev => {
-        const existing = prev[chosenWord.id] || { encounters: 0, wrongCount: 0, revealedCount: 0 };
+        const existing = prev[chosenWord.id] || { encounters: 0, wrongCount: 0, revealedCount: 1 };
         const updated = {
           ...prev,
           [chosenWord.id]: {
             ...existing,
-            encounters: existing.encounters + 1
+            encounters: existing.encounters + 1,
+            revealedCount: Math.max(1, existing.revealedCount)
           }
         };
         saveReviewSession(list, currentStep, updated, poolQueueRef.current, targetCount);
@@ -1041,7 +1042,7 @@ export const ReviewView: React.FC<Props> = ({
             {/* Word Hints List */}
             <WordHintsList
               hints={currentWordHints}
-              revealedCount={hintStats[currentQuestion.word.id]?.revealedCount || 0}
+              revealedCount={hintStats[currentQuestion.word.id]?.revealedCount ?? 1}
               maxAllowed={getMaxAllowedHints(hintStats[currentQuestion.word.id]?.encounters || 1)}
               onRevealNext={handleRevealNextHint}
               disabled={inlineFeedback !== null}

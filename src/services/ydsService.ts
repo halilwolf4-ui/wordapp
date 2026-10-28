@@ -17,8 +17,18 @@ export interface YdsQuestion {
   answer: 'A' | 'B' | 'C' | 'D' | 'E';
 }
 
+export interface YokdilVocabItem {
+  id: string;
+  word: string;
+  tr: string;
+  synonyms: string[];
+  years: number[];
+}
+
 let cachedQuestions: YdsQuestion[] | null = null;
 let loadPromise: Promise<YdsQuestion[]> | null = null;
+let cachedVocab: YokdilVocabItem[] | null = null;
+let loadVocabPromise: Promise<YokdilVocabItem[]> | null = null;
 
 /**
  * Loads the pre-extracted YÖKDİL / YDS questions from /yokdil_questions.json
@@ -51,6 +61,39 @@ export async function loadYdsQuestions(): Promise<YdsQuestion[]> {
   }
 
   return loadPromise;
+}
+
+/**
+ * Loads the YÖKDİL 2021-2025 vocabulary & synonyms list from /yokdil_vocab.json
+ */
+export async function loadYokdilVocab(): Promise<YokdilVocabItem[]> {
+  if (cachedVocab) {
+    return cachedVocab;
+  }
+
+  if (!loadVocabPromise) {
+    loadVocabPromise = (async () => {
+      try {
+        const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+          ? import.meta.env.BASE_URL
+          : `${import.meta.env.BASE_URL}/`;
+
+        const res = await fetch(`${baseUrl}yokdil_vocab.json`);
+        if (!res.ok) {
+          throw new Error(`Failed to load yokdil_vocab.json (status: ${res.status})`);
+        }
+
+        const data: YokdilVocabItem[] = await res.json();
+        cachedVocab = data;
+        return data;
+      } catch (err) {
+        console.error('Error loading YÖKDİL vocab:', err);
+        return [];
+      }
+    })();
+  }
+
+  return loadVocabPromise;
 }
 
 /**

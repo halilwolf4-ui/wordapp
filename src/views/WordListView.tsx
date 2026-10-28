@@ -282,13 +282,14 @@ export const WordListView: React.FC<Props> = ({
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex space-x-2 overflow-x-auto pb-1 text-xs font-black no-scrollbar">
+      <div className="flex space-x-2 overflow-x-auto pb-1 text-xs font-extrabold no-scrollbar">
         <button
           onClick={() => setActiveFilter('custom')}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 shrink-0 border-2 border-black uppercase transition-all ${
+          data-light-pill={activeFilter === 'custom' ? 'true' : undefined}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 shrink-0 rounded-full uppercase transition-all ${
             activeFilter === 'custom'
-              ? 'bg-[#C084FC] text-black shadow-[2px_2px_0px_0px_#000] -translate-y-0.5'
-              : 'bg-white text-zinc-800 hover:bg-[#F3E8FF]'
+              ? 'bg-[#C084FC] text-[#0F172A] shadow-sm -translate-y-0.5'
+              : 'bg-white dark:bg-[#151C2C] text-zinc-800 dark:text-slate-200 border border-slate-200/80 dark:border-white/10'
           }`}
         >
           <Sparkles size={14} strokeWidth={2.5} />
@@ -296,10 +297,11 @@ export const WordListView: React.FC<Props> = ({
         </button>
         <button
           onClick={() => setActiveFilter('mastered')}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 shrink-0 border-2 border-black uppercase transition-all ${
+          data-light-pill={activeFilter === 'mastered' ? 'true' : undefined}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 shrink-0 rounded-full uppercase transition-all ${
             activeFilter === 'mastered'
-              ? 'bg-[#4ADE80] text-black shadow-[2px_2px_0px_0px_#000] -translate-y-0.5'
-              : 'bg-white text-zinc-800 hover:bg-[#DCFCE7]'
+              ? 'bg-[#4ADE80] text-[#0F172A] shadow-sm -translate-y-0.5'
+              : 'bg-white dark:bg-[#151C2C] text-zinc-800 dark:text-slate-200 border border-slate-200/80 dark:border-white/10'
           }`}
         >
           <CheckCircle size={14} strokeWidth={2.5} />
@@ -307,10 +309,11 @@ export const WordListView: React.FC<Props> = ({
         </button>
         <button
           onClick={() => setActiveFilter('learning')}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 shrink-0 border-2 border-black uppercase transition-all ${
+          data-light-pill={activeFilter === 'learning' ? 'true' : undefined}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 shrink-0 rounded-full uppercase transition-all ${
             activeFilter === 'learning'
-              ? 'bg-[#00F0FF] text-black shadow-[2px_2px_0px_0px_#000] -translate-y-0.5'
-              : 'bg-white text-zinc-800 hover:bg-[#E0F2FE]'
+              ? 'bg-[#00F0FF] text-[#0F172A] shadow-sm -translate-y-0.5'
+              : 'bg-white dark:bg-[#151C2C] text-zinc-800 dark:text-slate-200 border border-slate-200/80 dark:border-white/10'
           }`}
         >
           <RotateCcw size={14} strokeWidth={2.5} />
@@ -318,10 +321,11 @@ export const WordListView: React.FC<Props> = ({
         </button>
         <button
           onClick={() => setActiveFilter('all')}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 shrink-0 border-2 border-black uppercase transition-all ${
+          data-light-pill={activeFilter === 'all' ? 'true' : undefined}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 shrink-0 rounded-full uppercase transition-all ${
             activeFilter === 'all'
-              ? 'bg-[#FFE600] text-black shadow-[2px_2px_0px_0px_#000] -translate-y-0.5'
-              : 'bg-white text-zinc-800 hover:bg-[#FEF9C3]'
+              ? 'bg-[#FFE600] text-[#0F172A] shadow-sm -translate-y-0.5'
+              : 'bg-white dark:bg-[#151C2C] text-zinc-800 dark:text-slate-200 border border-slate-200/80 dark:border-white/10'
           }`}
         >
           <span>TÜMÜ</span>

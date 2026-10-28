@@ -28,6 +28,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   dailyReviewLimit: 40,
   prioritizeCustomWords: true, // "öncelik kendi kelimelerimde olacak"
   enabledCategories: [
+    'yokdil_asiri_onemli', 'yokdil_yds',
     'basic_verbs', 'colors', 'family', 'irregular_verbs', 'money', 'numbers',
     'numbers_ordinals', 'oxford3000_a1', 'oxford3000_a2', 'oxford3000_b1',
     'oxford3000_b2', 'oxford5000_b2', 'oxford5000_c1', 'time',
@@ -193,6 +194,90 @@ export async function deduplicateDatabaseWords(database: WordDatabase = db): Pro
 }
 
 /**
+ * Syncs YÖKDİL / YDS and YÖKDİL / YDS - AŞIRI ÖNEMLİ categories and words into an existing IndexedDB.
+ */
+export async function syncYokdilCategoriesToDb(database: WordDatabase = db): Promise<void> {
+  const syncKey = 'kelime_avi_yokdil_cat_sync_v1';
+  if (typeof localStorage !== 'undefined' && localStorage.getItem(syncKey) === 'true') {
+    return;
+  }
+
+  try {
+    const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+      ? import.meta.env.BASE_URL
+      : `${import.meta.env.BASE_URL}/`;
+    const res = await fetch(`${baseUrl}words.json`);
+    if (!res.ok) return;
+
+    const data = await res.json();
+    const jsonWords: Word[] = data.words || [];
+    const yokdilJsonWords = jsonWords.filter(
+      w => w.categories && (w.categories.includes('yokdil_yds') || w.categories.includes('yokdil_asiri_onemli'))
+    );
+    if (yokdilJsonWords.length === 0) return;
+
+    const allDbWords = await database.words.toArray();
+    const clean = (s: string) => s.toLowerCase().trim().replace(/^to\s+/i, '');
+    const dbByEn = new Map<string, Word>();
+    let maxId = 0;
+    for (const w of allDbWords) {
+      dbByEn.set(clean(w.en), w);
+      if (w.id > maxId) maxId = w.id;
+    }
+
+    const toPut: Word[] = [];
+    for (const jw of yokdilJsonWords) {
+      const key = clean(jw.en);
+      const existing = dbByEn.get(key);
+      if (existing) {
+        const cats = new Set(existing.categories || []);
+        let changed = false;
+        for (const c of jw.categories || []) {
+          if (!cats.has(c)) {
+            cats.add(c);
+            changed = true;
+          }
+        }
+        if (changed) {
+          toPut.push({ ...existing, categories: Array.from(cats) });
+        }
+      } else {
+        maxId++;
+        toPut.push({ ...jw, id: maxId });
+      }
+    }
+
+    if (toPut.length > 0) {
+      await database.words.bulkPut(toPut);
+    }
+
+    const existingSettings = await database.settings.get(1);
+    if (existingSettings) {
+      const enabled = new Set(existingSettings.enabledCategories || []);
+      let settingsChanged = false;
+      for (const cat of ['yokdil_asiri_onemli', 'yokdil_yds']) {
+        if (!enabled.has(cat)) {
+          enabled.add(cat);
+          settingsChanged = true;
+        }
+      }
+      if (settingsChanged) {
+        await database.settings.put({
+          ...existingSettings,
+          enabledCategories: Array.from(enabled)
+        });
+      }
+    }
+
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(syncKey, 'true');
+    }
+  } catch (err) {
+    console.warn('[Database] Error syncing YÖKDİL categories:', err);
+  }
+}
+
+/**
  * Initialize database and import words.json if words table is empty.
  */
 export async function initializeDatabase(onProgress?: (progress: number, message: string) => void): Promise<void> {
@@ -212,6 +297,7 @@ export async function initializeDatabase(onProgress?: (progress: number, message
   const wordCount = await db.words.count();
   if (wordCount > 0) {
     await deduplicateDatabaseWords(db);
+    await syncYokdilCategoriesToDb(db);
     return; // Already initialized
   }
 

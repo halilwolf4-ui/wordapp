@@ -41,28 +41,33 @@ export const BackupReminderBanner: React.FC<Props> = ({
   };
 
   return (
-    <div className="bg-[#FFE600] border-b-[3px] border-black px-3.5 py-2 flex items-center justify-between text-xs text-black font-black select-none shadow-[0_2px_0px_0px_#000]">
-      <div className="flex items-center space-x-2 flex-1 pr-2">
-        <div className="bg-black text-[#FFE600] p-1 border border-black shrink-0">
-          <AlertTriangle size={14} strokeWidth={3} />
+    <div
+      data-light-pill="true"
+      className="bg-[#FFF4BD] border-b border-amber-300/80 px-3.5 py-2.5 flex items-center justify-between text-xs text-[#0F172A] font-extrabold select-none shadow-sm"
+    >
+      <div className="flex items-center space-x-2.5 flex-1 pr-2">
+        <div className="bg-[#FF6B5B] text-white p-1.5 rounded-[10px] shrink-0 shadow-sm">
+          <AlertTriangle size={14} strokeWidth={2.8} className="text-white" />
         </div>
-        <span className="tracking-tight uppercase">DİKKAT: Verilerini kaybetmemek için düzenli yedek al!</span>
+        <span className="tracking-tight text-[#0F172A] font-extrabold">
+          DİKKAT: Verilerini kaybetmemek için düzenli yedek al!
+        </span>
       </div>
       <div className="flex items-center space-x-2 shrink-0">
         <button
           onClick={handleQuickBackup}
           disabled={exporting}
-          className="flex items-center space-x-1 bg-black text-white hover:bg-zinc-800 font-black px-3 py-1 border-2 border-black text-[11px] shadow-[2px_2px_0px_0px_#fff] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all uppercase"
+          className="flex items-center space-x-1 bg-[#FF6B5B] text-white hover:opacity-95 font-extrabold px-3 py-1.5 rounded-full text-[11px] shadow-sm transition-all uppercase"
         >
-          <Download size={13} strokeWidth={3} />
-          <span>{exporting ? 'Yedekleniyor' : 'Yedek Al'}</span>
+          <Download size={13} strokeWidth={2.8} className="text-white" />
+          <span className="text-white">{exporting ? 'Yedekleniyor' : 'Yedek Al'}</span>
         </button>
         <button
           onClick={() => setDismissed(true)}
-          className="w-6 h-6 bg-white border border-black flex items-center justify-center text-black hover:bg-zinc-100"
+          className="w-7 h-7 bg-white/80 rounded-full border border-amber-400/50 flex items-center justify-center text-[#0F172A] hover:bg-white transition-all"
           title="Kapat"
         >
-          <X size={14} strokeWidth={3} />
+          <X size={14} strokeWidth={2.8} />
         </button>
       </div>
     </div>

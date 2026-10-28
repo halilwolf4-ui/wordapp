@@ -1,7 +1,7 @@
 import React from 'react';
-import { Flame, Zap, Settings as SettingsIcon, Sun, Moon } from 'lucide-react';
+import { Settings as SettingsIcon, Sun, Moon } from 'lucide-react';
 import { UserProfile } from '../types';
-import { xpForNextLevel } from '../services/gamification';
+import { CharacterIllustration, getStageForLevel, useCharacterGender } from './CharacterAvatar';
 
 interface Props {
   profile: UserProfile;
@@ -15,80 +15,109 @@ export const Header: React.FC<Props> = ({
   profile,
   isDark = false,
   onToggleTheme,
-  onOpenSpeedRound,
   onOpenSettings
 }) => {
-  const nextLvlXp = xpForNextLevel(profile.level);
-  const prevLvlXp = xpForNextLevel(profile.level - 1);
-  const currentLvlProgress = Math.max(0, profile.xp - prevLvlXp);
-  const currentLvlNeeded = Math.max(1, nextLvlXp - prevLvlXp);
-  const progressPct = Math.min(100, Math.round((currentLvlProgress / currentLvlNeeded) * 100));
+  const [gender, setGender] = useCharacterGender();
+  const stageInfo = getStageForLevel(profile.level);
 
   return (
-    <header className="sticky top-0 z-30 bg-[#FFE600] border-b-[3px] border-black px-3.5 py-2 select-none shadow-[0_3px_0px_0px_#000]">
-      <div className="max-w-md mx-auto flex items-center justify-between gap-2">
-        {/* Streak & Level */}
-        <div className="flex items-center space-x-2">
-          {/* Streak Badge */}
-          <div className="header-pill flex items-center space-x-1.5 bg-white border-2 border-black px-2.5 py-1 text-black font-black text-xs shadow-[2px_2px_0px_0px_#000]">
-            <Flame size={14} className="text-[#FF5722] fill-[#FF5722] flame-icon" />
-            <span>{profile.streak} GÜN</span>
-          </div>
-
-          {/* Streak Freeze Badge */}
-          {profile.streakFreezes !== undefined && profile.streakFreezes > 0 && (
-            <div
-              className="flex items-center space-x-1 bg-[#00F0FF] border-2 border-black px-2 py-1 text-black font-black text-xs shadow-[2px_2px_0px_0px_#000]"
-              title={`${profile.streakFreezes} Seri Dondurma Hakkı`}
-            >
-              <span className="text-xs">🧊</span>
-              <span>{profile.streakFreezes}</span>
-            </div>
-          )}
-
-          {/* Level & XP */}
-          <div className="header-pill flex items-center space-x-2 bg-white border-2 border-black px-2.5 py-1 text-xs shadow-[2px_2px_0px_0px_#000]">
-            <span className="font-black text-black tracking-tight">LV.{profile.level}</span>
-            <div className="w-12 h-2.5 bg-zinc-200 border border-black overflow-hidden relative level-bar-track">
-              <div
-                className="h-full bg-black level-bar-fill transition-all duration-300"
-                style={{ width: `${progressPct}%` }}
+    <header className="sticky top-0 z-30 bg-[#F7F8FC]/90 dark:bg-[#0B0F19]/90 backdrop-blur-xl px-4 pt-3.5 pb-2.5 select-none">
+      <div className="max-w-md mx-auto flex items-center justify-between gap-2.5">
+        {/* Left: Evolving Character Avatar & Greeting */}
+        <div className="flex items-center space-x-3 min-w-0">
+          <button
+            type="button"
+            onClick={() => setGender(gender === 'male' ? 'female' : 'male')}
+            title="Cinsiyeti değiştirmek için dokun (Erkek / Kadın)"
+            className="relative shrink-0 w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-[#FF5E5B] via-[#FF8A65] to-[#FFD166] shadow-[0_6px_16px_rgba(255,94,91,0.28)]"
+          >
+            <div className="w-full h-full rounded-full bg-[#FFF0E5] overflow-hidden flex items-center justify-center">
+              <CharacterIllustration
+                level={profile.level}
+                gender={gender}
+                variant="avatar"
+                className="w-11 h-11"
               />
             </div>
+            <span
+              data-light-pill="true"
+              className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white text-[#0F172A] text-[10px] font-black flex items-center justify-center shadow-md border border-slate-200"
+            >
+              {gender === 'female' ? '♀' : '♂'}
+            </span>
+          </button>
+
+          <div className="min-w-0">
+            <div className="flex items-center space-x-1.5">
+              <h1 className="text-[17px] sm:text-[18px] font-extrabold text-[#111827] dark:text-white leading-tight tracking-tight truncate">
+                Hey, {stageInfo.title}!
+              </h1>
+              <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0">
+                <path
+                  d="M18.5 11.5c0-3.5-2.5-6.5-6-6.5S6.5 8 6.5 11.5c0 4 2.5 7 6 7s6-3 6-7z"
+                  fill="#FFD166"
+                />
+                <path
+                  d="M12 3.5v4M8.5 5l2 3.5M15.5 5l-2 3.5"
+                  stroke="#F59E0B"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </div>
+            <p className="text-[11px] font-semibold text-[#6B7280] dark:text-slate-400 truncate mt-0.5">
+              Seviye {profile.level} • {gender === 'female' ? 'Kadın Karakter' : 'Erkek Karakter'}
+            </p>
           </div>
         </div>
 
-        {/* Actions: Theme Toggle, Speed Round & Settings */}
-        <div className="flex items-center space-x-1.5 sm:space-x-2">
+        {/* Right: 3D Flame Streak Pill + Theme & Settings */}
+        <div className="flex items-center space-x-2 shrink-0">
+          <div
+            className="flex items-center space-x-1.5 bg-[#FFF3E0] dark:bg-orange-950/60 px-3.5 py-1.5 rounded-full shadow-[0_4px_12px_rgba(255,138,0,0.12)]"
+            title={`${profile.streak} Günlük Seri`}
+          >
+            <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0">
+              <defs>
+                <linearGradient id="flameOuter" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#FF9F1C" />
+                  <stop offset="100%" stopColor="#FF5400" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M12 2C9.5 6 6 8.5 6 13.5C6 17.6 8.7 21 12 21C15.3 21 18 17.6 18 13.5C18 10 15.8 7.5 14.5 5.5C14.2 7.5 13 8.5 12 8.5C12.8 6 12.8 4 12 2Z"
+                fill="url(#flameOuter)"
+              />
+              <path
+                d="M12 11C10.5 13 9.5 14.2 9.5 16.2C9.5 18.2 10.6 19.5 12 19.5C13.4 19.5 14.5 18.2 14.5 16.2C14.5 14.5 13.5 13 12 11Z"
+                fill="#FFE66D"
+              />
+            </svg>
+            <span className="text-[13px] font-extrabold text-[#FF6D00] dark:text-orange-300 tabular-nums">
+              {profile.streak}
+            </span>
+          </div>
+
           {onToggleTheme && (
             <button
               onClick={onToggleTheme}
-              className="header-pill w-8 h-8 bg-white hover:bg-zinc-100 border-2 border-black flex items-center justify-center text-black shadow-[2px_2px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+              className="w-10 h-10 rounded-full bg-white dark:bg-[#151C2C] flex items-center justify-center text-slate-600 dark:text-slate-200 shadow-[0_4px_14px_rgba(17,24,39,0.05)] border border-slate-100 dark:border-white/5"
               title={isDark ? 'Gündüz Moduna Geç' : 'Gece Moduna Geç'}
             >
               {isDark ? (
-                <Sun size={16} strokeWidth={2.5} className="text-[#FFE600] fill-[#FFE600]" data-sun-icon="true" />
+                <Sun size={18} strokeWidth={2.2} className="text-[#FBBF24] fill-[#FBBF24]" />
               ) : (
-                <Moon size={16} strokeWidth={2.5} className="text-black" />
+                <Moon size={18} strokeWidth={2.2} className="text-slate-600" />
               )}
             </button>
           )}
 
           <button
-            onClick={onOpenSpeedRound}
-            className="flex items-center space-x-1 px-2 py-1 bg-[#FF69B4] hover:bg-[#ff52a8] border-2 border-black text-black text-xs font-black shadow-[2px_2px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-            title="60 sn Hızlı Tur"
-          >
-            <Zap size={14} className="fill-black text-black" />
-            <span className="tracking-wide">60s</span>
-          </button>
-
-          <button
             onClick={onOpenSettings}
-            className="header-pill w-8 h-8 bg-white hover:bg-zinc-100 border-2 border-black flex items-center justify-center text-black shadow-[2px_2px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+            className="w-10 h-10 rounded-full bg-white dark:bg-[#151C2C] flex items-center justify-center text-slate-600 dark:text-slate-200 shadow-[0_4px_14px_rgba(17,24,39,0.05)] border border-slate-100 dark:border-white/5"
             title="Ayarlar"
           >
-            <SettingsIcon size={16} strokeWidth={2.5} />
+            <SettingsIcon size={18} strokeWidth={2.2} />
           </button>
         </div>
       </div>

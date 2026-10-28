@@ -1,0 +1,593 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 12px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 12px);
+  }
+}
+
+/* Hide scrollbar for clean mobile tabs */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html,
+body {
+  overscroll-behavior-y: none;
+  height: 100%;
+  background-color: #FDFBF7;
+  color: #000000;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+#root {
+  min-height: 100%;
+  height: 100%;
+  background-color: #FDFBF7;
+}
+
+/* Neo-Brutalist Canvas Background Pattern */
+.brutal-dots {
+  background-image: radial-gradient(#000000 1.2px, transparent 1.2px);
+  background-size: 18px 18px;
+}
+
+.brutal-stripes {
+  background: repeating-linear-gradient(-45deg,
+      #000000,
+      #000000 10px,
+      #FFE600 10px,
+      #FFE600 20px);
+}
+
+/* Tactile Brutalist Click Effect */
+.brutal-press {
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.brutal-press:active {
+  transform: translate(3px, 3px) !important;
+  box-shadow: 1px 1px 0px #000000 !important;
+}
+
+.brutal-press-sm:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 0px 0px 0px #000000 !important;
+}
+
+/* Modern Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulseGlow {
+
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+/* Choice Selection Correct Pop Animation */
+@keyframes correctPop {
+  0% {
+    transform: scale(0.96);
+  }
+
+  40% {
+    transform: scale(1.03);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Choice Selection Wrong Shake Animation */
+@keyframes wrongShake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  15% {
+    transform: translateX(-7px);
+  }
+
+  30% {
+    transform: translateX(6px);
+  }
+
+  45% {
+    transform: translateX(-5px);
+  }
+
+  60% {
+    transform: translateX(4px);
+  }
+
+  75% {
+    transform: translateX(-2px);
+  }
+}
+
+/* Checkmark Spring Entry */
+@keyframes checkBounce {
+  0% {
+    transform: scale(0) rotate(-20deg);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.35) rotate(6deg);
+    opacity: 1;
+  }
+
+  80% {
+    transform: scale(0.92) rotate(-2deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+/* X Mark Spring Entry */
+@keyframes xBounce {
+  0% {
+    transform: scale(0) rotate(20deg);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.25) rotate(-6deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+/* Guiding Pulse Beacon (for true correct answer when user clicked wrong) */
+@keyframes beaconPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    border-color: rgba(16, 185, 129, 0.7);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+    border-color: rgba(16, 185, 129, 1);
+  }
+}
+
+@keyframes rippleRing {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scaleUp {
+  animation: scaleUp 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pulseGlow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.animate-correct-pop {
+  animation: correctPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-wrong-shake {
+  animation: wrongShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+}
+
+.animate-check-bounce {
+  animation: checkBounce 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-x-bounce {
+  animation: xBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-beacon-pulse {
+  animation: beaconPulse 1.4s ease-in-out infinite;
+}
+
+.animate-ripple-ring {
+  animation: rippleRing 0.6s cubic-bezier(0, 0.2, 0.8, 1) forwards;
+}
+
+/* ========================================================
+   NEO-BRUTALIST DARK MODE & COLOR PALETTE ENGINE
+   ======================================================== */
+
+:root {
+  --brutal-dark-bg: #0C0C0E;
+  --brutal-dark-surface: #18181E;
+  --brutal-dark-surface-elevated: #22222A;
+  --brutal-dark-accent: #FFE600;
+  --brutal-dark-shadow: #FFE600;
+  --brutal-dark-border: #000000;
+}
+
+/* Palette Presets */
+html[data-palette="cyber-yellow"] {
+  --brutal-dark-bg: #0C0C0E;
+  --brutal-dark-surface: #18181E;
+  --brutal-dark-surface-elevated: #24242C;
+  --brutal-dark-accent: #FFE600;
+  --brutal-dark-shadow: #FFE600;
+}
+
+html[data-palette="toxic-lime"] {
+  --brutal-dark-bg: #09110B;
+  --brutal-dark-surface: #121C14;
+  --brutal-dark-surface-elevated: #1B291E;
+  --brutal-dark-accent: #4ADE80;
+  --brutal-dark-shadow: #4ADE80;
+}
+
+html[data-palette="neon-pink"] {
+  --brutal-dark-bg: #110910;
+  --brutal-dark-surface: #1D121B;
+  --brutal-dark-surface-elevated: #281926;
+  --brutal-dark-accent: #FF5588;
+  --brutal-dark-shadow: #FF5588;
+}
+
+html[data-palette="cyan-glitch"] {
+  --brutal-dark-bg: #071015;
+  --brutal-dark-surface: #0E1A22;
+  --brutal-dark-surface-elevated: #162632;
+  --brutal-dark-accent: #00F0FF;
+  --brutal-dark-shadow: #00F0FF;
+}
+
+html[data-palette="ultraviolet"] {
+  --brutal-dark-bg: #100C18;
+  --brutal-dark-surface: #191426;
+  --brutal-dark-surface-elevated: #241D36;
+  --brutal-dark-accent: #C084FC;
+  --brutal-dark-shadow: #C084FC;
+}
+
+html[data-palette="monochrome"] {
+  --brutal-dark-bg: #000000;
+  --brutal-dark-surface: #181818;
+  --brutal-dark-surface-elevated: #242424;
+  --brutal-dark-accent: #FFFFFF;
+  --brutal-dark-shadow: #FFFFFF;
+}
+
+/* Base dark container styles */
+html.dark,
+html.dark body,
+html.dark #root {
+  background-color: var(--brutal-dark-bg, #0C0C0E) !important;
+  color: #FFFFFF !important;
+}
+
+/* Dots pattern on dark mode */
+html.dark .brutal-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.22) 1.2px, transparent 1.2px) !important;
+}
+
+/* White containers & cards on root canvas become dark brutalist blocks */
+html.dark .bg-white {
+  background-color: var(--brutal-dark-surface, #18181E) !important;
+  color: #FFFFFF !important;
+}
+
+html.dark .bg-\[\#FDFBF7\] {
+  background-color: var(--brutal-dark-bg, #0C0C0E) !important;
+  color: #FFFFFF !important;
+}
+
+html.dark .bg-zinc-50,
+html.dark .bg-zinc-100 {
+  background-color: var(--brutal-dark-surface-elevated, #22222A) !important;
+  color: #FFFFFF !important;
+}
+
+/* Subtitle and muted text on dark surfaces */
+html.dark .text-zinc-600,
+html.dark .text-zinc-700,
+html.dark .text-zinc-800,
+html.dark .text-zinc-900 {
+  color: #F4F4F5 !important;
+}
+
+/* ========================================================
+   STANDALONE TEXT-BLACK: ON DARK CANVASES & SURFACES, DEFAULT TO WHITE
+   ======================================================== */
+html.dark .text-black {
+  color: #FFFFFF !important;
+}
+
+/* Circular SVG Gauge Progress Stroke */
+.circular-progress-stroke {
+  color: #000000;
+}
+
+html.dark .circular-progress-stroke {
+  color: var(--brutal-dark-accent, #FFE600) !important;
+}
+
+/* ========================================================
+   CONTRAST PRESERVATION: COLORED CARDS, PILLS & BADGES
+   Any bright, pastel or neon background MUST retain pitch black text!
+   ======================================================== */
+html.dark .bg-\[\#FFE600\],
+html.dark .bg-\[\#4ADE80\],
+html.dark .bg-\[\#00F0FF\],
+html.dark .bg-\[\#86EFAC\],
+html.dark .bg-\[\#BBF7D0\],
+html.dark .bg-\[\#FEF08A\],
+html.dark .bg-\[\#BAE6FD\],
+html.dark .bg-\[\#DDD6FE\],
+html.dark .bg-\[\#C084FC\],
+html.dark .bg-\[\#FB923C\],
+html.dark .bg-\[\#FF69B4\],
+html.dark .bg-\[\#FF5588\],
+html.dark .bg-\[\#E5E0D8\],
+html.dark .bg-amber-400,
+html.dark .bg-emerald-400,
+html.dark [data-accent-contrast="true"] {
+  color: #000000 !important;
+}
+
+html.dark .bg-\[\#FFE600\] *,
+html.dark .bg-\[\#4ADE80\] *,
+html.dark .bg-\[\#00F0FF\] *,
+html.dark .bg-\[\#86EFAC\] *,
+html.dark .bg-\[\#BBF7D0\] *,
+html.dark .bg-\[\#FEF08A\] *,
+html.dark .bg-\[\#BAE6FD\] *,
+html.dark .bg-\[\#DDD6FE\] *,
+html.dark .bg-\[\#C084FC\] *,
+html.dark .bg-\[\#FB923C\] *,
+html.dark .bg-\[\#FF69B4\] *,
+html.dark .bg-\[\#FF5588\] *,
+html.dark .bg-\[\#E5E0D8\] *,
+html.dark .bg-amber-400 *,
+html.dark .bg-emerald-400 *,
+html.dark [data-accent-contrast="true"] *,
+html.dark .bg-\[\#FFE600\] .text-black,
+html.dark .bg-\[\#4ADE80\] .text-black,
+html.dark .bg-\[\#00F0FF\] .text-black,
+html.dark .bg-\[\#86EFAC\] .text-black,
+html.dark .bg-\[\#BBF7D0\] .text-black,
+html.dark .bg-\[\#FEF08A\] .text-black,
+html.dark .bg-\[\#BAE6FD\] .text-black,
+html.dark .bg-\[\#DDD6FE\] .text-black,
+html.dark .bg-\[\#C084FC\] .text-black,
+html.dark .bg-\[\#FB923C\] .text-black,
+html.dark .bg-\[\#FF69B4\] .text-black,
+html.dark .bg-\[\#FF5588\] .text-black,
+html.dark .bg-\[\#E5E0D8\] .text-black,
+html.dark .bg-amber-400 .text-black,
+html.dark .bg-emerald-400 .text-black,
+html.dark [data-accent-contrast="true"] .text-black {
+  color: #000000 !important;
+}
+
+/* Black badges inside ANY colored card have pitch black background and crisp white text/icons */
+html.dark .bg-\[\#FFE600\] .bg-black,
+html.dark .bg-\[\#4ADE80\] .bg-black,
+html.dark .bg-\[\#00F0FF\] .bg-black,
+html.dark .bg-\[\#86EFAC\] .bg-black,
+html.dark .bg-\[\#BBF7D0\] .bg-black,
+html.dark .bg-\[\#FEF08A\] .bg-black,
+html.dark .bg-\[\#BAE6FD\] .bg-black,
+html.dark .bg-\[\#DDD6FE\] .bg-black,
+html.dark .bg-\[\#C084FC\] .bg-black,
+html.dark .bg-\[\#FB923C\] .bg-black,
+html.dark .bg-\[\#FF69B4\] .bg-black,
+html.dark .bg-\[\#FF5588\] .bg-black {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+}
+
+html.dark .bg-\[\#FFE600\] .bg-black *,
+html.dark .bg-\[\#4ADE80\] .bg-black *,
+html.dark .bg-\[\#00F0FF\] .bg-black *,
+html.dark .bg-\[\#86EFAC\] .bg-black *,
+html.dark .bg-\[\#BBF7D0\] .bg-black *,
+html.dark .bg-\[\#FEF08A\] .bg-black *,
+html.dark .bg-\[\#BAE6FD\] .bg-black *,
+html.dark .bg-\[\#DDD6FE\] .bg-black *,
+html.dark .bg-\[\#C084FC\] .bg-black *,
+html.dark .bg-\[\#FB923C\] .bg-black *,
+html.dark .bg-\[\#FF69B4\] .bg-black *,
+html.dark .bg-\[\#FF5588\] .bg-black * {
+  color: #FFFFFF !important;
+}
+
+/* White icon boxes inside colored cards stay pure white with black icons */
+html.dark .bg-\[\#FFE600\] .bg-white,
+html.dark .bg-\[\#4ADE80\] .bg-white,
+html.dark .bg-\[\#00F0FF\] .bg-white,
+html.dark .bg-\[\#86EFAC\] .bg-white,
+html.dark .bg-\[\#BBF7D0\] .bg-white,
+html.dark .bg-\[\#FEF08A\] .bg-white,
+html.dark .bg-\[\#BAE6FD\] .bg-white,
+html.dark .bg-\[\#DDD6FE\] .bg-white,
+html.dark .bg-\[\#C084FC\] .bg-white,
+html.dark .bg-\[\#FB923C\] .bg-white,
+html.dark .bg-\[\#FF69B4\] .bg-white {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+}
+
+html.dark .bg-\[\#FFE600\] .bg-white *,
+html.dark .bg-\[\#4ADE80\] .bg-white *,
+html.dark .bg-\[\#00F0FF\] .bg-white *,
+html.dark .bg-\[\#86EFAC\] .bg-white *,
+html.dark .bg-\[\#BBF7D0\] .bg-white *,
+html.dark .bg-\[\#FEF08A\] .bg-white *,
+html.dark .bg-\[\#BAE6FD\] .bg-white *,
+html.dark .bg-\[\#DDD6FE\] .bg-white *,
+html.dark .bg-\[\#C084FC\] .bg-white *,
+html.dark .bg-\[\#FB923C\] .bg-white *,
+html.dark .bg-\[\#FF69B4\] .bg-white * {
+  color: #000000 !important;
+}
+
+/* Standalone black buttons and badges in dark mode */
+html.dark .bg-black {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+}
+
+html.dark .bg-black * {
+  color: #FFFFFF !important;
+}
+
+/* Dark mode Header tape */
+html.dark header {
+  background-color: var(--brutal-dark-accent, #FFE600) !important;
+  box-shadow: 0 3px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
+}
+
+/* Header pills & buttons in dark mode: black background with crisp white / flame contrast */
+html.dark header .header-pill {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+  border-color: #000000 !important;
+}
+
+html.dark header .header-pill * {
+  color: #FFFFFF !important;
+}
+
+html.dark header .header-pill .flame-icon {
+  color: #FF5722 !important;
+  fill: #FF5722 !important;
+}
+
+html.dark header .header-pill [data-sun-icon] {
+  color: #FFE600 !important;
+  fill: #FFE600 !important;
+}
+
+/* Dark mode bottom navbar */
+html.dark nav {
+  background-color: var(--brutal-dark-surface, #18181E) !important;
+  border-top-color: #000000 !important;
+}
+
+html.dark nav button {
+  color: #D4D4D8 !important;
+}
+
+html.dark nav button:hover {
+  color: #FFFFFF !important;
+}
+
+/* Inputs, selects, and textareas */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: var(--brutal-dark-surface, #18181E) !important;
+  color: #FFFFFF !important;
+  border-color: #000000 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #71717A !important;
+}
+
+/* Active tab pill in dark mode */
+html.dark .nav-active-tab {
+  background-color: var(--brutal-dark-accent, #FFE600) !important;
+  color: #000000 !important;
+}
+
+html.dark .nav-active-tab * {
+  color: #000000 !important;
+}
+
+/* SOLID NEON OFFSET DROP SHADOWS IN DARK MODE */
+html.dark .shadow-\[1px_1px_0px_0px_\#000\] {
+  box-shadow: 1px 1px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
+}
+
+html.dark .shadow-\[2px_2px_0px_0px_\#000\] {
+  box-shadow: 2px 2px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
+}
+
+html.dark .shadow-\[3px_3px_0px_0px_\#000\] {
+  box-shadow: 3px 3px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
+}
+
+html.dark .shadow-\[4px_4px_0px_0px_\#000\] {
+  box-shadow: 4px 4px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
+}
+
+html.dark .shadow-\[5px_5px_0px_0px_\#000\] {
+  box-shadow: 5px 5px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
+}
+
+html.dark .shadow-\[6px_6px_0px_0px_\#000\] {
+  box-shadow: 6px 6px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
+}
+
+html.dark .shadow-\[8px_8px_0px_0px_\#000\] {
+  box-shadow: 8px 8px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
+}

@@ -17,7 +17,10 @@ import {
   Globe2,
   Layers,
   Calendar,
-  Award
+  Award,
+  BookOpen,
+  Search,
+  Shuffle
 } from 'lucide-react';
 import { Word } from '../types';
 import { sound } from '../services/audio';
@@ -25,7 +28,14 @@ import { speakEnglish } from '../services/speech';
 import { fireCelebration, fireMicroSpark } from '../components/Confetti';
 import { lookupWord } from '../services/dictionaryService';
 import { getSentenceTranslation } from '../services/translationService';
-import { YdsQuestion, loadYdsQuestions, getRandomYdsQuestions, getAvailableYears } from '../services/ydsService';
+import {
+  YdsQuestion,
+  YokdilVocabItem,
+  loadYdsQuestions,
+  loadYokdilVocab,
+  getRandomYdsQuestions,
+  getAvailableYears
+} from '../services/ydsService';
 
 interface Props {
   allWords: Word[];
@@ -36,8 +46,10 @@ interface Props {
 
 type YdsCategory = 'fen' | 'sosyal' | 'all';
 type RoundSize = 10 | 20 | 0;
+type VocabSubMode = 'list' | 'match' | 'quiz';
 
 const OPTION_KEYS: ('A' | 'B' | 'C' | 'D' | 'E')[] = ['A', 'B', 'C', 'D', 'E'];
+const VOCAB_YEARS: ('all' | number)[] = ['all', 2025, 2024, 2023, 2022, 2021];
 
 interface ActiveWordPopup {
   word: string;
@@ -57,16 +69,38 @@ export const YdsYokdilView: React.FC<Props> = ({
   onClose
 }) => {
   // Navigation & session state
-  const [phase, setPhase] = useState<'select' | 'quiz' | 'summary'>('select');
+  const [phase, setPhase] = useState<'select' | 'quiz' | 'summary' | 'vocab'>('select');
   const [category, setCategory] = useState<YdsCategory>('fen');
   const [roundSize, setRoundSize] = useState<RoundSize>(10);
   const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
 
-  // Question dataset
+  // Question & Vocab datasets
   const [allQuestions, setAllQuestions] = useState<YdsQuestion[]>([]);
+  const [vocabList, setVocabList] = useState<YokdilVocabItem[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [quizQuestions, setQuizQuestions] = useState<YdsQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Vocab Study & Synonym Matching State
+  const [vocabSubMode, setVocabSubMode] = useState<VocabSubMode>('list');
+  const [vocabYearFilter, setVocabYearFilter] = useState<number | 'all'>('all');
+  const [vocabSearch, setVocabSearch] = useState('');
+  const [addedVocabIds, setAddedVocabIds] = useState<Set<string>>(new Set());
+
+  // Synonym Match Board State (5 pairs per round)
+  const [matchPairs, setMatchPairs] = useState<{ id: string; word: string; synonym: string; tr: string }[]>([]);
+  const [shuffledRight, setShuffledRight] = useState<{ id: string; synonym: string }[]>([]);
+  const [selectedLeftId, setSelectedLeftId] = useState<string | null>(null);
+  const [selectedRightId, setSelectedRightId] = useState<string | null>(null);
+  const [matchedIds, setMatchedIds] = useState<Set<string>>(new Set());
+  const [wrongPairFlash, setWrongPairFlash] = useState(false);
+  const [matchRoundCount, setMatchRoundCount] = useState(1);
+
+  // Synonym Multiple-Choice Quiz State
+  const [synQuizItem, setSynQuizItem] = useState<YokdilVocabItem | null>(null);
+  const [synQuizOptions, setSynQuizOptions] = useState<{ text: string; isCorrect: boolean }[]>([]);
+  const [synQuizSelected, setSynQuizSelected] = useState<number | null>(null);
+  const [synQuizScore, setSynQuizScore] = useState({ correct: 0, total: 0 });
 
   // Active question interaction
   const [selectedOption, setSelectedOption] = useState<'A' | 'B' | 'C' | 'D' | 'E' | null>(null);
@@ -88,18 +122,19 @@ export const YdsYokdilView: React.FC<Props> = ({
   const [earnedXp, setEarnedXp] = useState(0);
   const [missedQuestions, setMissedQuestions] = useState<{ q: YdsQuestion; selected: string }[]>([]);
 
-  // Load question bank on mount
+  // Load question bank & YÖKDİL vocab on mount
   useEffect(() => {
     let mounted = true;
-    loadYdsQuestions()
-      .then(data => {
+    Promise.all([loadYdsQuestions(), loadYokdilVocab()])
+      .then(([qData, vData]) => {
         if (mounted) {
-          setAllQuestions(data);
+          setAllQuestions(qData);
+          setVocabList(vData);
           setIsLoadingData(false);
         }
       })
       .catch(err => {
-        console.error('Failed to load YÖKDİL questions:', err);
+        console.error('Failed to load YÖKDİL data:', err);
         if (mounted) setIsLoadingData(false);
       });
     return () => {
@@ -110,6 +145,173 @@ export const YdsYokdilView: React.FC<Props> = ({
   const availableYears = useMemo(() => {
     return getAvailableYears(allQuestions);
   }, [allQuestions]);
+
+  // Filtered YÖKDİL vocabulary list by year and search query
+  const filteredVocab = useMemo(() => {
+    let list = vocabList;
+    if (vocabYearFilter !== 'all') {
+      list = list.filter(item => item.years.includes(vocabYearFilter));
+    }
+    if (vocabSearch.trim()) {
+      const q = vocabSearch.trim().toLowerCase();
+      list = list.filter(
+        item =>
+          item.word.toLowerCase().includes(q) ||
+          item.tr.toLowerCase().includes(q) ||
+          item.synonyms.some(s => s.toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [vocabList, vocabYearFilter, vocabSearch]);
+
+  // Pool of vocab for active year filter (used in Match & Quiz modes)
+  const yearFilteredVocabPool = useMemo(() => {
+    if (vocabYearFilter === 'all') return vocabList;
+    return vocabList.filter(item => item.years.includes(vocabYearFilter));
+  }, [vocabList, vocabYearFilter]);
+
+  // Initialize a 5-pair Synonym Match round
+  const initMatchRound = useCallback(
+    (poolInput?: YokdilVocabItem[]) => {
+      const sourcePool = (poolInput || yearFilteredVocabPool).filter(v => v.synonyms.length > 0);
+      if (sourcePool.length === 0) return;
+
+      const shuffled = [...sourcePool].sort(() => Math.random() - 0.5).slice(0, 5);
+      const pairs = shuffled.map(item => ({
+        id: item.id,
+        word: item.word,
+        synonym: item.synonyms[Math.floor(Math.random() * Math.min(2, item.synonyms.length))],
+        tr: item.tr
+      }));
+
+      const rightSide = [...pairs]
+        .map(p => ({ id: p.id, synonym: p.synonym }))
+        .sort(() => Math.random() - 0.5);
+
+      setMatchPairs(pairs);
+      setShuffledRight(rightSide);
+      setSelectedLeftId(null);
+      setSelectedRightId(null);
+      setMatchedIds(new Set());
+      setWrongPairFlash(false);
+    },
+    [yearFilteredVocabPool]
+  );
+
+  // Initialize a Synonym Multiple-Choice Quiz question
+  const initSynQuizQuestion = useCallback(
+    (poolInput?: YokdilVocabItem[]) => {
+      const sourcePool = (poolInput || yearFilteredVocabPool).filter(v => v.synonyms.length > 0);
+      if (sourcePool.length < 4) return;
+
+      const target = sourcePool[Math.floor(Math.random() * sourcePool.length)];
+      const correctSyn = target.synonyms[0];
+
+      const distractorPool = vocabList
+        .filter(
+          v =>
+            v.id !== target.id &&
+            v.synonyms.length > 0 &&
+            !target.synonyms.includes(v.synonyms[0])
+        )
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3)
+        .map(v => ({ text: v.synonyms[0], isCorrect: false }));
+
+      const opts = [{ text: correctSyn, isCorrect: true }, ...distractorPool].sort(
+        () => Math.random() - 0.5
+      );
+
+      setSynQuizItem(target);
+      setSynQuizOptions(opts);
+      setSynQuizSelected(null);
+    },
+    [yearFilteredVocabPool, vocabList]
+  );
+
+  // Re-initialize match/quiz when year filter or submode changes
+  useEffect(() => {
+    if (phase === 'vocab' && vocabSubMode === 'match') {
+      initMatchRound();
+    } else if (phase === 'vocab' && vocabSubMode === 'quiz') {
+      initSynQuizQuestion();
+    }
+  }, [phase, vocabSubMode, vocabYearFilter, initMatchRound, initSynQuizQuestion]);
+
+  // Handle Synonym Match pair check
+  const checkMatchAttempt = (leftId: string, rightId: string) => {
+    if (leftId === rightId) {
+      sound.playCorrect();
+      const nextMatched = new Set(matchedIds);
+      nextMatched.add(leftId);
+      setMatchedIds(nextMatched);
+      setSelectedLeftId(null);
+      setSelectedRightId(null);
+      if (onAddXp) onAddXp(5);
+      setEarnedXp(prev => prev + 5);
+
+      if (nextMatched.size === matchPairs.length && matchPairs.length > 0) {
+        fireMicroSpark(0.5, 0.4);
+      }
+    } else {
+      sound.playWrong();
+      setWrongPairFlash(true);
+      setTimeout(() => {
+        setSelectedLeftId(null);
+        setSelectedRightId(null);
+        setWrongPairFlash(false);
+      }, 450);
+    }
+  };
+
+  const handleSelectLeftWord = (id: string) => {
+    if (matchedIds.has(id) || wrongPairFlash) return;
+    setSelectedLeftId(id);
+    if (selectedRightId) {
+      checkMatchAttempt(id, selectedRightId);
+    }
+  };
+
+  const handleSelectRightSyn = (id: string) => {
+    if (matchedIds.has(id) || wrongPairFlash) return;
+    setSelectedRightId(id);
+    if (selectedLeftId) {
+      checkMatchAttempt(selectedLeftId, id);
+    }
+  };
+
+  // Add a YÖKDİL vocabulary item to custom words
+  const handleAddVocabItemToCustom = async (item: YokdilVocabItem) => {
+    if (!onAddCustomWord || addedVocabIds.has(item.id)) return;
+    const alreadyExists = allWords.some(
+      w =>
+        (w.isCustom || w.categories?.includes('custom')) &&
+        w.en.toLowerCase().trim() === item.word.toLowerCase()
+    );
+    if (alreadyExists) return;
+
+    const wordData: Omit<Word, 'id'> = {
+      en: item.word,
+      tr: item.tr,
+      examples: [
+        {
+          en: `Synonyms: ${item.synonyms.join(', ')}`,
+          tr: `YÖKDİL (${item.years.join(', ')}) — ${item.tr}`
+        }
+      ],
+      categories: ['custom', 'yds', 'yokdil_vocab'],
+      isCustom: true
+    };
+
+    try {
+      await onAddCustomWord(wordData, true);
+      sound.playCorrect();
+      fireMicroSpark(0.5, 0.4);
+      setAddedVocabIds(prev => new Set(prev).add(item.id));
+    } catch (err) {
+      console.error('Failed to add YÖKDİL word:', err);
+    }
+  };
 
   const currentQ: YdsQuestion | undefined = quizQuestions[currentIndex];
 
@@ -401,6 +603,413 @@ export const YdsYokdilView: React.FC<Props> = ({
   }
 
   // ----------------------------------------------------
+  // RENDER: VOCABULARY & SYNONYM STUDY PHASE
+  // ----------------------------------------------------
+  if (phase === 'vocab') {
+    const allMatched = matchPairs.length > 0 && matchedIds.size === matchPairs.length;
+
+    return (
+      <div className="flex flex-col min-h-[85vh] select-none text-black pb-8">
+        {/* Top Header */}
+        <div className="flex items-center justify-between pb-3 mb-3 border-b-2 border-black">
+          <button
+            onClick={() => setPhase('select')}
+            className="p-2 bg-white border-2 border-black font-black uppercase text-xs shadow-[2px_2px_0px_0px_#000] hover:bg-zinc-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all text-black dark:text-white"
+            title="Geri"
+          >
+            <ArrowLeft size={16} strokeWidth={2.5} />
+          </button>
+          <div className="flex items-center space-x-2 bg-[#FFE600] border-2 border-black px-3 py-1 shadow-[2px_2px_0px_0px_#000]">
+            <BookOpen size={15} strokeWidth={2.5} />
+            <span className="text-xs font-black uppercase tracking-wider">YÖKDİL KELİME & EŞ ANLAMLI</span>
+          </div>
+          <div className="w-8" />
+        </div>
+
+        {/* Sub-Mode Switcher Tabs */}
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          <button
+            onClick={() => setVocabSubMode('list')}
+            className={`py-2 px-2 border-2 border-black text-[11px] font-black uppercase transition-all ${
+              vocabSubMode === 'list'
+                ? 'bg-[#FFE600] text-black shadow-[2px_2px_0px_0px_#000]'
+                : 'bg-white text-black dark:text-white'
+            }`}
+          >
+            📖 LİSTE ({filteredVocab.length})
+          </button>
+          <button
+            onClick={() => setVocabSubMode('match')}
+            className={`py-2 px-2 border-2 border-black text-[11px] font-black uppercase transition-all ${
+              vocabSubMode === 'match'
+                ? 'bg-[#BBF7D0] text-black shadow-[2px_2px_0px_0px_#000]'
+                : 'bg-white text-black dark:text-white'
+            }`}
+          >
+            🔗 EŞLEŞTİRME
+          </button>
+          <button
+            onClick={() => setVocabSubMode('quiz')}
+            className={`py-2 px-2 border-2 border-black text-[11px] font-black uppercase transition-all ${
+              vocabSubMode === 'quiz'
+                ? 'bg-[#00F0FF] text-black shadow-[2px_2px_0px_0px_#000]'
+                : 'bg-white text-black dark:text-white'
+            }`}
+          >
+            🎯 EŞ ANLAM TESTİ
+          </button>
+        </div>
+
+        {/* Year Filter Pills (2021 - 2025) */}
+        <div className="bg-white border-2 border-black p-3 mb-3 shadow-[2px_2px_0px_0px_#000]">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-300 flex items-center space-x-1">
+              <Calendar size={12} strokeWidth={2.5} />
+              <span>YÖKDİL KELİME LİSTESİ YILI:</span>
+            </span>
+            <span className="text-[10px] font-mono font-black bg-black text-white px-2 py-0.5">
+              {yearFilteredVocabPool.length} KELİME
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {VOCAB_YEARS.map(yr => {
+              const isSel = vocabYearFilter === yr;
+              const yrCount =
+                yr === 'all'
+                  ? vocabList.length
+                  : vocabList.filter(v => v.years.includes(yr)).length;
+              return (
+                <button
+                  key={yr}
+                  onClick={() => setVocabYearFilter(yr)}
+                  className={`py-1 px-2.5 border-2 border-black text-[11px] font-black transition-all ${
+                    isSel
+                      ? 'bg-[#FFE600] text-black shadow-[1.5px_1.5px_0px_0px_#000]'
+                      : 'bg-white text-black'
+                  }`}
+                >
+                  {yr === 'all' ? `TÜMÜ (${yrCount})` : `${yr} (${yrCount})`}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* MODE 1: VOCABULARY + SYNONYMS LIST */}
+        {vocabSubMode === 'list' && (
+          <div className="flex-1 flex flex-col">
+            {/* Search Box */}
+            <div className="relative mb-3">
+              <Search
+                size={15}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"
+              />
+              <input
+                type="text"
+                value={vocabSearch}
+                onChange={e => setVocabSearch(e.target.value)}
+                placeholder="Kelime, Türkçe anlam veya eş anlamlı ara..."
+                className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-zinc-900 border-2 border-black text-xs font-bold text-black dark:text-white placeholder:text-zinc-400"
+              />
+            </div>
+
+            <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
+              {filteredVocab.map(item => {
+                const isCustomAlready =
+                  addedVocabIds.has(item.id) ||
+                  allWords.some(
+                    w =>
+                      (w.isCustom || w.categories?.includes('custom')) &&
+                      w.en.toLowerCase().trim() === item.word.toLowerCase()
+                  );
+
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-white border-2 border-black p-3 shadow-[2px_2px_0px_0px_#000]"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <div className="flex items-center flex-wrap gap-1.5">
+                        <span className="text-sm font-black text-black dark:text-white">
+                          {item.word}
+                        </span>
+                        <button
+                          onClick={() => speakEnglish(item.word)}
+                          className="p-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-[#FFE600] border border-black text-black dark:text-white transition-colors"
+                          title="Telaffuz"
+                        >
+                          <Volume2 size={12} strokeWidth={2.5} />
+                        </button>
+                        {item.years.map(y => (
+                          <span
+                            key={y}
+                            className="text-[9px] font-mono font-black px-1.5 py-0.5 bg-[#FFE600] text-black border border-black"
+                          >
+                            {y}
+                          </span>
+                        ))}
+                      </div>
+
+                      {onAddCustomWord && (
+                        <button
+                          disabled={isCustomAlready}
+                          onClick={() => handleAddVocabItemToCustom(item)}
+                          className={`px-2 py-1 border border-black text-[10px] font-black uppercase flex items-center space-x-1 shrink-0 ${
+                            isCustomAlready
+                              ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500 cursor-default'
+                              : 'bg-[#BBF7D0] text-black hover:bg-[#86EFAC]'
+                          }`}
+                        >
+                          {isCustomAlready ? (
+                            <>
+                              <Check size={11} strokeWidth={3} />
+                              <span>EKLENDİ</span>
+                            </>
+                          ) : (
+                            <>
+                              <Plus size={11} strokeWidth={3} />
+                              <span>LİSTEME EKLE</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Turkish Meaning */}
+                    <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-2">
+                      🇹🇷 {item.tr}
+                    </p>
+
+                    {/* Paired English Synonyms */}
+                    <div className="flex items-center flex-wrap gap-1.5 pt-1.5 border-t border-dashed border-zinc-300 dark:border-zinc-700">
+                      <span className="text-[10px] font-black uppercase text-emerald-700 dark:text-emerald-400">
+                        EŞ ANLAMLILARI (=):
+                      </span>
+                      {item.synonyms.map((syn, sIdx) => (
+                        <button
+                          key={sIdx}
+                          onClick={() => speakEnglish(syn)}
+                          className="text-[11px] font-black px-2 py-0.5 bg-[#00F0FF] text-black border border-black hover:bg-[#FFE600] transition-colors"
+                          title="Dinlemek için tıkla"
+                        >
+                          = {syn}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* MODE 2: INTERACTIVE SYNONYM MATCHING BOARD */}
+        {vocabSubMode === 'match' && (
+          <div className="bg-white border-[3px] border-black p-4 shadow-[4px_4px_0px_0px_#000]">
+            <div className="flex items-center justify-between mb-3 pb-2 border-b-2 border-black">
+              <div>
+                <h3 className="text-xs font-black uppercase text-black dark:text-white">
+                  EŞ ANLAMLI EŞLEŞTİRME (TUR {matchRoundCount})
+                </h3>
+                <p className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">
+                  Soldaki YÖKDİL kelimesini sağdaki İngilizce eş anlamlısı ile eşleştir!
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setMatchRoundCount(c => c + 1);
+                  initMatchRound();
+                }}
+                className="px-2.5 py-1.5 bg-[#FFE600] border-2 border-black text-[11px] font-black uppercase flex items-center space-x-1 shadow-[1.5px_1.5px_0px_0px_#000]"
+              >
+                <Shuffle size={12} strokeWidth={2.5} />
+                <span>YENİ 5&apos;Lİ</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              {/* Left Column: YÖKDİL Words */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-black uppercase text-zinc-500 block text-center">
+                  YÖKDİL KELİMESİ
+                </span>
+                {matchPairs.map(pair => {
+                  const isMatched = matchedIds.has(pair.id);
+                  const isSel = selectedLeftId === pair.id;
+                  return (
+                    <button
+                      key={pair.id}
+                      disabled={isMatched}
+                      onClick={() => handleSelectLeftWord(pair.id)}
+                      className={`w-full p-2.5 border-2 border-black text-left transition-all ${
+                        isMatched
+                          ? 'bg-[#BBF7D0] text-black opacity-85'
+                          : isSel && wrongPairFlash
+                          ? 'bg-[#FECDD3] text-black'
+                          : isSel
+                          ? 'bg-[#FFE600] text-black shadow-[2px_2px_0px_0px_#000]'
+                          : 'bg-[#FEF08A] text-black shadow-[1.5px_1.5px_0px_0px_#000]'
+                      }`}
+                    >
+                      <div className="text-xs font-black flex items-center justify-between">
+                        <span>{pair.word}</span>
+                        {isMatched && <Check size={13} strokeWidth={3} />}
+                      </div>
+                      {isMatched && (
+                        <div className="text-[10px] font-bold text-emerald-900 mt-0.5">
+                          {pair.tr}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Right Column: Shuffled English Synonyms */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-black uppercase text-zinc-500 block text-center">
+                  EŞ ANLAMLISI (=)
+                </span>
+                {shuffledRight.map(item => {
+                  const isMatched = matchedIds.has(item.id);
+                  const isSel = selectedRightId === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      disabled={isMatched}
+                      onClick={() => handleSelectRightSyn(item.id)}
+                      className={`w-full p-2.5 border-2 border-black text-left transition-all ${
+                        isMatched
+                          ? 'bg-[#BBF7D0] text-black opacity-85'
+                          : isSel && wrongPairFlash
+                          ? 'bg-[#FECDD3] text-black'
+                          : isSel
+                          ? 'bg-[#00F0FF] text-black shadow-[2px_2px_0px_0px_#000]'
+                          : 'bg-[#BAE6FD] text-black shadow-[1.5px_1.5px_0px_0px_#000]'
+                      }`}
+                    >
+                      <div className="text-xs font-black flex items-center justify-between">
+                        <span>= {item.synonym}</span>
+                        {isMatched && <Check size={13} strokeWidth={3} />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {allMatched && (
+              <div className="p-3 bg-[#FFE600] border-2 border-black flex items-center justify-between">
+                <div className="text-xs font-black text-black">
+                  🎉 Harika! 5 kelimeyi de eş anlamlılarıyla eşleştirdin! (+25 XP)
+                </div>
+                <button
+                  onClick={() => {
+                    setMatchRoundCount(c => c + 1);
+                    initMatchRound();
+                  }}
+                  className="px-3 py-1.5 bg-black text-white text-xs font-black uppercase"
+                >
+                  SONRAKİ TUR ➔
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* MODE 3: SYNONYM MULTIPLE-CHOICE QUIZ */}
+        {vocabSubMode === 'quiz' && synQuizItem && (
+          <div className="bg-white border-[3px] border-black p-4 shadow-[4px_4px_0px_0px_#000]">
+            <div className="flex items-center justify-between pb-2.5 mb-3 border-b-2 border-black">
+              <span className="text-[11px] font-black uppercase text-zinc-600 dark:text-zinc-300">
+                EŞ ANLAMLI TESTİ • {synQuizScore.correct} / {synQuizScore.total} DOĞRU
+              </span>
+              <div className="flex items-center gap-1">
+                {synQuizItem.years.map(y => (
+                  <span
+                    key={y}
+                    className="px-2 py-0.5 bg-black text-white font-mono text-[10px] font-black"
+                  >
+                    YÖKDİL {y}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="text-center py-4 mb-4 bg-[#FEF08A] border-2 border-black text-black">
+              <div className="text-[10px] font-black uppercase text-black/75 mb-1">
+                BU KELİMENİN EŞ ANLAMLISI HANGİSİDİR?
+              </div>
+              <div className="flex items-center justify-center space-x-2">
+                <span className="text-xl font-black text-black">
+                  {synQuizItem.word}
+                </span>
+                <button
+                  onClick={() => speakEnglish(synQuizItem.word)}
+                  className="p-1.5 bg-[#FFE600] border border-black text-black"
+                >
+                  <Volume2 size={14} strokeWidth={2.5} />
+                </button>
+              </div>
+              {synQuizSelected !== null && (
+                <div className="mt-2 text-xs font-black text-black">
+                  🇹🇷 {synQuizItem.tr} • (= {synQuizItem.synonyms.join(', ')})
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2 mb-4">
+              {synQuizOptions.map((opt, idx) => {
+                const hasAns = synQuizSelected !== null;
+                const isSel = synQuizSelected === idx;
+                let cls = 'bg-[#BAE6FD] text-black shadow-[2px_2px_0px_0px_#000]';
+                if (hasAns) {
+                  if (opt.isCorrect) cls = 'bg-[#BBF7D0] text-black';
+                  else if (isSel) cls = 'bg-[#FECDD3] text-black';
+                }
+                return (
+                  <button
+                    key={idx}
+                    disabled={hasAns}
+                    onClick={() => {
+                      setSynQuizSelected(idx);
+                      setSynQuizScore(s => ({
+                        correct: s.correct + (opt.isCorrect ? 1 : 0),
+                        total: s.total + 1
+                      }));
+                      if (opt.isCorrect) {
+                        sound.playCorrect();
+                        fireMicroSpark(0.5, 0.4);
+                        if (onAddXp) onAddXp(10);
+                      } else {
+                        sound.playWrong();
+                      }
+                    }}
+                    className={`w-full p-3 border-2 border-black text-left text-xs font-black flex items-center justify-between ${cls}`}
+                  >
+                    <span>= {opt.text}</span>
+                    {hasAns && opt.isCorrect && <CheckCircle2 size={16} className="text-emerald-800" />}
+                    {hasAns && isSel && !opt.isCorrect && <XCircle size={16} className="text-red-700" />}
+                  </button>
+                );
+              })}
+            </div>
+
+            {synQuizSelected !== null && (
+              <button
+                onClick={() => initSynQuizQuestion()}
+                className="w-full py-2.5 bg-[#FFE600] border-2 border-black text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_#000]"
+              >
+                SONRAKİ KELİME ➔
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ----------------------------------------------------
   // RENDER: SELECTION PHASE
   // ----------------------------------------------------
   if (phase === 'select') {
@@ -413,7 +1022,7 @@ export const YdsYokdilView: React.FC<Props> = ({
         <div className="flex items-center justify-between pb-3 mb-3 border-b-2 border-black">
           <button
             onClick={onClose}
-            className="p-2 bg-white border-2 border-black font-black uppercase text-xs shadow-[2px_2px_0px_0px_#000] hover:bg-zinc-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
+            className="p-2 bg-white border-2 border-black font-black uppercase text-xs shadow-[2px_2px_0px_0px_#000] hover:bg-zinc-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all text-black dark:text-white"
             title="Geri"
           >
             <ArrowLeft size={16} strokeWidth={2.5} />
@@ -443,10 +1052,43 @@ export const YdsYokdilView: React.FC<Props> = ({
           </p>
         </div>
 
+        {/* YÖKDİL VOCABULARY & SYNONYM STUDY CARD */}
+        <div className="mb-4">
+          <label className="text-[11px] font-black uppercase tracking-wider text-black block mb-2">
+            1. YÖKDİL Kelime & Eş Anlamlı Çalış (2021–2025)
+          </label>
+          <button
+            onClick={() => setPhase('vocab')}
+            className="w-full bg-[#BBF7D0] border-[3px] border-black p-4 text-left transition-all active:translate-x-[2px] active:translate-y-[2px] shadow-[4px_4px_0px_0px_#000] group"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-[#FFE600] border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center justify-center text-black">
+                <BookOpen size={20} strokeWidth={2.5} />
+              </div>
+              <span className="text-[11px] font-mono font-black px-2 py-0.5 bg-black text-white border border-black uppercase tracking-wider">
+                {vocabList.length} KELİME + EŞ ANLAM
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-tight text-black">
+                  YÖKDİL KELİME LİSTELERİ & EŞ ANLAMLILAR
+                </h3>
+                <p className="text-[11px] font-bold text-zinc-900 mt-0.5">
+                  2021–2025 çıkmış kelimeler, eş anlamlı eşleştirme oyunu ve kelime testi
+                </p>
+              </div>
+              <div className="px-2.5 py-1 bg-[#FFE600] border-2 border-black flex items-center justify-center shadow-[1.5px_1.5px_0px_0px_#000] font-black text-xs text-black shrink-0 ml-2">
+                Çalış ➔
+              </div>
+            </div>
+          </button>
+        </div>
+
         {/* Category Selection Cards */}
         <div className="space-y-3 mb-4">
           <label className="text-[11px] font-black uppercase tracking-wider text-black block">
-            1. Alanını Seç
+            2. Alanını Seç
           </label>
 
           {/* FEN BİLİMLERİ CARD */}
@@ -455,7 +1097,7 @@ export const YdsYokdilView: React.FC<Props> = ({
             className="w-full bg-[#00F0FF] border-[3px] border-black p-4 text-left transition-all active:translate-x-[2px] active:translate-y-[2px] shadow-[4px_4px_0px_0px_#000] active:shadow-[1px_1px_0px_0px_#000] hover:bg-[#38f3ff] group"
           >
             <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center justify-center text-black">
+              <div className="w-10 h-10 bg-[#FFE600] border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center justify-center text-black">
                 <FlaskConical size={20} strokeWidth={2.5} />
               </div>
               <span className="text-[11px] font-mono font-black px-2 py-0.5 bg-black text-white border border-black uppercase tracking-wider">
@@ -471,7 +1113,7 @@ export const YdsYokdilView: React.FC<Props> = ({
                   Fizik, Kimya, Biyoloji, Mühendislik, Tıp & Çevre
                 </p>
               </div>
-              <div className="w-8 h-8 bg-white border-2 border-black flex items-center justify-center shadow-[1.5px_1.5px_0px_0px_#000] group-hover:bg-[#FFE600] transition-colors">
+              <div className="w-8 h-8 bg-[#FFE600] border-2 border-black flex items-center justify-center shadow-[1.5px_1.5px_0px_0px_#000] text-black">
                 <span className="font-black text-sm">➔</span>
               </div>
             </div>
@@ -483,7 +1125,7 @@ export const YdsYokdilView: React.FC<Props> = ({
             className="w-full bg-[#FF69B4] border-[3px] border-black p-4 text-left transition-all active:translate-x-[2px] active:translate-y-[2px] shadow-[4px_4px_0px_0px_#000] active:shadow-[1px_1px_0px_0px_#000] hover:bg-[#ff80c0] group text-black"
           >
             <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center justify-center text-black">
+              <div className="w-10 h-10 bg-[#FFE600] border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center justify-center text-black">
                 <Globe2 size={20} strokeWidth={2.5} />
               </div>
               <span className="text-[11px] font-mono font-black px-2 py-0.5 bg-black text-white border border-black uppercase tracking-wider">
@@ -499,7 +1141,7 @@ export const YdsYokdilView: React.FC<Props> = ({
                   Tarih, Ekonomi, Psikoloji, Sosyoloji, Edebiyat
                 </p>
               </div>
-              <div className="w-8 h-8 bg-white border-2 border-black flex items-center justify-center shadow-[1.5px_1.5px_0px_0px_#000] group-hover:bg-[#FFE600] transition-colors">
+              <div className="w-8 h-8 bg-[#FFE600] border-2 border-black flex items-center justify-center shadow-[1.5px_1.5px_0px_0px_#000] text-black">
                 <span className="font-black text-sm">➔</span>
               </div>
             </div>
@@ -512,19 +1154,19 @@ export const YdsYokdilView: React.FC<Props> = ({
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-white border-2 border-black shadow-[1.5px_1.5px_0px_0px_#000] flex items-center justify-center text-black">
+                <div className="w-8 h-8 bg-black border-2 border-black shadow-[1.5px_1.5px_0px_0px_#000] flex items-center justify-center text-white">
                   <Layers size={17} strokeWidth={2.5} />
                 </div>
                 <div>
                   <h4 className="text-xs font-black uppercase tracking-tight text-black">
-                    KARMA (FEN + SOSYAL)
+                    KARMA (TÜM SORULAR)
                   </h4>
                   <p className="text-[10px] font-bold text-zinc-800">
                     Tüm alanlardan karışık rastgele sorular
                   </p>
                 </div>
               </div>
-              <span className="font-black text-sm px-2 py-1 bg-white border border-black shadow-[1px_1px_0px_0px_#000]">
+              <span className="font-black text-sm px-2 py-1 bg-black text-white border border-black shadow-[1px_1px_0px_0px_#000]">
                 Başla ➔
               </span>
             </div>

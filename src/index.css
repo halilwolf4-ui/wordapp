@@ -4,7 +4,7 @@
 
 @layer utilities {
   .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 12px);
+    padding-bottom: env(safe-area-inset-bottom, 16px);
   }
 
   .pt-safe {
@@ -22,55 +22,245 @@
   scrollbar-width: none;
 }
 
+/* ========================================================
+   HIGH-END PLAYFUL MOBILE UI SYSTEM
+   - Crisp warm-white & soft-alabaster surfaces (#F7F8FC)
+   - Colored ambient diffused shadows
+   - Candy-striped progress bars & liquid water-fill badges
+   - Guaranteed dark-mode contrast on all pastel/light pills
+   ======================================================== */
+
+:root {
+  --app-bg: #F7F8FC;
+  --app-surface: #FFFFFF;
+  --app-text: #111827;
+  --app-muted: #6B7280;
+}
+
 html,
 body {
   overscroll-behavior-y: none;
   height: 100%;
-  background-color: #FDFBF7;
-  color: #000000;
+  background-color: var(--app-bg);
+  color: var(--app-text);
+  font-family: 'Plus Jakarta Sans', 'Outfit', 'Fredoka', system-ui, -apple-system, sans-serif;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
 }
 
 #root {
   min-height: 100%;
   height: 100%;
-  background-color: #FDFBF7;
+  background-color: var(--app-bg);
 }
 
-/* Neo-Brutalist Canvas Background Pattern */
+/* Diagonal candy stripes for Level XP bar */
+.striped-progress {
+  background-image: linear-gradient(45deg,
+      rgba(255, 255, 255, 0.24) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.24) 50%,
+      rgba(255, 255, 255, 0.24) 75%,
+      transparent 75%,
+      transparent);
+  background-size: 16px 16px;
+}
+
+/* Diagonal hatched bar for active chart column */
+.hatched-bar {
+  background: repeating-linear-gradient(-45deg,
+      #111827,
+      #111827 4px,
+      #FFFFFF 4px,
+      #FFFFFF 8px);
+}
+
+/* Liquid Wave Animation for Water-Filling Badges */
+@keyframes liquidWave {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-liquid-wave {
+  animation: liquidWave 2.6s linear infinite;
+}
+
+/* Golden Shimmer for Solid Gold Unlocked Badges */
+@keyframes goldShimmer {
+
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(1.08);
+  }
+}
+
+.animate-gold-shimmer {
+  animation: goldShimmer 3s ease-in-out infinite;
+}
+
+/* Soft dot pattern */
 .brutal-dots {
-  background-image: radial-gradient(#000000 1.2px, transparent 1.2px);
-  background-size: 18px 18px;
+  background-image: radial-gradient(rgba(148, 163, 184, 0.12) 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
 }
 
 .brutal-stripes {
-  background: repeating-linear-gradient(-45deg,
-      #000000,
-      #000000 10px,
-      #FFE600 10px,
-      #FFE600 20px);
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
 }
 
-/* Tactile Brutalist Click Effect */
-.brutal-press {
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+/* ========================================================
+   CLEAN UP LEGACY BRUTALIST CLASSES IN SECONDARY VIEWS
+   ======================================================== */
+.border-black,
+.border-2.border-black,
+.border-\[3px\].border-black,
+.border-4.border-black {
+  border-color: rgba(226, 232, 240, 0.75) !important;
+  border-width: 1px !important;
 }
 
-.brutal-press:active {
-  transform: translate(3px, 3px) !important;
-  box-shadow: 1px 1px 0px #000000 !important;
+.shadow-\[4px_4px_0px_0px_\#000\],
+.shadow-\[5px_5px_0px_0px_\#000\],
+.shadow-\[6px_6px_0px_0px_\#000\],
+.shadow-\[8px_8px_0px_0px_\#000\] {
+  border-radius: 26px !important;
+  border: 1px solid rgba(226, 232, 240, 0.85) !important;
+  box-shadow: 0 12px 30px -8px rgba(17, 24, 39, 0.06) !important;
 }
 
-.brutal-press-sm:active {
-  transform: translate(2px, 2px) !important;
-  box-shadow: 0px 0px 0px #000000 !important;
+.shadow-\[2px_2px_0px_0px_\#000\],
+.shadow-\[3px_3px_0px_0px_\#000\],
+.shadow-\[4px_4px_0px_0px_\#FFE600\],
+.shadow-\[3px_3px_0px_0px_\#FFE600\],
+.shadow-\[2px_2px_0px_0px_\#FFE600\] {
+  border-radius: 18px !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 0 6px 16px -4px rgba(17, 24, 39, 0.05) !important;
 }
 
-/* Modern Animations */
+.shadow-\[1px_1px_0px_0px_\#000\],
+.shadow-\[1\.5px_1\.5px_0px_0px_\#000\] {
+  border-radius: 12px !important;
+  border: 1px solid rgba(226, 232, 240, 0.7) !important;
+  box-shadow: none !important;
+}
+
+.bg-\[\#FDFBF7\] {
+  background-color: var(--app-bg) !important;
+}
+
+.bg-\[\#FFE600\] {
+  background-color: #FDE047 !important;
+  color: #0F172A !important;
+}
+
+.bg-\[\#FEF08A\] {
+  background-color: #FEF08A !important;
+  color: #0F172A !important;
+}
+
+.bg-\[\#00F0FF\] {
+  background-color: #BAE6FD !important;
+  color: #0C4A6E !important;
+}
+
+.bg-\[\#BAE6FD\] {
+  background-color: #BAE6FD !important;
+  color: #0C4A6E !important;
+}
+
+.bg-\[\#C084FC\] {
+  background-color: #E9D5FF !important;
+  color: #4C1D95 !important;
+}
+
+.bg-\[\#DDD6FE\] {
+  background-color: #DDD6FE !important;
+  color: #4C1D95 !important;
+}
+
+.bg-\[\#FF69B4\] {
+  background-color: #FECDD3 !important;
+  color: #881337 !important;
+}
+
+.bg-\[\#BBF7D0\],
+.bg-\[\#86EFAC\] {
+  background-color: #BBF7D0 !important;
+  color: #064E3B !important;
+}
+
+.bg-\[\#E5E0D8\] {
+  background-color: #E2E8F0 !important;
+  color: #0F172A !important;
+}
+
+.bg-\[\#4ADE80\] {
+  background: linear-gradient(135deg, #34D399 0%, #10B981 100%) !important;
+  color: #064E3B !important;
+}
+
+.bg-\[\#FF5588\] {
+  background: linear-gradient(135deg, #FF6B6B 0%, #F03E3E 100%) !important;
+  color: #FFFFFF !important;
+}
+
+.bg-black {
+  background: linear-gradient(135deg, #FF6B5B 0%, #FF8E53 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+}
+
+.bg-black * {
+  color: #FFFFFF !important;
+}
+
+/* ========================================================
+   FLUID SPRING INTERACTION PHYSICS
+   ======================================================== */
+button {
+  transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.2s ease !important;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97) !important;
+}
+
+input:not([type="checkbox"]):not([type="color"]),
+select,
+textarea {
+  border-radius: 18px !important;
+  border: 1.5px solid #E2E8F0 !important;
+  box-shadow: 0 4px 12px rgba(17, 24, 39, 0.03) !important;
+  transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+
+input:not([type="checkbox"]):not([type="color"]):focus,
+select:focus,
+textarea:focus {
+  border-color: #6C8EFF !important;
+  box-shadow: 0 0 0 4px rgba(108, 142, 255, 0.15) !important;
+}
+
+/* ========================================================
+   MICRO-ANIMATIONS
+   ======================================================== */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px);
   }
 
   to {
@@ -82,7 +272,7 @@ body {
 @keyframes scaleUp {
   from {
     opacity: 0;
-    transform: scale(0.96);
+    transform: scale(0.94);
   }
 
   to {
@@ -95,7 +285,7 @@ body {
 
   0%,
   100% {
-    opacity: 0.8;
+    opacity: 0.9;
     transform: scale(1);
   }
 
@@ -105,13 +295,12 @@ body {
   }
 }
 
-/* Choice Selection Correct Pop Animation */
 @keyframes correctPop {
   0% {
     transform: scale(0.96);
   }
 
-  40% {
+  45% {
     transform: scale(1.03);
   }
 
@@ -120,7 +309,6 @@ body {
   }
 }
 
-/* Choice Selection Wrong Shake Animation */
 @keyframes wrongShake {
 
   0%,
@@ -149,7 +337,6 @@ body {
   }
 }
 
-/* Checkmark Spring Entry */
 @keyframes checkBounce {
   0% {
     transform: scale(0) rotate(-20deg);
@@ -157,7 +344,7 @@ body {
   }
 
   60% {
-    transform: scale(1.35) rotate(6deg);
+    transform: scale(1.3) rotate(6deg);
     opacity: 1;
   }
 
@@ -171,7 +358,6 @@ body {
   }
 }
 
-/* X Mark Spring Entry */
 @keyframes xBounce {
   0% {
     transform: scale(0) rotate(20deg);
@@ -189,47 +375,32 @@ body {
   }
 }
 
-/* Guiding Pulse Beacon (for true correct answer when user clicked wrong) */
-@keyframes beaconPulse {
+@keyframes floatSlow {
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
-    border-color: rgba(16, 185, 129, 0.7);
+    transform: translateY(0px);
   }
 
   50% {
-    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
-    border-color: rgba(16, 185, 129, 1);
-  }
-}
-
-@keyframes rippleRing {
-  0% {
-    transform: scale(0.8);
-    opacity: 1;
-  }
-
-  100% {
-    transform: scale(2);
-    opacity: 0;
+    transform: translateY(-5px);
   }
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
 .animate-scaleUp {
-  animation: scaleUp 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: scaleUp 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .animate-pulseGlow {
-  animation: pulseGlow 2s ease-in-out infinite;
+  animation: pulseGlow 2.2s ease-in-out infinite;
 }
 
 .animate-correct-pop {
-  animation: correctPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: correctPop 0.36s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .animate-wrong-shake {
@@ -237,357 +408,136 @@ body {
 }
 
 .animate-check-bounce {
-  animation: checkBounce 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: checkBounce 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .animate-x-bounce {
   animation: xBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-.animate-beacon-pulse {
-  animation: beaconPulse 1.4s ease-in-out infinite;
-}
-
-.animate-ripple-ring {
-  animation: rippleRing 0.6s cubic-bezier(0, 0.2, 0.8, 1) forwards;
+.animate-float {
+  animation: floatSlow 3.5s ease-in-out infinite;
 }
 
 /* ========================================================
-   NEO-BRUTALIST DARK MODE & COLOR PALETTE ENGINE
+   DARK MODE & GUARANTEED HIGH-CONTRAST RULES
    ======================================================== */
-
-:root {
-  --brutal-dark-bg: #0C0C0E;
-  --brutal-dark-surface: #18181E;
-  --brutal-dark-surface-elevated: #22222A;
-  --brutal-dark-accent: #FFE600;
-  --brutal-dark-shadow: #FFE600;
-  --brutal-dark-border: #000000;
-}
-
-/* Palette Presets */
-html[data-palette="cyber-yellow"] {
-  --brutal-dark-bg: #0C0C0E;
-  --brutal-dark-surface: #18181E;
-  --brutal-dark-surface-elevated: #24242C;
-  --brutal-dark-accent: #FFE600;
-  --brutal-dark-shadow: #FFE600;
-}
-
-html[data-palette="toxic-lime"] {
-  --brutal-dark-bg: #09110B;
-  --brutal-dark-surface: #121C14;
-  --brutal-dark-surface-elevated: #1B291E;
-  --brutal-dark-accent: #4ADE80;
-  --brutal-dark-shadow: #4ADE80;
-}
-
-html[data-palette="neon-pink"] {
-  --brutal-dark-bg: #110910;
-  --brutal-dark-surface: #1D121B;
-  --brutal-dark-surface-elevated: #281926;
-  --brutal-dark-accent: #FF5588;
-  --brutal-dark-shadow: #FF5588;
-}
-
-html[data-palette="cyan-glitch"] {
-  --brutal-dark-bg: #071015;
-  --brutal-dark-surface: #0E1A22;
-  --brutal-dark-surface-elevated: #162632;
-  --brutal-dark-accent: #00F0FF;
-  --brutal-dark-shadow: #00F0FF;
-}
-
-html[data-palette="ultraviolet"] {
-  --brutal-dark-bg: #100C18;
-  --brutal-dark-surface: #191426;
-  --brutal-dark-surface-elevated: #241D36;
-  --brutal-dark-accent: #C084FC;
-  --brutal-dark-shadow: #C084FC;
-}
-
-html[data-palette="monochrome"] {
-  --brutal-dark-bg: #000000;
-  --brutal-dark-surface: #181818;
-  --brutal-dark-surface-elevated: #242424;
-  --brutal-dark-accent: #FFFFFF;
-  --brutal-dark-shadow: #FFFFFF;
-}
-
-/* Base dark container styles */
 html.dark,
 html.dark body,
 html.dark #root {
-  background-color: var(--brutal-dark-bg, #0C0C0E) !important;
-  color: #FFFFFF !important;
+  background-color: #0B0F19 !important;
+  color: #F9FAFB !important;
 }
 
-/* Dots pattern on dark mode */
-html.dark .brutal-dots {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.22) 1.2px, transparent 1.2px) !important;
+html.dark .bg-white:not([data-light-pill="true"]) {
+  background-color: #151C2C !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #F9FAFB !important;
 }
 
-/* White containers & cards on root canvas become dark brutalist blocks */
-html.dark .bg-white {
-  background-color: var(--brutal-dark-surface, #18181E) !important;
-  color: #FFFFFF !important;
+html.dark .bg-white[data-light-pill="true"] {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
 }
 
 html.dark .bg-\[\#FDFBF7\] {
-  background-color: var(--brutal-dark-bg, #0C0C0E) !important;
-  color: #FFFFFF !important;
+  background-color: #0F172A !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #F9FAFB !important;
 }
 
-html.dark .bg-zinc-50,
-html.dark .bg-zinc-100 {
-  background-color: var(--brutal-dark-surface-elevated, #22222A) !important;
-  color: #FFFFFF !important;
+html.dark .border-black,
+html.dark .border-2.border-black,
+html.dark .border-\[3px\].border-black,
+html.dark .border-4.border-black {
+  border-color: rgba(255, 255, 255, 0.09) !important;
 }
 
-/* Subtitle and muted text on dark surfaces */
+html.dark .shadow-\[4px_4px_0px_0px_\#000\],
+html.dark .shadow-\[5px_5px_0px_0px_\#000\],
+html.dark .shadow-\[6px_6px_0px_0px_\#000\],
+html.dark .shadow-\[8px_8px_0px_0px_\#000\],
+html.dark .shadow-\[2px_2px_0px_0px_\#000\],
+html.dark .shadow-\[3px_3px_0px_0px_\#000\] {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .text-black,
 html.dark .text-zinc-600,
 html.dark .text-zinc-700,
 html.dark .text-zinc-800,
 html.dark .text-zinc-900 {
-  color: #F4F4F5 !important;
+  color: #F3F4F6 !important;
 }
 
-/* ========================================================
-   STANDALONE TEXT-BLACK: ON DARK CANVASES & SURFACES, DEFAULT TO WHITE
-   ======================================================== */
-html.dark .text-black {
-  color: #FFFFFF !important;
-}
-
-/* Circular SVG Gauge Progress Stroke */
-.circular-progress-stroke {
-  color: #000000;
-}
-
-html.dark .circular-progress-stroke {
-  color: var(--brutal-dark-accent, #FFE600) !important;
-}
-
-/* ========================================================
-   CONTRAST PRESERVATION: COLORED CARDS, PILLS & BADGES
-   Any bright, pastel or neon background MUST retain pitch black text!
-   ======================================================== */
-html.dark .bg-\[\#FFE600\],
-html.dark .bg-\[\#4ADE80\],
-html.dark .bg-\[\#00F0FF\],
-html.dark .bg-\[\#86EFAC\],
-html.dark .bg-\[\#BBF7D0\],
-html.dark .bg-\[\#FEF08A\],
-html.dark .bg-\[\#BAE6FD\],
-html.dark .bg-\[\#DDD6FE\],
-html.dark .bg-\[\#C084FC\],
-html.dark .bg-\[\#FB923C\],
-html.dark .bg-\[\#FF69B4\],
-html.dark .bg-\[\#FF5588\],
-html.dark .bg-\[\#E5E0D8\],
-html.dark .bg-amber-400,
-html.dark .bg-emerald-400,
-html.dark [data-accent-contrast="true"] {
-  color: #000000 !important;
-}
-
-html.dark .bg-\[\#FFE600\] *,
-html.dark .bg-\[\#4ADE80\] *,
-html.dark .bg-\[\#00F0FF\] *,
-html.dark .bg-\[\#86EFAC\] *,
-html.dark .bg-\[\#BBF7D0\] *,
-html.dark .bg-\[\#FEF08A\] *,
-html.dark .bg-\[\#BAE6FD\] *,
-html.dark .bg-\[\#DDD6FE\] *,
-html.dark .bg-\[\#C084FC\] *,
-html.dark .bg-\[\#FB923C\] *,
-html.dark .bg-\[\#FF69B4\] *,
-html.dark .bg-\[\#FF5588\] *,
-html.dark .bg-\[\#E5E0D8\] *,
-html.dark .bg-amber-400 *,
-html.dark .bg-emerald-400 *,
-html.dark [data-accent-contrast="true"] *,
-html.dark .bg-\[\#FFE600\] .text-black,
-html.dark .bg-\[\#4ADE80\] .text-black,
-html.dark .bg-\[\#00F0FF\] .text-black,
-html.dark .bg-\[\#86EFAC\] .text-black,
-html.dark .bg-\[\#BBF7D0\] .text-black,
-html.dark .bg-\[\#FEF08A\] .text-black,
-html.dark .bg-\[\#BAE6FD\] .text-black,
-html.dark .bg-\[\#DDD6FE\] .text-black,
-html.dark .bg-\[\#C084FC\] .text-black,
-html.dark .bg-\[\#FB923C\] .text-black,
-html.dark .bg-\[\#FF69B4\] .text-black,
-html.dark .bg-\[\#FF5588\] .text-black,
-html.dark .bg-\[\#E5E0D8\] .text-black,
-html.dark .bg-amber-400 .text-black,
-html.dark .bg-emerald-400 .text-black,
-html.dark [data-accent-contrast="true"] .text-black {
-  color: #000000 !important;
-}
-
-/* Black badges inside ANY colored card have pitch black background and crisp white text/icons */
-html.dark .bg-\[\#FFE600\] .bg-black,
-html.dark .bg-\[\#4ADE80\] .bg-black,
-html.dark .bg-\[\#00F0FF\] .bg-black,
-html.dark .bg-\[\#86EFAC\] .bg-black,
-html.dark .bg-\[\#BBF7D0\] .bg-black,
-html.dark .bg-\[\#FEF08A\] .bg-black,
-html.dark .bg-\[\#BAE6FD\] .bg-black,
-html.dark .bg-\[\#DDD6FE\] .bg-black,
-html.dark .bg-\[\#C084FC\] .bg-black,
-html.dark .bg-\[\#FB923C\] .bg-black,
-html.dark .bg-\[\#FF69B4\] .bg-black,
-html.dark .bg-\[\#FF5588\] .bg-black {
-  background-color: #000000 !important;
-  color: #FFFFFF !important;
-}
-
-html.dark .bg-\[\#FFE600\] .bg-black *,
-html.dark .bg-\[\#4ADE80\] .bg-black *,
-html.dark .bg-\[\#00F0FF\] .bg-black *,
-html.dark .bg-\[\#86EFAC\] .bg-black *,
-html.dark .bg-\[\#BBF7D0\] .bg-black *,
-html.dark .bg-\[\#FEF08A\] .bg-black *,
-html.dark .bg-\[\#BAE6FD\] .bg-black *,
-html.dark .bg-\[\#DDD6FE\] .bg-black *,
-html.dark .bg-\[\#C084FC\] .bg-black *,
-html.dark .bg-\[\#FB923C\] .bg-black *,
-html.dark .bg-\[\#FF69B4\] .bg-black *,
-html.dark .bg-\[\#FF5588\] .bg-black * {
-  color: #FFFFFF !important;
-}
-
-/* White icon boxes inside colored cards stay pure white with black icons */
-html.dark .bg-\[\#FFE600\] .bg-white,
-html.dark .bg-\[\#4ADE80\] .bg-white,
-html.dark .bg-\[\#00F0FF\] .bg-white,
-html.dark .bg-\[\#86EFAC\] .bg-white,
-html.dark .bg-\[\#BBF7D0\] .bg-white,
-html.dark .bg-\[\#FEF08A\] .bg-white,
-html.dark .bg-\[\#BAE6FD\] .bg-white,
-html.dark .bg-\[\#DDD6FE\] .bg-white,
-html.dark .bg-\[\#C084FC\] .bg-white,
-html.dark .bg-\[\#FB923C\] .bg-white,
-html.dark .bg-\[\#FF69B4\] .bg-white {
-  background-color: #FFFFFF !important;
-  color: #000000 !important;
-}
-
-html.dark .bg-\[\#FFE600\] .bg-white *,
-html.dark .bg-\[\#4ADE80\] .bg-white *,
-html.dark .bg-\[\#00F0FF\] .bg-white *,
-html.dark .bg-\[\#86EFAC\] .bg-white *,
-html.dark .bg-\[\#BBF7D0\] .bg-white *,
-html.dark .bg-\[\#FEF08A\] .bg-white *,
-html.dark .bg-\[\#BAE6FD\] .bg-white *,
-html.dark .bg-\[\#DDD6FE\] .bg-white *,
-html.dark .bg-\[\#C084FC\] .bg-white *,
-html.dark .bg-\[\#FB923C\] .bg-white *,
-html.dark .bg-\[\#FF69B4\] .bg-white * {
-  color: #000000 !important;
-}
-
-/* Standalone black buttons and badges in dark mode */
-html.dark .bg-black {
-  background-color: #000000 !important;
-  color: #FFFFFF !important;
-}
-
-html.dark .bg-black * {
-  color: #FFFFFF !important;
-}
-
-/* Dark mode Header tape */
-html.dark header {
-  background-color: var(--brutal-dark-accent, #FFE600) !important;
-  box-shadow: 0 3px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
-}
-
-/* Header pills & buttons in dark mode: black background with crisp white / flame contrast */
-html.dark header .header-pill {
-  background-color: #000000 !important;
-  color: #FFFFFF !important;
-  border-color: #000000 !important;
-}
-
-html.dark header .header-pill * {
-  color: #FFFFFF !important;
-}
-
-html.dark header .header-pill .flame-icon {
-  color: #FF5722 !important;
-  fill: #FF5722 !important;
-}
-
-html.dark header .header-pill [data-sun-icon] {
-  color: #FFE600 !important;
-  fill: #FFE600 !important;
-}
-
-/* Dark mode bottom navbar */
-html.dark nav {
-  background-color: var(--brutal-dark-surface, #18181E) !important;
-  border-top-color: #000000 !important;
-}
-
-html.dark nav button {
-  color: #D4D4D8 !important;
-}
-
-html.dark nav button:hover {
-  color: #FFFFFF !important;
-}
-
-/* Inputs, selects, and textareas */
-html.dark input,
+html.dark input:not([type="checkbox"]):not([type="color"]),
 html.dark select,
 html.dark textarea {
-  background-color: var(--brutal-dark-surface, #18181E) !important;
+  background-color: #1E293B !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #F9FAFB !important;
+}
+
+/* CRITICAL FIX: Any light/pastel surface in Dark Mode MUST keep dark text (#0F172A)
+   for itself and all nested children so text is NEVER white-on-pastel! */
+html.dark .bg-\[\#FFE600\],
+html.dark .bg-\[\#FFE600\] *,
+html.dark .bg-\[\#FEF08A\],
+html.dark .bg-\[\#FEF08A\] *,
+html.dark .bg-\[\#00F0FF\],
+html.dark .bg-\[\#00F0FF\] *,
+html.dark .bg-\[\#BAE6FD\],
+html.dark .bg-\[\#BAE6FD\] *,
+html.dark .bg-\[\#C084FC\],
+html.dark .bg-\[\#C084FC\] *,
+html.dark .bg-\[\#DDD6FE\],
+html.dark .bg-\[\#DDD6FE\] *,
+html.dark .bg-\[\#BBF7D0\],
+html.dark .bg-\[\#BBF7D0\] *,
+html.dark .bg-\[\#86EFAC\],
+html.dark .bg-\[\#86EFAC\] *,
+html.dark .bg-\[\#4ADE80\],
+html.dark .bg-\[\#4ADE80\] *,
+html.dark .bg-\[\#E5E0D8\],
+html.dark .bg-\[\#E5E0D8\] *,
+html.dark .bg-\[\#FF69B4\],
+html.dark .bg-\[\#FF69B4\] *,
+html.dark .bg-amber-400,
+html.dark .bg-amber-400 *,
+html.dark .bg-emerald-400,
+html.dark .bg-emerald-400 *,
+html.dark .bg-zinc-100:not(.dark\:bg-zinc-800):not(.dark\:bg-zinc-700),
+html.dark .bg-zinc-100:not(.dark\:bg-zinc-800):not(.dark\:bg-zinc-700) *,
+html.dark .bg-zinc-200:not(.dark\:bg-zinc-800):not(.dark\:bg-zinc-700),
+html.dark .bg-zinc-200:not(.dark\:bg-zinc-800):not(.dark\:bg-zinc-700) *,
+html.dark [data-light-pill="true"],
+html.dark [data-light-pill="true"] * {
+  color: #0F172A !important;
+}
+
+/* Keep rose/pink alert banners dark-mode friendly and crisp */
+html.dark .bg-\[\#FFF1F2\],
+html.dark .bg-\[\#FFE4E6\] {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+  border-color: rgba(244, 63, 94, 0.35) !important;
+  color: #FDA4AF !important;
+}
+
+html.dark .bg-\[\#FFF1F2\] *,
+html.dark .bg-\[\#FFE4E6\] * {
+  color: #FECDD3 !important;
+}
+
+html.dark .bg-\[\#F0FDF4\] {
+  background-color: rgba(16, 185, 129, 0.14) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+/* Preserve white text on coral/dark buttons nested inside light containers */
+html.dark .bg-black,
+html.dark .bg-black *,
+html.dark .bg-\[\#FF5588\],
+html.dark .bg-\[\#FF5588\] * {
   color: #FFFFFF !important;
-  border-color: #000000 !important;
-}
-
-html.dark input::placeholder,
-html.dark textarea::placeholder {
-  color: #71717A !important;
-}
-
-/* Active tab pill in dark mode */
-html.dark .nav-active-tab {
-  background-color: var(--brutal-dark-accent, #FFE600) !important;
-  color: #000000 !important;
-}
-
-html.dark .nav-active-tab * {
-  color: #000000 !important;
-}
-
-/* SOLID NEON OFFSET DROP SHADOWS IN DARK MODE */
-html.dark .shadow-\[1px_1px_0px_0px_\#000\] {
-  box-shadow: 1px 1px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
-}
-
-html.dark .shadow-\[2px_2px_0px_0px_\#000\] {
-  box-shadow: 2px 2px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
-}
-
-html.dark .shadow-\[3px_3px_0px_0px_\#000\] {
-  box-shadow: 3px 3px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
-}
-
-html.dark .shadow-\[4px_4px_0px_0px_\#000\] {
-  box-shadow: 4px 4px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
-}
-
-html.dark .shadow-\[5px_5px_0px_0px_\#000\] {
-  box-shadow: 5px 5px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
-}
-
-html.dark .shadow-\[6px_6px_0px_0px_\#000\] {
-  box-shadow: 6px 6px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
-}
-
-html.dark .shadow-\[8px_8px_0px_0px_\#000\] {
-  box-shadow: 8px 8px 0px 0px var(--brutal-dark-shadow, #FFE600) !important;
 }

@@ -1,4 +1,5 @@
 import { Word } from '../types';
+import yokdilSynonymsMap from './yokdilSynonymsMap.json';
 
 export type HintRelation = 'synonym' | 'similar' | 'antonym';
 
@@ -7,11 +8,13 @@ export interface WordHint {
   relation: HintRelation;
 }
 
+const curatedSynonymsRecord = yokdilSynonymsMap as Record<string, string[]>;
+
 // In-memory cache for high-speed instant lookups
 const memoryCache = new Map<string, WordHint[]>();
 
 // Increment cache version to invalidate old non-B1 or obscure hints
-const STORAGE_CACHE_KEY = 'kelime_avi_hints_cache_v2';
+const STORAGE_CACHE_KEY = 'kelime_avi_hints_cache_v3';
 
 /**
  * Curated list of high-frequency English antonym pairs strictly at or below B1 level (A1, A2, B1).
@@ -144,14 +147,20 @@ export function isB1OrBelowWord(wordStr: string, allWords: Word[] = []): boolean
 
 /**
  * Calculates max allowed hints based on word encounter count:
- * - Encounter 1: 0 (No hints on first appearance)
- * - Encounter 2: 1 (1st hint allowed)
- * - Encounter 3: 2 (2nd hint allowed)
- * - Encounter 4+: 3 (3rd hint allowed)
+ * Allows up to 3 hints/synonyms right from the 1st encounter in Test & Tekrar.
  */
-export function getMaxAllowedHints(encounters: number): number {
-  if (encounters <= 1) return 0;
-  return Math.min(3, encounters - 1);
+export function getMaxAllowedHints(_encounters: number): number {
+  return 3;
+}
+
+/**
+ * Looks up curated YÖKDİL / YDS English synonyms for a word.
+ */
+export function getCuratedSynonymHints(en: string): WordHint[] {
+  const clean = cleanEnglishWord(en);
+  const direct = curatedSynonymsRecord[clean] || curatedSynonymsRecord[en.toLowerCase().trim()];
+  if (!direct || direct.length === 0) return [];
+  return direct.slice(0, 3).map(syn => ({ word: syn, relation: 'synonym' as const }));
 }
 
 /**
@@ -195,6 +204,17 @@ export function getLocalFallbackHints(targetWord: Word, allWords: Word[] = []): 
   const cleanTarget = cleanEnglishWord(targetWord.en);
   const used = new Set<string>([cleanTarget, targetWord.en.toLowerCase()]);
   const hints: WordHint[] = [];
+
+  // 0. Check curated YÖKDİL / YDS synonyms first
+  const curatedSyns = getCuratedSynonymHints(targetWord.en);
+  for (const ch of curatedSyns) {
+    const chClean = cleanEnglishWord(ch.word);
+    if (!used.has(chClean)) {
+      hints.push(ch);
+      used.add(chClean);
+      if (hints.length >= 3) return hints;
+    }
+  }
 
   // 1. Check local antonym map (strictly B1)
   const localAnt = localAntonymMap.get(cleanTarget);
@@ -245,6 +265,13 @@ export function getLocalFallbackHints(targetWord: Word, allWords: Word[] = []): 
 export async function getWordHints(targetWord: Word, allWords: Word[] = []): Promise<WordHint[]> {
   const cleanTarget = cleanEnglishWord(targetWord.en);
   if (!cleanTarget) return [];
+
+  // 0. Check curated YÖKDİL / YDS synonym map first (instant, high accuracy)
+  const curatedSyns = getCuratedSynonymHints(targetWord.en);
+  if (curatedSyns.length >= 2) {
+    memoryCache.set(cleanTarget, curatedSyns);
+    return curatedSyns;
+  }
 
   // 1. Check in-memory cache
   if (memoryCache.has(cleanTarget)) {

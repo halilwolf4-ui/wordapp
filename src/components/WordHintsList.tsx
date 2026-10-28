@@ -27,21 +27,18 @@ export const WordHintsList: React.FC<WordHintsListProps> = ({
 
   return (
     <div className="w-full max-w-xs sm:max-w-sm mx-auto space-y-1.5 my-2 animate-fadeIn select-none">
-      {/* Revealed hints displayed as compact, high-contrast chips */}
+      {/* Revealed hints displayed as compact, high-contrast pills */}
       {visibleHints.length > 0 && (
         <div className="flex flex-wrap items-center justify-center gap-1.5">
           {visibleHints.map((hint, idx) => {
             const isSynonym = hint.relation === 'synonym';
             const isAntonym = hint.relation === 'antonym';
 
-            // High-voltage Neo-Brutalist styling based on relation:
             const containerStyle = isSynonym
-              ? 'bg-[#BBF7D0] border-2 border-black text-black shadow-[1.5px_1.5px_0px_0px_#000]'
+              ? 'bg-[#BBF7D0] text-[#064E3B]'
               : isAntonym
-              ? 'bg-[#FF69B4] border-2 border-black text-black shadow-[1.5px_1.5px_0px_0px_#000]'
-              : 'bg-[#FEF08A] border-2 border-black text-black shadow-[1.5px_1.5px_0px_0px_#000]';
-
-            const badgeStyle = 'bg-black text-white border border-black';
+              ? 'bg-[#FECDD3] text-[#881337]'
+              : 'bg-[#FEF08A] text-[#0F172A]';
 
             const relationLabel = isSynonym
               ? 'EŞ ANLAM'
@@ -52,20 +49,19 @@ export const WordHintsList: React.FC<WordHintsListProps> = ({
             return (
               <div
                 key={idx}
-                className={`inline-flex items-center space-x-1.5 px-2 py-0.5 transition-all animate-fadeIn ${containerStyle}`}
+                data-light-pill="true"
+                className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full shadow-sm transition-all animate-fadeIn ${containerStyle}`}
               >
-                <span
-                  className={`text-[9px] font-black uppercase tracking-wider px-1 py-0.2 shrink-0 ${badgeStyle}`}
-                >
+                <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-black/10 text-[#0F172A] shrink-0">
                   {relationLabel}
                 </span>
-                <span className="text-xs font-black text-black tracking-wide uppercase">
+                <span className="text-xs font-extrabold text-[#0F172A] tracking-wide uppercase">
                   {hint.word}
                 </span>
                 <AudioButton
                   text={hint.word}
                   size={12}
-                  className="p-0.5 bg-white border border-black text-black hover:bg-[#FFE600] active:scale-95"
+                  className="p-0.5 bg-white/80 rounded-full text-[#0F172A] hover:bg-white active:scale-95"
                 />
               </div>
             );
@@ -73,17 +69,18 @@ export const WordHintsList: React.FC<WordHintsListProps> = ({
         </div>
       )}
 
-      {/* Neo-brutalist hint trigger button */}
+      {/* High-contrast tactile hint trigger pill */}
       {canRevealNext && !disabled && (
         <div className="flex justify-center pt-1">
           <button
             type="button"
             disabled={disabled}
             onClick={onRevealNext}
-            className="py-1 px-3.5 bg-[#FFE600] hover:bg-[#ffd700] active:translate-x-[1px] active:translate-y-[1px] border-2 border-black text-black font-black text-[11px] flex items-center justify-center space-x-1.5 shadow-[2px_2px_0px_0px_#000] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-50 disabled:pointer-events-none"
+            data-light-pill="true"
+            className="py-1.5 px-4 bg-[#FDE047] hover:bg-[#FACC15] rounded-full text-[#0F172A] font-extrabold text-[11px] flex items-center justify-center space-x-1.5 shadow-sm transition-all uppercase tracking-wide disabled:opacity-50 disabled:pointer-events-none"
           >
-            <Lightbulb size={13} strokeWidth={3} className="text-black shrink-0" />
-            <span>
+            <Lightbulb size={13} strokeWidth={2.8} className="text-[#0F172A] shrink-0" />
+            <span className="text-[#0F172A]">
               {revealedCount === 0
                 ? 'İPUCU AL'
                 : `${revealedCount + 1}. İPUCU AL`}
