@@ -964,7 +964,7 @@ export const App: React.FC = () => {
               />
             </div>
 
-            <div className={currentTab === 'words' ? 'block' : 'hidden'}>
+            {currentTab === 'words' && (
               <WordListView
                 allWords={allWords}
                 progressMap={progressMap}
@@ -973,9 +973,9 @@ export const App: React.FC = () => {
                 onDeleteCustomWord={handleDeleteCustomWord}
                 onRestoreMasteredWord={handleRestoreMasteredWord}
               />
-            </div>
+            )}
 
-            <div className={currentTab === 'stats' ? 'block' : 'hidden'}>
+            {currentTab === 'stats' && (
               <StatsView
                 profile={profile}
                 dailyLogs={dailyLogs}
@@ -983,7 +983,7 @@ export const App: React.FC = () => {
                 totalMastered={masteredCount}
                 allProgress={allProgress}
               />
-            </div>
+            )}
           </div>
         )}
       </main>

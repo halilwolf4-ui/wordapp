@@ -229,12 +229,7 @@ body {
    FLUID SPRING INTERACTION PHYSICS
    ======================================================== */
 button {
-  transition: transform 0.14s cubic-bezier(0.32, 0.72, 0, 1),
-    opacity 0.14s ease !important;
-}
-
-button:active:not(:disabled) {
-  transform: scale(0.97) !important;
+  -webkit-tap-highlight-color: transparent;
 }
 
 input:not([type="checkbox"]):not([type="color"]),
