@@ -138,7 +138,7 @@ body {
 .shadow-\[8px_8px_0px_0px_\#000\] {
   border-radius: 26px !important;
   border: 1px solid rgba(226, 232, 240, 0.85) !important;
-  box-shadow: 0 12px 30px -8px rgba(17, 24, 39, 0.06) !important;
+  box-shadow: 0 6px 16px -4px rgba(17, 24, 39, 0.05) !important;
 }
 
 .shadow-\[2px_2px_0px_0px_\#000\],
@@ -148,7 +148,7 @@ body {
 .shadow-\[2px_2px_0px_0px_\#FFE600\] {
   border-radius: 18px !important;
   border: 1px solid rgba(226, 232, 240, 0.8) !important;
-  box-shadow: 0 6px 16px -4px rgba(17, 24, 39, 0.05) !important;
+  box-shadow: 0 4px 10px -2px rgba(17, 24, 39, 0.04) !important;
 }
 
 .shadow-\[1px_1px_0px_0px_\#000\],
@@ -384,37 +384,35 @@ textarea:focus {
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.18s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  animation: fadeIn 0.18s ease-out forwards;
 }
 
 .animate-scaleUp {
-  animation: scaleUp 0.18s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  animation: scaleUp 0.18s ease-out forwards;
 }
 
 .animate-pulseGlow {
   animation: pulseGlow 2.2s ease-in-out infinite;
-  will-change: transform;
 }
 
 .animate-correct-pop {
-  animation: correctPop 0.22s ease-out forwards;
+  animation: correctPop 0.20s ease-out forwards;
 }
 
 .animate-wrong-shake {
-  animation: wrongShake 0.26s ease-out forwards;
+  animation: wrongShake 0.22s ease-out forwards;
 }
 
 .animate-check-bounce {
-  animation: checkBounce 0.2s ease-out forwards;
+  animation: checkBounce 0.18s ease-out forwards;
 }
 
 .animate-x-bounce {
-  animation: xBounce 0.2s ease-out forwards;
+  animation: xBounce 0.18s ease-out forwards;
 }
 
 .animate-float {
   animation: floatSlow 3s ease-in-out infinite;
-  will-change: transform;
 }
 
 /* ========================================================
@@ -459,7 +457,7 @@ html.dark .shadow-\[8px_8px_0px_0px_\#000\],
 html.dark .shadow-\[2px_2px_0px_0px_\#000\],
 html.dark .shadow-\[3px_3px_0px_0px_\#000\] {
   border-color: rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.35) !important;
 }
 
 html.dark .text-black,
@@ -577,4 +575,36 @@ html.dark body .bg-\[\#FF5588\] [data-light-pill="true"],
 html.dark body .bg-\[\#FF5588\] [data-light-pill="true"] * {
   background-color: #FFFFFF !important;
   color: #0F172A !important;
+}
+
+/* ========================================================
+   LOW PERFORMANCE / BATTERY SAVER MODE
+   ======================================================== */
+.low-perf .animate-gold-shimmer,
+.low-perf .animate-liquid-wave,
+.low-perf .animate-pulseGlow,
+.low-perf .animate-float {
+  animation: none !important;
+  will-change: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-gold-shimmer,
+  .animate-liquid-wave,
+  .animate-pulseGlow,
+  .animate-float {
+    animation: none !important;
+    will-change: auto !important;
+  }
+}
+
+.low-perf * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.low-perf .shadow-\[0_10px_30px_rgba\(17\,24\,39\,0\.04\)\],
+.low-perf .shadow-\[0_10px_24px_-6px_rgba\(245\,158\,11\,0\.5\)\],
+.low-perf .shadow-\[0_8px_20px_-6px_rgba\(17\,24\,39\,0\.05\)\] {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
 }

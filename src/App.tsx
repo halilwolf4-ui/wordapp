@@ -46,40 +46,50 @@ export const App: React.FC = () => {
   const [isYdsYokdilOpen, setIsYdsYokdilOpen] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
-  // Keyboard awareness listener
+  // Keyboard awareness listener with debouncing to prevent frame drops
   useEffect(() => {
+    let resizeTimer: any = null;
+    let focusTimer: any = null;
+
     const handleFocusIn = (e: FocusEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') {
+        clearTimeout(focusTimer);
         setIsKeyboardVisible(true);
       }
     };
+
     const handleFocusOut = () => {
-      // Delay slightly to handle transitions between inputs
-      setTimeout(() => {
+      clearTimeout(focusTimer);
+      focusTimer = setTimeout(() => {
         const activeTag = document.activeElement?.tagName;
         if (activeTag !== 'INPUT' && activeTag !== 'TEXTAREA') {
           setIsKeyboardVisible(false);
         }
-      }, 100);
+      }, 120);
     };
 
     const handleViewportResize = () => {
-      if (window.visualViewport) {
-        const isShrunk = window.visualViewport.height < window.innerHeight * 0.75;
-        if (isShrunk) {
-          setIsKeyboardVisible(true);
-        } else if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-          setIsKeyboardVisible(false);
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (window.visualViewport) {
+          const isShrunk = window.visualViewport.height < window.innerHeight * 0.75;
+          if (isShrunk) {
+            setIsKeyboardVisible(true);
+          } else if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+            setIsKeyboardVisible(false);
+          }
         }
-      }
+      }, 100);
     };
 
-    window.addEventListener('focusin', handleFocusIn);
-    window.addEventListener('focusout', handleFocusOut);
-    window.visualViewport?.addEventListener('resize', handleViewportResize);
+    window.addEventListener('focusin', handleFocusIn, { passive: true });
+    window.addEventListener('focusout', handleFocusOut, { passive: true });
+    window.visualViewport?.addEventListener('resize', handleViewportResize, { passive: true } as any);
 
     return () => {
+      clearTimeout(resizeTimer);
+      clearTimeout(focusTimer);
       window.removeEventListener('focusin', handleFocusIn);
       window.removeEventListener('focusout', handleFocusOut);
       window.visualViewport?.removeEventListener('resize', handleViewportResize);
@@ -780,6 +790,27 @@ export const App: React.FC = () => {
     );
   }, [today, todayLog, settings.dailyReviewLimit]);
 
+  const homeNewCount = useMemo(() => {
+    let unstudied = 0;
+    for (let i = 0; i < allProgress.length; i++) {
+      const p = allProgress[i];
+      if (p.status === 'learning' && p.totalCorrect === 0 && !p.lastReviewDate) {
+        unstudied++;
+      }
+    }
+    return newWordsQueue.length + unstudied;
+  }, [newWordsQueue.length, allProgress]);
+
+  // Stable navigation callbacks for React.memo views
+  const handleStartReview = useCallback(() => setCurrentTab('review'), []);
+  const handleStartLearn = useCallback(() => setCurrentTab('learn'), []);
+  const handleStartSpeedRound = useCallback(() => setIsSpeedRoundOpen(true), []);
+  const handleStartPassaparola = useCallback(() => setIsPassaparolaOpen(true), []);
+  const handleStartClozeTest = useCallback(() => setIsClozeTestOpen(true), []);
+  const handleStartYdsYokdil = useCallback(() => setIsYdsYokdilOpen(true), []);
+  const handleOpenSettings = useCallback(() => setIsSettingsOpen(true), []);
+  const handleCloseToHome = useCallback(() => setCurrentTab('home'), []);
+
   // Loading Screen
   if (isInitializing) {
     return (
@@ -902,12 +933,15 @@ export const App: React.FC = () => {
         ) : (
           /* TAB VIEWS (Kept mounted to preserve learning session state and active questions) */
           <div>
-            <div className={currentTab === 'home' ? 'block' : 'hidden'}>
+            <div
+              className={currentTab === 'home' ? 'block' : 'hidden'}
+              style={{ contentVisibility: currentTab === 'home' ? 'visible' : 'hidden' }}
+            >
               <HomeView
                 todayCorrect={todayLog.correctCount}
                 dailyGoal={settings.dailyNewTarget}
                 dueCount={dueQueue.length}
-                newCount={newWordsQueue.length + allProgress.filter(p => p.status === 'learning' && p.totalCorrect === 0 && !p.lastReviewDate).length}
+                newCount={homeNewCount}
                 learningCount={learningCount}
                 masteredCount={masteredCount}
                 totalWordsCount={allWords.length}
@@ -916,17 +950,20 @@ export const App: React.FC = () => {
                 settings={settings}
                 isLearnCompletedToday={isLearnCompletedToday}
                 isReviewCompletedToday={isReviewCompletedToday}
-                onStartReview={() => setCurrentTab('review')}
-                onStartLearn={() => setCurrentTab('learn')}
-                onStartSpeedRound={() => setIsSpeedRoundOpen(true)}
-                onStartPassaparola={() => setIsPassaparolaOpen(true)}
-                onStartClozeTest={() => setIsClozeTestOpen(true)}
-                onStartYdsYokdil={() => setIsYdsYokdilOpen(true)}
-                onOpenSettings={() => setIsSettingsOpen(true)}
+                onStartReview={handleStartReview}
+                onStartLearn={handleStartLearn}
+                onStartSpeedRound={handleStartSpeedRound}
+                onStartPassaparola={handleStartPassaparola}
+                onStartClozeTest={handleStartClozeTest}
+                onStartYdsYokdil={handleStartYdsYokdil}
+                onOpenSettings={handleOpenSettings}
               />
             </div>
 
-            <div className={currentTab === 'learn' ? 'block' : 'hidden'}>
+            <div
+              className={currentTab === 'learn' ? 'block' : 'hidden'}
+              style={{ contentVisibility: currentTab === 'learn' ? 'visible' : 'hidden' }}
+            >
               <LearnView
                 wordsQueue={newWordsQueue}
                 allWordsMap={wordsMap}
@@ -941,12 +978,15 @@ export const App: React.FC = () => {
                 onRecordMistake={handleRecordMistake}
                 onSessionCompleted={handleSessionCompleted}
                 onComboUpdate={handleComboUpdate}
-                onClose={() => setCurrentTab('home')}
+                onClose={handleCloseToHome}
                 onRefreshBatch={loadData}
               />
             </div>
 
-            <div className={currentTab === 'review' ? 'block' : 'hidden'}>
+            <div
+              className={currentTab === 'review' ? 'block' : 'hidden'}
+              style={{ contentVisibility: currentTab === 'review' ? 'visible' : 'hidden' }}
+            >
               <ReviewView
                 dueQueue={dueQueue}
                 allWordsMap={wordsMap}
@@ -960,7 +1000,7 @@ export const App: React.FC = () => {
                 onDemoteMasteredWord={handleDemoteMasteredWord}
                 onSessionCompleted={handleSessionCompleted}
                 onComboUpdate={handleComboUpdate}
-                onClose={() => setCurrentTab('home')}
+                onClose={handleCloseToHome}
                 onRefreshDue={loadData}
               />
             </div>

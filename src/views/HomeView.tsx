@@ -31,7 +31,7 @@ interface Props {
   onOpenSettings?: () => void;
 }
 
-export const HomeView: React.FC<Props> = ({
+export const HomeView: React.FC<Props> = React.memo(({
   todayCorrect,
   dailyGoal,
   dueCount,
@@ -472,4 +472,4 @@ export const HomeView: React.FC<Props> = ({
       </div>
     </div>
   );
-};
+});

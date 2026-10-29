@@ -200,10 +200,44 @@ function computeWordLevel(w: Word): number {
   return 1;
 }
 
+const posDomainPoolCache = new WeakMap<Word[], Map<string, Word[]>>();
+
+function getPosDomainPools(allWords: Word[]): Map<string, Word[]> {
+  let map = posDomainPoolCache.get(allWords);
+  if (!map) {
+    map = new Map<string, Word[]>();
+    for (let i = 0; i < allWords.length; i++) {
+      const w = allWords[i];
+      const meta = getWordMeta(w);
+      const isVerbFamily = meta.pos === 'verb' || meta.pos === 'phrasal_verb';
+      const key = isVerbFamily ? 'verb' : meta.pos;
+
+      let list = map.get(key);
+      if (!list) {
+        list = [];
+        map.set(key, list);
+      }
+      list.push(w);
+
+      if (meta.pos === 'noun' && meta.domain) {
+        const domainKey = `noun:${meta.domain}`;
+        let domainList = map.get(domainKey);
+        if (!domainList) {
+          domainList = [];
+          map.set(domainKey, domainList);
+        }
+        domainList.push(w);
+      }
+    }
+    posDomainPoolCache.set(allWords, map);
+  }
+  return map;
+}
+
 /**
  * Returns close, realistic, thematic distractors for multiple choice questions.
  * Priority 1: Words from the CURRENT 20-WORD SESSION that match the same Part of Speech!
- * Priority 2: Words from the database matching the exact POS, semantic domain & level!
+ * Priority 2: Words from the pre-indexed database matching exact POS, semantic domain & level!
  */
 export function getSmartDistractors(
   targetWord: Word,
@@ -222,7 +256,7 @@ export function getSmartDistractors(
 
   function pickFrom(pool: Word[]) {
     if (pool.length === 0 || selectedDistractors.length >= count) return;
-    // Bucket by level difference (0..4) instead of O(N log N) sorting on 2500+ words
+    // Bucket by level difference (0..4) instead of O(N log N) sorting
     const buckets: Word[][] = [[], [], [], [], []];
     for (let i = 0; i < pool.length; i++) {
       const w = pool[i];
@@ -249,6 +283,7 @@ export function getSmartDistractors(
   }
 
   const isTargetVerbFamily = targetPos === 'verb' || targetPos === 'phrasal_verb';
+  const targetGroupKey = isTargetVerbFamily ? 'verb' : targetPos;
 
   // Priority 1: Pick from current session words matching the exact same POS!
   if (sessionWords && sessionWords.length > 0) {
@@ -261,7 +296,6 @@ export function getSmartDistractors(
       if (isTargetVerbFamily !== isWVerbFamily) return false;
       if (!isTargetVerbFamily && meta.pos !== targetPos) return false;
 
-      // In nouns, avoid mixing body with profession/object
       if (targetPos === 'noun' && targetDomain && targetDomain !== 'general') {
         if (meta.domain !== targetDomain && meta.domain !== 'general') return false;
       }
@@ -270,16 +304,19 @@ export function getSmartDistractors(
     pickFrom(sessionMatchPool);
   }
 
-  // Priority 2: Database matching exact POS and Domain (no "parmaklık/iplik" for abstract nouns)
+  // Pre-indexed pools lookup (O(1) instead of O(N) scanning 2500+ words every question)
+  const pools = getPosDomainPools(allWords);
+
+  // Priority 2: Database matching exact POS and Domain
   if (selectedDistractors.length < count) {
-    const pool1 = allWords.filter(w => {
+    const candidatePool = (targetPos === 'noun' && targetDomain && targetDomain !== 'general')
+      ? (pools.get(`noun:${targetDomain}`) || pools.get('noun') || [])
+      : (pools.get(targetGroupKey) || []);
+
+    const pool1 = candidatePool.filter(w => {
       if (w.id === targetWord.id) return false;
       const meta = getWordMeta(w);
       if (meta.trNorm === targetTrNorm || meta.trNorm.length === 0) return false;
-
-      const isWVerbFamily = meta.pos === 'verb' || meta.pos === 'phrasal_verb';
-      if (isTargetVerbFamily !== isWVerbFamily) return false;
-      if (!isTargetVerbFamily && meta.pos !== targetPos) return false;
 
       if (targetPos === 'noun') {
         const wDomain = meta.domain;
@@ -294,15 +331,13 @@ export function getSmartDistractors(
     pickFrom(pool1);
   }
 
-  // Priority 3: Fallback same POS
+  // Priority 3: Fallback same POS family
   if (selectedDistractors.length < count) {
-    const pool2 = allWords.filter(w => {
+    const fallbackPool = pools.get(targetGroupKey) || [];
+    const pool2 = fallbackPool.filter(w => {
       if (w.id === targetWord.id) return false;
       const meta = getWordMeta(w);
-      const isWVerbFamily = meta.pos === 'verb' || meta.pos === 'phrasal_verb';
-      if (isTargetVerbFamily !== isWVerbFamily) return false;
-      if (!isTargetVerbFamily && meta.pos !== targetPos) return false;
-      return true;
+      return meta.trNorm !== targetTrNorm && meta.trNorm.length > 0;
     });
     pickFrom(pool2);
   }

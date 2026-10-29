@@ -101,7 +101,146 @@ const CATEGORY_LIQUID: Record<
   }
 };
 
-export const StatsView: React.FC<Props> = ({
+interface BadgeItemProps {
+  badge: (typeof BADGES)[number];
+  unlocked: boolean;
+  rawPct: number;
+  progress: ReturnType<typeof getBadgeProgress>;
+  liq: { waveFill: string; barGradient: string; pillText: string };
+}
+
+const BadgeCardItem: React.FC<BadgeItemProps> = React.memo(({ badge: b, unlocked, rawPct, progress, liq }) => {
+  const cardRef = React.useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = React.useState(false);
+
+  React.useEffect(() => {
+    const el = cardRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      setIsInView(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { rootMargin: '40px 0px', threshold: 0.05 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  if (unlocked) {
+    return (
+      <div
+        ref={cardRef}
+        title={b.description}
+        data-light-pill="true"
+        className={`rounded-[24px] p-3 flex flex-col items-center justify-between text-center min-h-[154px] relative overflow-hidden bg-gradient-to-br from-[#FFF6B7] via-[#FFD84D] to-[#F59E0B] border-2 border-[#FBBF24] shadow-[0_10px_24px_-6px_rgba(245,158,11,0.5)] ${
+          isInView ? 'animate-gold-shimmer' : ''
+        }`}
+      >
+        <div className="w-full flex items-center justify-between text-[9px] font-black text-[#78350F] px-0.5">
+          <span>★ ALTIN</span>
+          <span>%100</span>
+        </div>
+
+        <div className="w-14 h-14 rounded-[20px] bg-gradient-to-b from-[#FFFBEB] via-[#FDE047] to-[#D97706] border-2 border-white/80 shadow-[inset_0_2px_4px_rgba(255,255,255,0.9),0_6px_12px_rgba(180,83,9,0.3)] flex items-center justify-center my-1 relative">
+          <span className="text-[26px] leading-none select-none drop-shadow-[0_2px_3px_rgba(120,53,15,0.25)]">
+            {b.icon}
+          </span>
+        </div>
+
+        <div className="w-full mt-0.5">
+          <h5 className="text-[11px] font-extrabold text-[#451A03] leading-tight line-clamp-1">
+            {b.title}
+          </h5>
+          <p className="text-[9px] font-bold text-[#78350F]/90 line-clamp-1 mt-0.5">
+            {b.description}
+          </p>
+        </div>
+
+        <div className="w-full mt-1.5 space-y-0.5">
+          <div className="h-2 w-full bg-[#78350F]/20 rounded-full overflow-hidden p-[1px]">
+            <div className="h-full w-full rounded-full bg-gradient-to-r from-[#78350F] to-[#92400E]" />
+          </div>
+          <span className="text-[9px] font-black text-[#451A03] uppercase tracking-wider block">
+            ✓ KAZANILDI
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={cardRef}
+      title={b.description}
+      className="rounded-[24px] p-3 flex flex-col items-center justify-between text-center min-h-[154px] bg-white dark:bg-[#151C2C] border border-slate-200/80 dark:border-white/10 shadow-[0_8px_20px_-6px_rgba(17,24,39,0.05)] transition-all"
+    >
+      <div className="w-full flex items-center justify-between text-[9px] font-extrabold text-slate-400 dark:text-slate-400 px-0.5">
+        <span>{rawPct > 0 ? 'DOLUYOR' : 'KİLİTLİ'}</span>
+        <span className={`tabular-nums font-black ${rawPct > 0 ? liq.pillText : ''}`}>
+          %{rawPct}
+        </span>
+      </div>
+
+      <div className="w-14 h-14 rounded-[20px] relative overflow-hidden bg-slate-100 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700 flex items-center justify-center my-1 shadow-inner">
+        {rawPct > 0 && (
+          <div
+            className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out"
+            style={{
+              height: `${Math.max(14, rawPct)}%`,
+              backgroundColor: liq.waveFill,
+              opacity: 0.35
+            }}
+          >
+            <svg
+              viewBox="0 0 120 14"
+              preserveAspectRatio="none"
+              className={`w-[200%] h-2.5 absolute -top-2 left-0 ${isInView ? 'animate-liquid-wave' : ''}`}
+            >
+              <path
+                d="M0 7 Q 15 0, 30 7 T 60 7 T 90 7 T 120 7 L 120 14 L 0 14 Z"
+                fill={liq.waveFill}
+              />
+            </svg>
+          </div>
+        )}
+
+        <span
+          className={`text-[25px] leading-none relative z-10 select-none transition-all ${
+            rawPct > 0 ? 'opacity-95 scale-100' : 'opacity-45 grayscale'
+          }`}
+        >
+          {b.icon}
+        </span>
+      </div>
+
+      <div className="w-full mt-0.5">
+        <h5 className="text-[11px] font-extrabold text-[#111827] dark:text-white leading-tight line-clamp-1">
+          {b.title}
+        </h5>
+        <p className="text-[9px] font-medium text-slate-400 dark:text-slate-400 line-clamp-1 mt-0.5">
+          {b.description}
+        </p>
+      </div>
+
+      <div className="w-full mt-1.5 space-y-1">
+        <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full bg-gradient-to-r ${liq.barGradient} transition-all duration-500`}
+            style={{ width: `${rawPct > 0 ? Math.max(8, rawPct) : 0}%` }}
+          />
+        </div>
+        <span className="text-[9px] font-extrabold text-slate-500 dark:text-slate-300 tabular-nums block">
+          {progress ? progress.label : 'Özel Görev'}
+        </span>
+      </div>
+    </div>
+  );
+});
+
+export const StatsView: React.FC<Props> = React.memo(({
   profile,
   dailyLogs,
   totalLearned,
@@ -396,133 +535,19 @@ export const StatsView: React.FC<Props> = ({
               : 0;
             const liq = CATEGORY_LIQUID[b.category || 'words'] || CATEGORY_LIQUID.words;
 
-            if (unlocked) {
-              /* ============================================================
-                 SOLID GOLD BADGE (KATI ALTIN RENKTE — 100% TAMAMLANMIŞ)
-                 ============================================================ */
-              return (
-                <div
-                  key={b.id}
-                  title={b.description}
-                  data-light-pill="true"
-                  className="rounded-[24px] p-3 flex flex-col items-center justify-between text-center min-h-[154px] relative overflow-hidden bg-gradient-to-br from-[#FFF6B7] via-[#FFD84D] to-[#F59E0B] border-2 border-[#FBBF24] shadow-[0_10px_24px_-6px_rgba(245,158,11,0.5)] animate-gold-shimmer"
-                >
-                  {/* Top Golden Crown Tag */}
-                  <div className="w-full flex items-center justify-between text-[9px] font-black text-[#78350F] px-0.5">
-                    <span>★ ALTIN</span>
-                    <span>%100</span>
-                  </div>
-
-                  {/* Solid 3D Gold Medallion with Unique Badge Icon */}
-                  <div className="w-14 h-14 rounded-[20px] bg-gradient-to-b from-[#FFFBEB] via-[#FDE047] to-[#D97706] border-2 border-white/80 shadow-[inset_0_2px_4px_rgba(255,255,255,0.9),0_6px_12px_rgba(180,83,9,0.3)] flex items-center justify-center my-1 relative">
-                    <span className="text-[26px] leading-none select-none drop-shadow-[0_2px_3px_rgba(120,53,15,0.25)]">
-                      {b.icon}
-                    </span>
-                  </div>
-
-                  {/* Title & Description */}
-                  <div className="w-full mt-0.5">
-                    <h5 className="text-[11px] font-extrabold text-[#451A03] leading-tight line-clamp-1">
-                      {b.title}
-                    </h5>
-                    <p className="text-[9px] font-bold text-[#78350F]/90 line-clamp-1 mt-0.5">
-                      {b.description}
-                    </p>
-                  </div>
-
-                  {/* Solid Gold Completed Progress Bar Underneath */}
-                  <div className="w-full mt-1.5 space-y-0.5">
-                    <div className="h-2 w-full bg-[#78350F]/20 rounded-full overflow-hidden p-[1px]">
-                      <div className="h-full w-full rounded-full bg-gradient-to-r from-[#78350F] to-[#92400E]" />
-                    </div>
-                    <span className="text-[9px] font-black text-[#451A03] uppercase tracking-wider block">
-                      ✓ KAZANILDI
-                    </span>
-                  </div>
-                </div>
-              );
-            }
-
-            /* ============================================================
-               LIQUID WATER-FILLING BADGE (SU GİBİ DOLAN + ALT İLERLEME BARI)
-               ============================================================ */
             return (
-              <div
+              <BadgeCardItem
                 key={b.id}
-                title={b.description}
-                className="rounded-[24px] p-3 flex flex-col items-center justify-between text-center min-h-[154px] bg-white dark:bg-[#151C2C] border border-slate-200/80 dark:border-white/10 shadow-[0_8px_20px_-6px_rgba(17,24,39,0.05)] transition-all"
-              >
-                {/* Top Percentage Status */}
-                <div className="w-full flex items-center justify-between text-[9px] font-extrabold text-slate-400 dark:text-slate-400 px-0.5">
-                  <span>{rawPct > 0 ? 'DOLUYOR' : 'KİLİTLİ'}</span>
-                  <span className={`tabular-nums font-black ${rawPct > 0 ? liq.pillText : ''}`}>
-                    %{rawPct}
-                  </span>
-                </div>
-
-                {/* Medallion Container that fills with water from bottom to top */}
-                <div className="w-14 h-14 rounded-[20px] relative overflow-hidden bg-slate-100 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700 flex items-center justify-center my-1 shadow-inner">
-                  {/* Rising Liquid Layer */}
-                  {rawPct > 0 && (
-                    <div
-                      className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out"
-                      style={{
-                        height: `${Math.max(14, rawPct)}%`,
-                        backgroundColor: liq.waveFill,
-                        opacity: 0.35
-                      }}
-                    >
-                      {/* Animated Wave Crest at the top of the liquid */}
-                      <svg
-                        viewBox="0 0 120 14"
-                        preserveAspectRatio="none"
-                        className="w-[200%] h-2.5 absolute -top-2 left-0 animate-liquid-wave"
-                      >
-                        <path
-                          d="M0 7 Q 15 0, 30 7 T 60 7 T 90 7 T 120 7 L 120 14 L 0 14 Z"
-                          fill={liq.waveFill}
-                        />
-                      </svg>
-                    </div>
-                  )}
-
-                  {/* Unique Badge Icon Floating inside the Liquid Vessel */}
-                  <span
-                    className={`text-[25px] leading-none relative z-10 select-none transition-all ${
-                      rawPct > 0 ? 'opacity-95 scale-100' : 'opacity-45 grayscale'
-                    }`}
-                  >
-                    {b.icon}
-                  </span>
-                </div>
-
-                {/* Title & Description */}
-                <div className="w-full mt-0.5">
-                  <h5 className="text-[11px] font-extrabold text-[#111827] dark:text-white leading-tight line-clamp-1">
-                    {b.title}
-                  </h5>
-                  <p className="text-[9px] font-medium text-slate-400 dark:text-slate-400 line-clamp-1 mt-0.5">
-                    {b.description}
-                  </p>
-                </div>
-
-                {/* Bottom Filling Progress Bar + Fraction Counter */}
-                <div className="w-full mt-1.5 space-y-1">
-                  <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full bg-gradient-to-r ${liq.barGradient} transition-all duration-500`}
-                      style={{ width: `${rawPct > 0 ? Math.max(8, rawPct) : 0}%` }}
-                    />
-                  </div>
-                  <span className="text-[9px] font-extrabold text-slate-500 dark:text-slate-300 tabular-nums block">
-                    {progress ? progress.label : 'Özel Görev'}
-                  </span>
-                </div>
-              </div>
+                badge={b}
+                unlocked={unlocked}
+                rawPct={rawPct}
+                progress={progress}
+                liq={liq}
+              />
             );
           })}
         </div>
       </div>
     </div>
   );
-};
+});

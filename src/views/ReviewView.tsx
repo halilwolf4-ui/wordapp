@@ -73,7 +73,7 @@ interface PersistedReviewState {
 
 const STORAGE_REVIEW_SESSION = 'kelime_avi_active_review_session';
 
-export const ReviewView: React.FC<Props> = ({
+export const ReviewView: React.FC<Props> = React.memo(({
   dueQueue,
   allWordsMap,
   allProgress,
@@ -1145,4 +1145,4 @@ export const ReviewView: React.FC<Props> = ({
       )}
     </div>
   );
-};
+});

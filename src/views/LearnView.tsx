@@ -77,7 +77,7 @@ interface PersistedState {
 const STORAGE_LEARN_SESSION = 'kelime_avi_active_learn_session';
 const STORAGE_BASKET = 'kelime_avi_learn_unknown_basket';
 
-export const LearnView: React.FC<Props> = ({
+export const LearnView: React.FC<Props> = React.memo(({
   wordsQueue,
   allWordsMap,
   allProgress,
@@ -1362,4 +1362,4 @@ export const LearnView: React.FC<Props> = ({
       )}
     </div>
   );
-};
+});

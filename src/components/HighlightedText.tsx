@@ -9,7 +9,7 @@ interface Props {
  * Renders text and highlights segments enclosed in #...#
  * Guaranteed high-contrast in both Light and Dark mode.
  */
-export const HighlightedText: React.FC<Props> = ({ text, className = '' }) => {
+export const HighlightedText: React.FC<Props> = React.memo(({ text, className = '' }) => {
   if (!text) return null;
 
   const parts = text.split(/(#[^#]+#)/g);
@@ -33,4 +33,4 @@ export const HighlightedText: React.FC<Props> = ({ text, className = '' }) => {
       })}
     </span>
   );
-};
+});

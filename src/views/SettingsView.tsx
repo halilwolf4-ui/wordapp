@@ -3,8 +3,9 @@ import { UserSettings } from '../types';
 import { DEFAULT_CATEGORY_NAMES } from '../db';
 import { exportBackupFile, inspectBackupFile, restoreBackup, BackupPreview } from '../services/backup';
 import { sound } from '../services/audio';
-import { Download, Upload, Volume2, Sliders, ShieldCheck, Check, ArrowLeft, Sparkles, RotateCcw, Moon, Sun, Palette } from 'lucide-react';
+import { Download, Upload, Volume2, Sliders, ShieldCheck, Check, ArrowLeft, Sparkles, RotateCcw, Moon, Sun, Palette, Zap } from 'lucide-react';
 import { useCharacterGender } from '../components/CharacterAvatar';
+import { getLowPerformanceSetting, setLowPerformanceMode } from '../services/performance';
 
 interface Props {
   settings: UserSettings;
@@ -29,6 +30,7 @@ export const SettingsView: React.FC<Props> = ({
   const [mergeMode, setMergeMode] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [restoreSuccess, setRestoreSuccess] = useState(false);
+  const [perfSetting, setPerfSetting] = useState(getLowPerformanceSetting);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Export backup
@@ -285,6 +287,51 @@ export const SettingsView: React.FC<Props> = ({
               <span>KADIN KARAKTER</span>
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Performance & Battery Saver Mode */}
+      <div className="bg-white border-4 border-black p-5 space-y-4 shadow-[6px_6px_0px_0px_#000] text-black">
+        <div className="flex items-center justify-between border-b-2 border-black pb-2">
+          <h3 className="text-sm font-black uppercase flex items-center space-x-2 tracking-tight">
+            <Zap size={16} strokeWidth={2.5} />
+            <span>PERFORMANS VE PİL TASARRUFU</span>
+          </h3>
+          <span
+            data-light-pill={perfSetting.enabled ? 'true' : undefined}
+            className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${
+              perfSetting.enabled ? 'bg-[#4ADE80] text-[#0F172A]' : 'bg-zinc-200 text-zinc-700'
+            }`}
+          >
+            {perfSetting.enabled ? 'AKTİF' : 'STANDART'}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="pr-3">
+            <label className="text-xs font-black text-black block uppercase">
+              DÜŞÜK PERFORMANS MODU
+            </label>
+            <span className="text-[11px] font-semibold text-zinc-700 block mt-0.5">
+              Eski ve zayıf telefonlarda animasyonları hafifletir, derin gölgeleri ve aşırı konfetiyi kapatır.
+              {!perfSetting.isManual && (
+                <span className="block text-[10px] text-amber-600 dark:text-amber-400 font-bold mt-0.5">
+                  (Cihaz donanımına göre otomatik belirlendi)
+                </span>
+              )}
+            </span>
+          </div>
+
+          <input
+            type="checkbox"
+            checked={perfSetting.enabled}
+            onChange={(e) => {
+              const val = e.target.checked;
+              setLowPerformanceMode(val);
+              setPerfSetting({ enabled: val, isManual: true });
+            }}
+            className="w-5 h-5 accent-black border-2 border-black cursor-pointer shrink-0"
+          />
         </div>
       </div>
 

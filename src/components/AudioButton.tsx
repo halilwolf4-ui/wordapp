@@ -9,7 +9,7 @@ interface Props {
   rate?: number;
 }
 
-export const AudioButton: React.FC<Props> = ({
+export const AudioButton: React.FC<Props> = React.memo(({
   text,
   size = 20,
   className = 'p-2 bg-white text-black border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:bg-[#FFE600] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all',
@@ -30,4 +30,4 @@ export const AudioButton: React.FC<Props> = ({
       <Volume2 size={size} strokeWidth={2.5} />
     </button>
   );
-};
+});

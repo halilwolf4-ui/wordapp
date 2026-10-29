@@ -15,7 +15,7 @@ interface Props {
   onRestoreMasteredWord: (wordId: number) => Promise<void>;
 }
 
-export const WordListView: React.FC<Props> = ({
+export const WordListView: React.FC<Props> = React.memo(({
   allWords,
   progressMap,
   onAddCustomWord,
@@ -156,7 +156,7 @@ export const WordListView: React.FC<Props> = ({
     return () => clearTimeout(timer);
   }, [newEn, allWords, isAddModalOpen]);
 
-  // Filtered words
+  // Filtered words (full list, lazy-loaded in chunks of 30)
   const filteredWords = useMemo(() => {
     let list = allWords;
 
@@ -175,8 +175,38 @@ export const WordListView: React.FC<Props> = ({
       );
     }
 
-    return list.slice(0, 100); // paginate / limit to 100 for render speed
+    return list;
   }, [allWords, progressMap, activeFilter, searchTerm]);
+
+  // Lazy loading in 30-word chunks for smooth 60fps scrolling on low-end devices
+  const [visibleCount, setVisibleCount] = useState(30);
+
+  useEffect(() => {
+    setVisibleCount(30);
+  }, [searchTerm, activeFilter]);
+
+  const displayedWords = useMemo(() => {
+    return filteredWords.slice(0, visibleCount);
+  }, [filteredWords, visibleCount]);
+
+  const sentinelRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisibleCount(prev => Math.min(filteredWords.length, prev + 30));
+        }
+      },
+      { rootMargin: '250px 0px' }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [filteredWords.length]);
 
   // Akıllı emoji önerisi (formda otomatik öneri olarak sunulur)
   const suggestedEmoji = useMemo(() => {
@@ -339,7 +369,7 @@ export const WordListView: React.FC<Props> = ({
             EŞLEŞEN KELİME BULUNAMADI.
           </div>
         ) : (
-          filteredWords.map((w) => {
+          displayedWords.map((w) => {
             const prog = progressMap.get(w.id);
             const isMastered = prog?.status === 'mastered';
             const isCustom = w.isCustom || w.categories?.includes('custom');
@@ -433,6 +463,17 @@ export const WordListView: React.FC<Props> = ({
               </div>
             );
           })
+        )}
+
+        {visibleCount < filteredWords.length && (
+          <div ref={sentinelRef} className="pt-2 text-center">
+            <button
+              onClick={() => setVisibleCount(prev => Math.min(filteredWords.length, prev + 30))}
+              className="px-4 py-2 bg-white dark:bg-[#151C2C] border-2 border-black dark:border-white/20 text-xs font-black uppercase shadow-[2px_2px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5"
+            >
+              Daha Fazla Göster ({displayedWords.length} / {filteredWords.length})
+            </button>
+          </div>
         )}
       </div>
 
@@ -636,4 +677,4 @@ export const WordListView: React.FC<Props> = ({
       )}
     </div>
   );
-};
+});

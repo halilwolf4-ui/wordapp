@@ -1,4 +1,5 @@
 import confetti from 'canvas-confetti';
+import { isLowPerformanceDevice } from '../services/performance';
 
 const VIBRANT_PALETTE = [
   '#6366f1', // Indigo
@@ -23,15 +24,16 @@ const GOLD_PALETTE = [
  */
 export function fireCelebration(): void {
   try {
+    const isLow = isLowPerformanceDevice();
     confetti({
-      particleCount: 45,
-      spread: 70,
+      particleCount: isLow ? 12 : 28,
+      spread: isLow ? 45 : 60,
       origin: { x: 0.5, y: 0.65 },
-      startVelocity: 35,
+      startVelocity: isLow ? 24 : 30,
       colors: VIBRANT_PALETTE,
       shapes: ['circle', 'square'],
-      scalar: 0.95,
-      ticks: 120,
+      scalar: 0.9,
+      ticks: isLow ? 45 : 72, // ~1.2s duration (shorter on low-end)
       zIndex: 9999
     });
   } catch {
@@ -44,16 +46,17 @@ export function fireCelebration(): void {
  */
 export function fireLevelUp(): void {
   try {
+    const isLow = isLowPerformanceDevice();
     confetti({
-      particleCount: 65,
-      spread: 85,
+      particleCount: isLow ? 16 : 38,
+      spread: isLow ? 55 : 75,
       origin: { x: 0.5, y: 0.6 },
-      startVelocity: 38,
-      ticks: 130,
+      startVelocity: isLow ? 26 : 32,
+      ticks: isLow ? 50 : 80,
       zIndex: 9999,
       colors: VIBRANT_PALETTE,
       shapes: ['circle', 'square'],
-      scalar: 1
+      scalar: 0.95
     });
   } catch {}
 }
@@ -63,15 +66,16 @@ export function fireLevelUp(): void {
  */
 export function fireStreakCelebration(): void {
   try {
+    const isLow = isLowPerformanceDevice();
     confetti({
-      particleCount: 50,
-      spread: 75,
+      particleCount: isLow ? 14 : 30,
+      spread: isLow ? 50 : 65,
       origin: { x: 0.5, y: 0.7 },
       colors: GOLD_PALETTE,
       shapes: ['circle', 'square'],
-      scalar: 1,
-      startVelocity: 35,
-      ticks: 120,
+      scalar: 0.95,
+      startVelocity: isLow ? 24 : 30,
+      ticks: isLow ? 45 : 72,
       zIndex: 9999
     });
   } catch {}
@@ -82,16 +86,17 @@ export function fireStreakCelebration(): void {
  */
 export function fireMicroSpark(xRatio: number = 0.5, yRatio: number = 0.5): void {
   try {
+    if (isLowPerformanceDevice()) return; // Skip micro-sparks on low-end hardware
     confetti({
-      particleCount: 18,
-      spread: 55,
+      particleCount: 12,
+      spread: 45,
       origin: { x: xRatio, y: yRatio },
-      startVelocity: 22,
+      startVelocity: 20,
       colors: VIBRANT_PALETTE,
       shapes: ['circle', 'square'],
-      scalar: 0.8,
-      ticks: 70,
-      gravity: 1.1,
+      scalar: 0.75,
+      ticks: 50,
+      gravity: 1.2,
       zIndex: 9999
     });
   } catch {}

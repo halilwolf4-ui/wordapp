@@ -20,7 +20,7 @@ const BADGE_COLORS = [
   'bg-[#E6FCF5] text-[#12B886]',
 ];
 
-export const QuizOptionButton: React.FC<QuizOptionButtonProps> = ({
+export const QuizOptionButton: React.FC<QuizOptionButtonProps> = React.memo(({
   index,
   text,
   isSelected,
@@ -128,4 +128,4 @@ export const QuizOptionButton: React.FC<QuizOptionButtonProps> = ({
       </div>
     </button>
   );
-};
+});
