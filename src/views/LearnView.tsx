@@ -11,7 +11,6 @@ import {
   Check,
   X,
   ArrowRight,
-  RotateCcw,
   Sparkles,
   Eye,
   Keyboard,
