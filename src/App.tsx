@@ -388,7 +388,8 @@ export const App: React.FC = () => {
     isCorrect: boolean,
     isNewLearned: boolean = false,
     comboCount: number = 1,
-    isMastered: boolean = false
+    isMastered: boolean = false,
+    isReview: boolean = false
   ) => {
     const xpGain = isCorrect ? Math.round(10 * getComboMultiplier(comboCount)) : 0;
     const nextXp = profile.xp + xpGain;
@@ -441,7 +442,7 @@ export const App: React.FC = () => {
       correctCount: isCorrect ? currentLog.correctCount + 1 : currentLog.correctCount,
       wrongCount: !isCorrect ? currentLog.wrongCount + 1 : currentLog.wrongCount,
       newLearnedCount: isNewLearned ? currentLog.newLearnedCount + 1 : currentLog.newLearnedCount,
-      reviewsDone: !isNewLearned ? currentLog.reviewsDone + 1 : currentLog.reviewsDone,
+      reviewsDone: isReview ? currentLog.reviewsDone + 1 : currentLog.reviewsDone,
       masteredCount: (currentLog.masteredCount || 0) + (isMastered ? 1 : 0),
       xpEarned: currentLog.xpEarned + xpGain
     };
@@ -481,7 +482,7 @@ export const App: React.FC = () => {
       return [...filtered, nextProgress];
     });
 
-    await recordAnswerResult(isCorrect, true, comboCount);
+    await recordAnswerResult(isCorrect, true, comboCount, false, false);
   };
 
   // Permanently mark word as known when swiped 'Biliyorum' in discovery
@@ -500,7 +501,7 @@ export const App: React.FC = () => {
     };
     await db.progress.put(knownProg);
     setAllProgress(prev => [...prev.filter(p => p.wordId !== word.id), knownProg]);
-    await recordAnswerResult(true, true, 1, true);
+    await recordAnswerResult(true, false, 1, true, false);
   };
 
   // Mark word as learning when swiped 'Bilmiyorum' in discovery
@@ -545,7 +546,7 @@ export const App: React.FC = () => {
       return [...filtered, nextProgress];
     });
 
-    await recordAnswerResult(isCorrect, false, comboCount, becameMastered);
+    await recordAnswerResult(isCorrect, false, comboCount, becameMastered, true);
   };
 
   // Record single last mistake on a word (without bloating DB, only saves the latest one)

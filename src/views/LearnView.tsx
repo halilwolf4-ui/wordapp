@@ -96,6 +96,7 @@ export const LearnView: React.FC<Props> = React.memo(({
 }) => {
   const targetWordsCount = Math.max(1, dailyNewTarget);
   const [earnedFreeze, setEarnedFreeze] = useState(false);
+  const [isExtraLearnCompleted, setIsExtraLearnCompleted] = useState(false);
 
   // Discovery phase state
   const [candidateList, setCandidateList] = useState<Word[]>([]);
@@ -275,8 +276,12 @@ export const LearnView: React.FC<Props> = React.memo(({
         poolQueueRef.current = [];
         localStorage.removeItem(STORAGE_LEARN_SESSION);
         localStorage.removeItem(STORAGE_BASKET);
+        const wasAlreadyCompleted = todayStr && localStorage.getItem('kelime_avi_learn_completed_' + todayStr) === 'true';
         if (todayStr) {
           localStorage.setItem('kelime_avi_learn_completed_' + todayStr, 'true');
+        }
+        if (wasAlreadyCompleted) {
+          setIsExtraLearnCompleted(true);
         }
         setPhase('summary');
         sound.playLevelUp();
@@ -385,17 +390,9 @@ export const LearnView: React.FC<Props> = React.memo(({
     if (!allWordsMap || allWordsMap.size === 0) return; // Must wait for dictionary!
     initializedRef.current = true;
 
-    // 0. Gün tamamlandı mı kontrolü ("gün sıfırlanmadan o ekran kalacak")
-    const isCompletedToday =
-      (todayStr && localStorage.getItem('kelime_avi_learn_completed_' + todayStr) === 'true') ||
-      (dailyLogs && todayStr && (dailyLogs.find(l => l.date === todayStr)?.newLearnedCount || 0) >= targetWordsCount && (dailyLogs.find(l => l.date === todayStr)?.newLearnedCount || 0) > 0);
-
-    if (isCompletedToday) {
-      setPhase('summary');
-      return;
-    }
-
-    // 1. Check if there is an active unfinished study session
+    // 1. ÖNCELİK 1: Devam eden tamamlanmamış aktif çalışma oturumu var mı?
+    // Kullanıcı öğrenirken uygulamayı kapattıysa ("işim çıktı kapadım"),
+    // hedef tamamlandı dense bile ASLA başarı ekranına atmamalı, kaldığı yerden devam ettirmeli!
     const savedSessionRaw = localStorage.getItem(STORAGE_LEARN_SESSION);
     if (savedSessionRaw) {
       try {
@@ -408,10 +405,6 @@ export const LearnView: React.FC<Props> = React.memo(({
               const prog = allProgress?.find(p => p.wordId === item.wordId);
               restoredList.push({
                 word,
-                // ÖNEMLİ KURAL: Oturuma yeniden girildiğinde veya uygulama açıldığında,
-                // tamamlanmamış hiçbir kelime ASLA doğrudan yazmalı açılmamalıdır!
-                // Kullanıcı önce o kelimenin şıkkını görmeli ve çözmeli;
-                // ancak şıkkı çözüldükten sonra aralık kuralıyla yazma aşamasına geçmelidir.
                 choicePassed: false,
                 typingPassed: item.typingPassed,
                 choicePassedAtStep: null,
@@ -442,7 +435,7 @@ export const LearnView: React.FC<Props> = React.memo(({
       }
     }
 
-    // 2. Check if user already had some words in unknown basket
+    // 2. ÖNCELİK 2: Kullanıcı keşif aşamasındayken sepete kelime atmış ve yarım bırakmış mı?
     const savedBasketRaw = localStorage.getItem(STORAGE_BASKET);
     let initialBasket: Word[] = [];
     if (savedBasketRaw) {
@@ -456,7 +449,24 @@ export const LearnView: React.FC<Props> = React.memo(({
       }
     }
 
-    // Automatically include unstudied custom words or unstudied 'learning' words
+    if (initialBasket.length >= targetWordsCount) {
+      startStudy(initialBasket.slice(0, targetWordsCount));
+      return;
+    }
+
+    // 3. ÖNCELİK 3: Günlük hedef tamamlandı mı kontrolü ("özet/kutlama ekranı")
+    // Sadece aktif yarım oturum yoksa özet gösterilir
+    const isCompletedToday =
+      (todayStr && localStorage.getItem('kelime_avi_learn_completed_' + todayStr) === 'true') ||
+      (dailyLogs && todayStr && (dailyLogs.find(l => l.date === todayStr)?.newLearnedCount || 0) >= targetWordsCount && (dailyLogs.find(l => l.date === todayStr)?.newLearnedCount || 0) > 0);
+
+    if (isCompletedToday) {
+      setPhase('summary');
+      return;
+    }
+
+    // 4. Henüz oturum yok ve gün tamamlanmadı: Normal keşif başlat
+    // Otomatik olarak bekleyen özel kelimeleri sepete ekle
     if (allProgress && allProgress.length > 0) {
       for (const prog of allProgress) {
         if (prog.status === 'learning' && prog.totalCorrect === 0 && !prog.lastReviewDate) {
@@ -477,7 +487,6 @@ export const LearnView: React.FC<Props> = React.memo(({
       return;
     }
 
-    // 3. No active study: show discovery to find targetWordsCount unknown words
     const basketEns = new Set(initialBasket.map(b => (b.en || '').trim().toLowerCase()));
     const learnedEns = new Set(
       allProgress
@@ -494,7 +503,6 @@ export const LearnView: React.FC<Props> = React.memo(({
       return true;
     });
 
-    // If no candidate words remain in discovery pool, but we have words waiting:
     if (unselectedCandidates.length === 0 && initialBasket.length > 0) {
       startStudy(initialBasket.slice(0, targetWordsCount));
       return;
@@ -508,7 +516,7 @@ export const LearnView: React.FC<Props> = React.memo(({
     setCombo(0);
     setGlobalStep(0);
     lastWordIdRef.current = null;
-  }, [wordsQueue, allWordsMap, allProgress, pickNextQuestion, startStudy]);
+  }, [wordsQueue, allWordsMap, allProgress, pickNextQuestion, startStudy, targetWordsCount, todayStr, dailyLogs]);
 
   const currentCandidate = candidateList[candidateIndex];
 
@@ -843,15 +851,37 @@ export const LearnView: React.FC<Props> = React.memo(({
     pickNextQuestion(sessionList, globalStep, currentQuestion?.word.id ?? null);
   };
 
-  // Reset and find new 20 words
-  const handleStartFreshDiscovery = () => {
+  // Reset and find new words for extra learning
+  const handleStartFreshDiscovery = useCallback(() => {
     localStorage.removeItem(STORAGE_LEARN_SESSION);
     localStorage.removeItem(STORAGE_BASKET);
     setSessionList([]);
-    setUnknownBasket([]);
     setHintStats({});
     setCurrentWordHints([]);
     setCandidateIndex(0);
+
+    let initialBasket: Word[] = [];
+    if (allProgress && allProgress.length > 0) {
+      for (const prog of allProgress) {
+        if (prog.status === 'learning' && prog.totalCorrect === 0 && !prog.lastReviewDate) {
+          const w = allWordsMap.get(prog.wordId);
+          if (w && !initialBasket.some(b => b.id === w.id)) {
+            if (w.isCustom || w.categories?.includes('custom') || !!w.reword) {
+              initialBasket.unshift(w); // Custom words first!
+            } else {
+              initialBasket.push(w);
+            }
+          }
+        }
+      }
+    }
+
+    if (initialBasket.length >= targetWordsCount) {
+      startStudy(initialBasket.slice(0, targetWordsCount));
+      return;
+    }
+
+    const basketEns = new Set(initialBasket.map(b => (b.en || '').trim().toLowerCase()));
     const learnedEns = new Set(
       allProgress
         ? allProgress.map(p => allWordsMap.get(p.wordId)?.en.trim().toLowerCase()).filter(Boolean)
@@ -860,18 +890,25 @@ export const LearnView: React.FC<Props> = React.memo(({
     const seenCandidates = new Set<string>();
     const freshCandidates = wordsQueue.filter(w => {
       const enKey = (w.en || '').trim().toLowerCase();
-      if (!enKey || learnedEns.has(enKey) || seenCandidates.has(enKey)) return false;
+      if (!enKey || initialBasket.some(b => b.id === w.id) || basketEns.has(enKey) || learnedEns.has(enKey) || seenCandidates.has(enKey)) return false;
       seenCandidates.add(enKey);
       return true;
     });
+
+    if (freshCandidates.length === 0 && initialBasket.length > 0) {
+      startStudy(initialBasket.slice(0, targetWordsCount));
+      return;
+    }
+
     setCandidateList(freshCandidates);
+    setUnknownBasket(initialBasket);
     setIsFlipped(false);
     setPhase('discovery');
     setCombo(0);
     setGlobalStep(0);
     lastWordIdRef.current = null;
     onRefreshBatch();
-  };
+  }, [allProgress, allWordsMap, wordsQueue, targetWordsCount, startStudy, onRefreshBatch]);
 
   const learnedCount = sessionList.filter(i => i.typingPassed).length;
 
@@ -885,6 +922,8 @@ export const LearnView: React.FC<Props> = React.memo(({
           todayStr={todayStr}
           earnedFreeze={earnedFreeze}
           onClose={onClose}
+          onStartExtraLearn={handleStartFreshDiscovery}
+          isExtraLearnCompleted={isExtraLearnCompleted}
         />
       );
     }
@@ -899,7 +938,9 @@ export const LearnView: React.FC<Props> = React.memo(({
             <h2 className="text-2xl sm:text-3xl font-black text-black uppercase">{learnedCount} KELİME TAMAMLANDI!</h2>
           </div>
           <p className="text-zinc-800 font-bold text-xs max-w-xs mx-auto">
-            Bilmeyip seçtiğin tüm kelimeleri önce şıklarla, ardından klavyeyle yazarak başarıyla öğrendin.
+            {isExtraLearnCompleted
+              ? 'Harika! Hedefinin üzerinde fazladan kelimeler öğrendin.'
+              : 'Bilmeyip seçtiğin tüm kelimeleri önce şıklarla, ardından klavyeyle yazarak başarıyla öğrendin.'}
           </p>
         </div>
 
@@ -920,18 +961,16 @@ export const LearnView: React.FC<Props> = React.memo(({
         </div>
 
         <div className="space-y-3 pt-2 max-w-sm mx-auto">
-          {!(todayStr && localStorage.getItem('kelime_avi_learn_completed_' + todayStr) === 'true') && (
-            <button
-              onClick={handleStartFreshDiscovery}
-              className="w-full py-4 bg-black text-[#FFE600] hover:bg-zinc-800 active:translate-x-[2px] active:translate-y-[2px] border-2 border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_#FFE600] active:shadow-none flex items-center justify-center space-x-2 transition-all"
-            >
-              <RotateCcw size={18} strokeWidth={3} />
-              <span>YENİ {targetWordsCount} KELİME BUL (FLASH KART)</span>
-            </button>
-          )}
+          <button
+            onClick={handleStartFreshDiscovery}
+            className="w-full py-4 bg-[#FFE600] text-black hover:bg-[#ffd700] active:translate-x-[2px] active:translate-y-[2px] border-2 border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_#000] active:shadow-none flex items-center justify-center space-x-2 transition-all"
+          >
+            <Sparkles size={18} strokeWidth={2.5} />
+            <span>{isExtraLearnCompleted ? 'YİNE DE FAZLADAN ÖĞRENMEYE DEVAM ET' : 'FAZLADAN ÖĞRENMEYE DEVAM ET'}</span>
+          </button>
           <button
             onClick={onClose}
-            className="w-full py-3.5 bg-white text-black hover:bg-zinc-100 active:translate-x-[2px] active:translate-y-[2px] border-2 border-black font-black uppercase text-sm shadow-[3px_3px_0px_0px_#000] active:shadow-none transition-all"
+            className="w-full py-3.5 bg-black text-[#FFE600] hover:bg-zinc-800 active:translate-x-[2px] active:translate-y-[2px] border-2 border-black font-black uppercase text-sm shadow-[3px_3px_0px_0px_#FFE600] active:shadow-none transition-all"
           >
             ANA SAYFAYA DÖN
           </button>

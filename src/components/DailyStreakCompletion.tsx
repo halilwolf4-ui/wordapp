@@ -12,6 +12,8 @@ interface Props {
   onClose: () => void;
   onStartExtraReview?: () => void;
   isExtraCompleted?: boolean;
+  onStartExtraLearn?: () => void;
+  isExtraLearnCompleted?: boolean;
 }
 
 const STREAK_BADGES = [
@@ -32,7 +34,9 @@ export const DailyStreakCompletion: React.FC<Props> = ({
   earnedFreeze,
   onClose,
   onStartExtraReview,
-  isExtraCompleted
+  isExtraCompleted,
+  onStartExtraLearn,
+  isExtraLearnCompleted
 }) => {
   const [badgePage, setBadgePage] = useState(0);
   const itemsPerPage = 4;
@@ -113,6 +117,8 @@ export const DailyStreakCompletion: React.FC<Props> = ({
         <p className="text-xs font-bold text-zinc-800 uppercase tracking-wide">
           {isExtraCompleted
             ? 'ÖĞRENDİĞİN TÜM KELİMELERİ PEKİŞTİRDİN. SERİN VE AŞAMALARIN KORUNDU!'
+            : isExtraLearnCompleted
+            ? 'HARİKA! HEDEFİNİN ÜZERİNDE FAZLADAN KELİMELER ÖĞRENDİN.'
             : 'TEBRİKLER! BUGÜNKÜ GÖREVİNİ BAŞARIYLA TAMAMLADIN.'}
         </p>
       </div>
@@ -245,6 +251,15 @@ export const DailyStreakCompletion: React.FC<Props> = ({
 
       {/* 5. Action Buttons */}
       <div className="pt-2 space-y-2.5">
+        {onStartExtraLearn && (
+          <button
+            onClick={onStartExtraLearn}
+            className="w-full py-3.5 bg-[#FFE600] hover:bg-[#ffd700] text-black active:translate-x-[2px] active:translate-y-[2px] font-black uppercase tracking-wider text-sm border-2 border-black shadow-[4px_4px_0px_0px_#000] active:shadow-none transition-all flex items-center justify-center space-x-2"
+          >
+            <Sparkles size={18} strokeWidth={2.5} />
+            <span>{isExtraLearnCompleted ? 'YİNE DE FAZLADAN ÖĞRENMEYE DEVAM ET' : 'FAZLADAN ÖĞRENMEYE DEVAM ET'}</span>
+          </button>
+        )}
         {onStartExtraReview && (
           <button
             onClick={onStartExtraReview}
@@ -258,7 +273,7 @@ export const DailyStreakCompletion: React.FC<Props> = ({
           onClick={onClose}
           className="w-full py-3 bg-black text-[#FFE600] hover:bg-zinc-900 active:translate-x-[2px] active:translate-y-[2px] font-black uppercase tracking-wider text-xs border-2 border-black shadow-[3px_3px_0px_0px_#FFE600] active:shadow-none transition-all flex items-center justify-center space-x-2"
         >
-          <span>{onStartExtraReview ? 'ANA SAYFAYA DÖN' : 'DEVAM ET'}</span>
+          <span>{onStartExtraReview || onStartExtraLearn ? 'ANA SAYFAYA DÖN' : 'DEVAM ET'}</span>
         </button>
       </div>
     </div>
