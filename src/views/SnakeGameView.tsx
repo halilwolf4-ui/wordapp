@@ -19,8 +19,6 @@ import {
   RotateCcw,
   Zap,
   Play,
-  Sliders,
-  X,
   Clock,
   Flame,
   Award,
@@ -75,9 +73,8 @@ export const SnakeGameView: React.FC<Props> = ({
     };
   }, []);
 
-  // Config state (allows runtime tweaking in dev / debug drawer)
-  const [config, setConfig] = useState<SnakeGameConfig>(DEFAULT_SNAKE_CONFIG);
-  const [showDebug, setShowDebug] = useState(false);
+  // Fixed Snake Game config (120s duration)
+  const config = DEFAULT_SNAKE_CONFIG;
 
   // Game states
   const [gameState, setGameState] = useState<'ready' | 'playing' | 'gameover'>('ready');
@@ -654,110 +651,8 @@ export const SnakeGameView: React.FC<Props> = ({
             <Zap className="w-3 h-3" />
             <span className="text-[11px]">{speedMultiplier.toFixed(2)}x</span>
           </div>
-
-          <button
-            onClick={() => setShowDebug(prev => !prev)}
-            className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/15 flex items-center justify-center text-slate-300"
-            title="Ayar / Test Paneli"
-          >
-            <Sliders className="w-3.5 h-3.5" />
-          </button>
         </div>
       </div>
-
-      {/* DEBUG PANEL */}
-      {showDebug && (
-        <div className="absolute top-10 inset-x-0 bg-[#172033] border-b border-emerald-500/30 p-3 z-30 text-xs text-slate-200 shadow-2xl">
-          <div className="max-w-md mx-auto space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-emerald-400">🔧 Canlı Test & Serpentine Config</span>
-              <button onClick={() => setShowDebug(false)} className="text-slate-400">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-[11px]">
-              <div>
-                <label>Mesafe: {displayDistance}s</label>
-                <input
-                  type="range"
-                  min="0"
-                  max={config.maxDistance}
-                  value={displayDistance}
-                  onChange={e => {
-                    const val = Number(e.target.value);
-                    distanceRef.current = val;
-                    visualDistanceRef.current = val;
-                    setDisplayDistance(val);
-                  }}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label>Mesafe Tavanı: {config.maxDistance}s</label>
-                <input
-                  type="number"
-                  min="60"
-                  max="300"
-                  value={config.maxDistance}
-                  onChange={e => setConfig(prev => ({ ...prev, maxDistance: Number(e.target.value) }))}
-                  className="w-full bg-black/40 rounded px-1.5 py-0.5"
-                />
-              </div>
-              <div>
-                <label>Gövde: {config.snakeBodySec}s</label>
-                <input
-                  type="range"
-                  min="4"
-                  max="60"
-                  value={config.snakeBodySec}
-                  onChange={e => setConfig(prev => ({ ...prev, snakeBodySec: Number(e.target.value) }))}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label>Max Soru / Kelime: {config.maxAsksPerWord}</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="4"
-                  value={config.maxAsksPerWord}
-                  onChange={e => setConfig(prev => ({ ...prev, maxAsksPerWord: Number(e.target.value) }))}
-                  className="w-full bg-black/40 rounded px-1.5 py-0.5"
-                />
-              </div>
-              <div>
-                <label>Tekrar Aralığı: {config.retryGapMin}-{config.retryGapMax}</label>
-                <div className="flex gap-1">
-                  <input
-                    type="number"
-                    min="3"
-                    max="15"
-                    value={config.retryGapMin}
-                    onChange={e => setConfig(prev => ({ ...prev, retryGapMin: Number(e.target.value) }))}
-                    className="w-1/2 bg-black/40 rounded px-1 text-[10px]"
-                  />
-                  <input
-                    type="number"
-                    min="5"
-                    max="20"
-                    value={config.retryGapMax}
-                    onChange={e => setConfig(prev => ({ ...prev, retryGapMax: Number(e.target.value) }))}
-                    className="w-1/2 bg-black/40 rounded px-1 text-[10px]"
-                  />
-                </div>
-              </div>
-              <div className="flex items-end">
-                <button
-                  onClick={() => setConfig(DEFAULT_SNAKE_CONFIG)}
-                  className="w-full py-1 bg-amber-500/20 text-amber-300 rounded text-[10px] font-bold"
-                >
-                  Varsayılana Sıfırla
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 2. THE SERPENTINE ROAD ARENA (~45% of visible height, min 200px) */}
       <div
