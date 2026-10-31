@@ -209,12 +209,12 @@ export interface SerpentinePoint {
 
 /**
  * Calculates head position (x, y, angle) along the serpentine path according to distance:
- * - At distance = 60s: head is at start of Row 0 (360, 20) facing left (180 deg)
+ * - At distance = startDist (default 120s): head is at start of Row 0 (360, 20) facing left (180 deg)
  * - At distance = 0s: head reached player at end of Row 5 (360, 220) facing right (0 deg)
- * - At distance > 60s (up to 120s): head is in the visible right entrance buffer (x = 360 -> 430)
+ * - At distance > startDist: head is in the visible right entrance buffer (x = 360 -> 430)
  */
 export function getSerpentinePointAtTime(distance: number, config: SnakeGameConfig): SerpentinePoint {
-  const startDist = config.initialDistance; // 60
+  const startDist = config.initialDistance;
   const t = startDist - distance; // elapsed progress in seconds
 
   const numRows = config.pathRows;
@@ -226,11 +226,11 @@ export function getSerpentinePointAtTime(distance: number, config: SnakeGameConf
   const straightSec = Math.max(1, startDist - totalTurnSec);
   const rowSec = straightSec / numRows;
 
-  // 1. Visible right entrance zone (distance > 60s, up to 120s)
+  // 1. Visible right entrance zone (distance > startDist)
   if (t < 0) {
-    const overflowSec = Math.min(60, -t);
-    // Move head smoothly rightwards from 360 up to 430 as distance increases from 60 to 120
-    const x = 360 + (overflowSec / 60) * 70;
+    const overflowSec = Math.min(startDist, -t);
+    // Move head smoothly rightwards from 360 up to 430 as distance increases
+    const x = 360 + (overflowSec / startDist) * 70;
     return { x, y: 20, angle: 180 };
   }
 

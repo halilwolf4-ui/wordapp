@@ -311,7 +311,7 @@ export const SnakeGameView: React.FC<Props> = ({
       }
 
       if (snakeHeadRef.current) {
-        if (vDist <= 60 && roadPathRef.current) {
+        if (vDist <= config.initialDistance && roadPathRef.current) {
           try {
             const pt = roadPathRef.current.getPointAtLength(headDistOnPath);
             const ptNext = roadPathRef.current.getPointAtLength(Math.min(totalLen, headDistOnPath + 1));
@@ -327,8 +327,8 @@ export const SnakeGameView: React.FC<Props> = ({
             entranceLineRef.current.style.display = 'none';
           }
         } else {
-          const overflowSec = Math.min(60, vDist - 60);
-          const headX = 360 + (overflowSec / 60) * 70;
+          const overflowSec = Math.min(config.initialDistance, vDist - config.initialDistance);
+          const headX = 360 + (overflowSec / config.initialDistance) * 70;
           snakeHeadRef.current.setAttribute(
             'transform',
             `translate(${headX}, 20) rotate(180)`
@@ -681,7 +681,7 @@ export const SnakeGameView: React.FC<Props> = ({
                 <input
                   type="range"
                   min="0"
-                  max="120"
+                  max={config.maxDistance}
                   value={displayDistance}
                   onChange={e => {
                     const val = Number(e.target.value);
@@ -697,7 +697,7 @@ export const SnakeGameView: React.FC<Props> = ({
                 <input
                   type="number"
                   min="60"
-                  max="180"
+                  max="300"
                   value={config.maxDistance}
                   onChange={e => setConfig(prev => ({ ...prev, maxDistance: Number(e.target.value) }))}
                   className="w-full bg-black/40 rounded px-1.5 py-0.5"
@@ -995,7 +995,7 @@ export const SnakeGameView: React.FC<Props> = ({
               className="w-full py-3 rounded-xl bg-gradient-to-r from-[#22C55E] to-[#16A34A] text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
             >
               <Play className="w-4 h-4 fill-current" />
-              Savaşı Başlat (60s)
+              Savaşı Başlat ({config.initialDistance}s)
             </button>
           </div>
         )}

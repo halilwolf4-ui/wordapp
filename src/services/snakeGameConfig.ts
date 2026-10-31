@@ -1,6 +1,6 @@
 export interface SnakeGameConfig {
-  initialDistance: number;       // Saniye cinsinden başlangıç mesafesi (default: 60)
-  maxDistance: number;           // Mesafe tavanı (default: 120)
+  initialDistance: number;       // Saniye cinsinden başlangıç mesafesi (default: 120)
+  maxDistance: number;           // Mesafe tavanı (default: 240)
   minDistance: number;           // Oyun bitiş mesafesi (default: 0)
   
   initialSpeedMultiplier: number;// Başlangıç hız çarpanı (default: 1.0)
@@ -56,8 +56,8 @@ export interface SnakeGameConfig {
 }
 
 export const DEFAULT_SNAKE_CONFIG: SnakeGameConfig = {
-  initialDistance: 60,
-  maxDistance: 120, // 90'dan 120'ye çıkarıldı
+  initialDistance: 120,
+  maxDistance: 240,
   minDistance: 0,
 
   initialSpeedMultiplier: 1.0,
