@@ -20,8 +20,10 @@ import { StatsView } from './views/StatsView';
 import { SettingsView } from './views/SettingsView';
 import { SpeedRoundView } from './views/SpeedRoundView';
 import { PassaparolaView } from './views/PassaparolaView';
+import { SnakeGameView } from './views/SnakeGameView';
 import { ClozeTestView } from './views/ClozeTestView';
 import { YdsYokdilView } from './views/YdsYokdilView';
+import { SecretWordView } from './views/SecretWordView';
 
 export const App: React.FC = () => {
   // Initialization state
@@ -42,8 +44,10 @@ export const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSpeedRoundOpen, setIsSpeedRoundOpen] = useState(false);
   const [isPassaparolaOpen, setIsPassaparolaOpen] = useState(false);
+  const [isSnakeGameOpen, setIsSnakeGameOpen] = useState(false);
   const [isClozeTestOpen, setIsClozeTestOpen] = useState(false);
   const [isYdsYokdilOpen, setIsYdsYokdilOpen] = useState(false);
+  const [isSecretWordOpen, setIsSecretWordOpen] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   // Keyboard awareness listener with debouncing to prevent frame drops
@@ -807,6 +811,7 @@ export const App: React.FC = () => {
   const handleStartLearn = useCallback(() => setCurrentTab('learn'), []);
   const handleStartSpeedRound = useCallback(() => setIsSpeedRoundOpen(true), []);
   const handleStartPassaparola = useCallback(() => setIsPassaparolaOpen(true), []);
+  const handleStartSnakeGame = useCallback(() => setIsSnakeGameOpen(true), []);
   const handleStartClozeTest = useCallback(() => setIsClozeTestOpen(true), []);
   const handleStartYdsYokdil = useCallback(() => setIsYdsYokdilOpen(true), []);
   const handleOpenSettings = useCallback(() => setIsSettingsOpen(true), []);
@@ -839,7 +844,7 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen min-h-[100dvh] bg-[#FDFBF7] text-black flex flex-col selection:bg-[#FFE600] selection:text-black">
       {/* 7-Day Backup Reminder - Only on Home tab, never during active tests */}
-      {currentTab === 'home' && !isKeyboardVisible && !isSpeedRoundOpen && !isPassaparolaOpen && !isClozeTestOpen && !isYdsYokdilOpen && (
+      {currentTab === 'home' && !isKeyboardVisible && !isSpeedRoundOpen && !isPassaparolaOpen && !isSnakeGameOpen && !isClozeTestOpen && !isYdsYokdilOpen && (
         <BackupReminderBanner
           lastBackupDate={settings.lastBackupDate}
           onBackupCompleted={loadData}
@@ -847,7 +852,7 @@ export const App: React.FC = () => {
       )}
 
       {/* Sticky Top Header - Hidden during active learning, review, overlays, or keyboard typing */}
-      {!isKeyboardVisible && currentTab !== 'learn' && currentTab !== 'review' && !isSpeedRoundOpen && !isPassaparolaOpen && !isClozeTestOpen && !isYdsYokdilOpen && (
+      {!isKeyboardVisible && currentTab !== 'learn' && currentTab !== 'review' && !isSpeedRoundOpen && !isPassaparolaOpen && !isSnakeGameOpen && !isClozeTestOpen && !isYdsYokdilOpen && (
         <Header
           profile={profile}
           isDark={settings.theme === 'dark'}
@@ -899,6 +904,23 @@ export const App: React.FC = () => {
             }}
             onClose={() => setIsPassaparolaOpen(false)}
           />
+        ) : isSnakeGameOpen ? (
+          <SnakeGameView
+            allWords={allWords}
+            progressMap={progressMap}
+            onAnswerWord={async (wordId, isCorrect, comboCount, userMistake) => {
+              // Typed answer without multiple choices: high quality SRS entry
+              await handleReviewWordAnswer(wordId, isCorrect, false, userMistake, comboCount);
+            }}
+            onAddXp={async (amount) => {
+              const newXp = profile.xp + amount;
+              const newLevel = calculateLevel(newXp);
+              const updatedProf = { ...profile, xp: newXp, level: newLevel };
+              await db.profile.put(updatedProf);
+              setProfile(updatedProf);
+            }}
+            onClose={() => setIsSnakeGameOpen(false)}
+          />
         ) : isYdsYokdilOpen ? (
           <YdsYokdilView
             allWords={allWords}
@@ -931,6 +953,20 @@ export const App: React.FC = () => {
             onAddCustomWord={handleAddCustomWord}
             onClose={() => setIsClozeTestOpen(false)}
           />
+        ) : isSecretWordOpen ? (
+          <SecretWordView
+            allWords={allWords}
+            progressMap={progressMap}
+            onReviewAnswer={handleReviewWordAnswer}
+            onAddXp={async (amount) => {
+              const newXp = profile.xp + amount;
+              const newLevel = calculateLevel(newXp);
+              const updatedProf = { ...profile, xp: newXp, level: newLevel };
+              await db.profile.put(updatedProf);
+              setProfile(updatedProf);
+            }}
+            onClose={() => setIsSecretWordOpen(false)}
+          />
         ) : (
           /* TAB VIEWS (Kept mounted to preserve learning session state and active questions) */
           <div>
@@ -955,8 +991,10 @@ export const App: React.FC = () => {
                 onStartLearn={handleStartLearn}
                 onStartSpeedRound={handleStartSpeedRound}
                 onStartPassaparola={handleStartPassaparola}
+                onStartSnakeGame={handleStartSnakeGame}
                 onStartClozeTest={handleStartClozeTest}
                 onStartYdsYokdil={handleStartYdsYokdil}
+                onStartSecretWord={() => setIsSecretWordOpen(true)}
                 onOpenSettings={handleOpenSettings}
               />
             </div>
@@ -1030,8 +1068,8 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* Fixed Bottom Navigation - Hidden during active learning, review, passaparola, cloze test, or keyboard typing */}
-      {!isSettingsOpen && !isSpeedRoundOpen && !isPassaparolaOpen && !isClozeTestOpen && !isKeyboardVisible && currentTab !== 'learn' && currentTab !== 'review' && (
+      {/* Fixed Bottom Navigation - Hidden during active learning, review, passaparola, snake game, cloze test, or keyboard typing */}
+      {!isSettingsOpen && !isSpeedRoundOpen && !isPassaparolaOpen && !isSnakeGameOpen && !isClozeTestOpen && !isKeyboardVisible && currentTab !== 'learn' && currentTab !== 'review' && (
         <Navbar
           currentTab={currentTab}
           onTabChange={(tab) => {
@@ -1039,6 +1077,7 @@ export const App: React.FC = () => {
             setIsYdsYokdilOpen(false);
             setIsSpeedRoundOpen(false);
             setIsPassaparolaOpen(false);
+            setIsSnakeGameOpen(false);
             setIsClozeTestOpen(false);
             setCurrentTab(tab);
           }}

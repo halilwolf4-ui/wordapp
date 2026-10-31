@@ -26,8 +26,10 @@ interface Props {
   onStartLearn: () => void;
   onStartSpeedRound: () => void;
   onStartPassaparola: () => void;
+  onStartSnakeGame: () => void;
   onStartClozeTest: () => void;
   onStartYdsYokdil: () => void;
+  onStartSecretWord?: () => void;
   onOpenSettings?: () => void;
 }
 
@@ -48,8 +50,10 @@ export const HomeView: React.FC<Props> = React.memo(({
   onStartLearn,
   onStartSpeedRound,
   onStartPassaparola,
+  onStartSnakeGame,
   onStartClozeTest,
   onStartYdsYokdil,
+  onStartSecretWord,
   onOpenSettings
 }) => {
   const [gender, setGender] = useCharacterGender();
@@ -382,6 +386,50 @@ export const HomeView: React.FC<Props> = React.memo(({
         </div>
 
         <div className="space-y-2.5">
+          {onStartSecretWord && (
+            <button
+              onClick={onStartSecretWord}
+              className="w-full rounded-[20px] bg-gradient-to-r from-[#F59E0B] to-[#D97706] hover:brightness-105 px-5 py-4 text-left text-white relative overflow-hidden flex items-center justify-between shadow-[0_8px_20px_-6px_rgba(245,158,11,0.45)]"
+            >
+              <div className="relative z-10">
+                <span className="text-[16px] font-extrabold block leading-tight flex items-center gap-1.5">
+                  <span>Gizli Kelime</span>
+                  <span className="text-[10px] font-black uppercase bg-black/30 px-2 py-0.5 rounded-full text-amber-200">
+                    Özel Bulmaca
+                  </span>
+                </span>
+                <span className="text-xs font-medium text-white/90 mt-0.5 block">
+                  Kendi Kelimelerinle Çapraz Bulmaca • Gizli Kelimeyi Bul
+                </span>
+              </div>
+
+              <div className="w-16 h-12 flex items-center justify-center -mr-1 text-3xl shrink-0 drop-shadow-md">
+                🗝️
+              </div>
+            </button>
+          )}
+
+          <button
+            onClick={onStartSnakeGame}
+            className="w-full rounded-[20px] bg-gradient-to-r from-[#10B981] to-[#059669] hover:brightness-105 px-5 py-4 text-left text-white relative overflow-hidden flex items-center justify-between shadow-[0_8px_20px_-6px_rgba(16,185,129,0.45)]"
+          >
+            <div className="relative z-10">
+              <span className="text-[16px] font-extrabold block leading-tight flex items-center gap-1.5">
+                <span>Yılan Savaşı</span>
+                <span className="text-[10px] font-black uppercase bg-black/30 px-2 py-0.5 rounded-full text-emerald-200">
+                  Yeni
+                </span>
+              </span>
+              <span className="text-xs font-medium text-white/90 mt-0.5 block">
+                Klavyeyle Yazım • Yılan Yakalamadan Kelimeleri Kurtar
+              </span>
+            </div>
+
+            <div className="w-16 h-12 flex items-center justify-center -mr-1 text-3xl shrink-0 drop-shadow-md">
+              🐍
+            </div>
+          </button>
+
           <button
             onClick={onStartPassaparola}
             className="w-full rounded-[20px] bg-[#52C465] hover:bg-[#47B659] px-5 py-4 text-left text-white relative overflow-hidden flex items-center justify-between shadow-[0_8px_20px_-6px_rgba(82,196,101,0.45)]"
