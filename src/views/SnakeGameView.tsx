@@ -3,7 +3,6 @@ import { Word, Progress } from '../types';
 import { sound } from '../services/audio';
 import { fireCelebration } from '../components/Confetti';
 import {
-  SnakeGameConfig,
   DEFAULT_SNAKE_CONFIG
 } from '../services/snakeGameConfig';
 import {
