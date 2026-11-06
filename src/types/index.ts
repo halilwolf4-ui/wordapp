@@ -50,6 +50,7 @@ export interface UserSettings {
   prioritizeCustomWords: boolean;
   enabledCategories: string[];
   surpriseMasteredCheck: boolean;
+  soundEnabled?: boolean;
   soundEffects: boolean;
   vibration: boolean;
   speechSpeed: number;
@@ -73,6 +74,10 @@ export interface UserProfile {
   frozenDates?: string[]; // list of dates saved by a freeze
   consecutiveCompletedDays?: number; // 0-5 consecutive days toward next freeze
   lastCompletedDate?: string; // last date user completed a daily study session
+  highScoreSnake?: number;
+  totalSnakeWords?: number;
+  secretWordPuzzlesSolved?: number;
+  secretWordNoHintSolves?: number;
 }
 
 export interface DailyLog {
@@ -90,7 +95,7 @@ export interface BadgeDefinition {
   title: string;
   description: string;
   icon: string;
-  category?: 'words' | 'streak' | 'speed' | 'master' | 'special';
+  category?: 'words' | 'streak' | 'speed' | 'master' | 'special' | 'games';
 }
 
 export interface BackupData {

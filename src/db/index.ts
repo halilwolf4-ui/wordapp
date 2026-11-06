@@ -1,5 +1,6 @@
 import Dexie, { Table } from 'dexie';
 import { Word, Progress, UserSettings, UserProfile, DailyLog } from '../types';
+import { baseKey } from '../utils/wordMatcher';
 
 export class WordDatabase extends Dexie {
   words!: Table<Word, number>;
@@ -63,6 +64,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
     'top1000', 'top3000', 'town', 'custom'
   ],
   surpriseMasteredCheck: true,
+  soundEnabled: true,
   soundEffects: true,
   vibration: true,
   speechSpeed: 0.9,
@@ -85,7 +87,11 @@ export const DEFAULT_PROFILE: UserProfile = {
   streakFreezes: 0,
   frozenDates: [],
   consecutiveCompletedDays: 0,
-  lastCompletedDate: ''
+  lastCompletedDate: '',
+  highScoreSnake: 0,
+  totalSnakeWords: 0,
+  secretWordPuzzlesSolved: 0,
+  secretWordNoHintSolves: 0
 };
 
 /**
@@ -245,17 +251,16 @@ export async function syncYokdilCategoriesToDb(database: WordDatabase = db): Pro
     if (yokdilJsonWords.length === 0) return;
 
     const allDbWords = await database.words.toArray();
-    const clean = (s: string) => s.toLowerCase().trim().replace(/^to\s+/i, '');
     const dbByEn = new Map<string, Word>();
     let maxId = 0;
     for (const w of allDbWords) {
-      dbByEn.set(clean(w.en), w);
+      dbByEn.set(baseKey(w.en), w);
       if (w.id > maxId) maxId = w.id;
     }
 
     const toPut: Word[] = [];
     for (const jw of yokdilJsonWords) {
-      const key = clean(jw.en);
+      const key = baseKey(jw.en);
       const existing = dbByEn.get(key);
       if (existing) {
         const cats = new Set(existing.categories || []);

@@ -24,6 +24,7 @@ interface Props {
   progressMap: Map<number, Progress>;
   onReviewAnswer?: (wordId: number, isCorrect: boolean, isPartial: boolean) => Promise<void>;
   onAddXp?: (amount: number) => Promise<void>;
+  onPuzzleSolved?: (stats: { isNoHint: boolean }) => Promise<void>;
   onClose: () => void;
 }
 
@@ -32,6 +33,7 @@ export const SecretWordView: React.FC<Props> = ({
   progressMap,
   onReviewAnswer,
   onAddXp,
+  onPuzzleSolved,
   onClose
 }) => {
   // Session Manager (caches index and pre-generates next puzzle)
@@ -135,12 +137,18 @@ export const SecretWordView: React.FC<Props> = ({
     setIsGameOver(true);
     setPuzzlesSolvedCount(prev => prev + 1);
 
+    const isNoHint = rowRevealedLetterIndices.size === 0 && revealedRowIds.size === 0;
+
     // Bonus XP for full puzzle completion
     const bonusXp = 30;
     if (onAddXp) {
       await onAddXp(bonusXp);
     }
     setSessionXpEarned(prev => prev + bonusXp);
+
+    if (onPuzzleSolved) {
+      await onPuzzleSolved({ isNoHint });
+    }
   };
 
   // Give a hint for current active row (reveals one letter in the row, excluding the vertical spine)

@@ -65,6 +65,19 @@ function getBadgeProgress(
       return { current: has, max: 1, label: `${has}/1` };
     }
 
+    // Yılan Savaşı
+    case 'snake_score_50': return { current: Math.min(50, profile.highScoreSnake || 0), max: 50, label: `${Math.min(50, profile.highScoreSnake || 0)}/50` };
+    case 'snake_score_150': return { current: Math.min(150, profile.highScoreSnake || 0), max: 150, label: `${Math.min(150, profile.highScoreSnake || 0)}/150` };
+    case 'snake_words_50': return { current: Math.min(50, profile.totalSnakeWords || 0), max: 50, label: `${Math.min(50, profile.totalSnakeWords || 0)}/50` };
+
+    // Gizli Kelime
+    case 'secret_puzzles_5': return { current: Math.min(5, profile.secretWordPuzzlesSolved || 0), max: 5, label: `${Math.min(5, profile.secretWordPuzzlesSolved || 0)}/5` };
+    case 'secret_puzzles_25': return { current: Math.min(25, profile.secretWordPuzzlesSolved || 0), max: 25, label: `${Math.min(25, profile.secretWordPuzzlesSolved || 0)}/25` };
+    case 'secret_no_hints': {
+      const has = profile.unlockedBadges.includes('secret_no_hints') ? 1 : (profile.secretWordNoHintSolves || 0) > 0 ? 1 : 0;
+      return { current: has, max: 1, label: `${has}/1` };
+    }
+
     default: return null;
   }
 }
@@ -98,6 +111,11 @@ const CATEGORY_LIQUID: Record<
     waveFill: '#F472B6',
     barGradient: 'from-[#F472B6] to-[#EC4899]',
     pillText: 'text-[#DB2777] dark:text-[#F472B6]'
+  },
+  games: {
+    waveFill: '#10B981',
+    barGradient: 'from-[#10B981] to-[#059669]',
+    pillText: 'text-[#059669] dark:text-[#34D399]'
   }
 };
 
@@ -248,7 +266,7 @@ export const StatsView: React.FC<Props> = React.memo(({
   allProgress = []
 }) => {
   const today = getEffectiveDate();
-  const [badgeCategory, setBadgeCategory] = useState<'all' | 'words' | 'streak' | 'speed' | 'master' | 'special'>('all');
+  const [badgeCategory, setBadgeCategory] = useState<'all' | 'words' | 'streak' | 'speed' | 'master' | 'special' | 'games'>('all');
 
   const logsMap = new Map<string, DailyLog>();
   dailyLogs.forEach(l => logsMap.set(l.date, l));
@@ -506,6 +524,7 @@ export const StatsView: React.FC<Props> = React.memo(({
             { id: 'streak', label: '🔥 Seriler' },
             { id: 'speed', label: '⚡ Hızlı Tur' },
             { id: 'master', label: '👑 Master' },
+            { id: 'games', label: '🎮 Oyunlar' },
             { id: 'special', label: '✨ Özel' }
           ].map((cat) => (
             <button

@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { db, initializeDatabase, deduplicateDatabaseWords, syncYokdilCategoriesToDb, DEFAULT_SETTINGS, DEFAULT_PROFILE, DEFAULT_CATEGORY_NAMES } from './db';
 import { Word, Progress, UserSettings, UserProfile, DailyLog } from './types';
-import { selectDailyReviewQueue, selectDailyNewWordsQueue, calculateNextProgress } from './services/srsEngine';
+import { matchWordCandidate } from './utils/wordMatcher';
+import { selectDailyReviewQueue, selectDailyNewWordsQueue, decideReviewAnswer } from './services/srsEngine';
 import { getEffectiveDate, daysBetween, addDays } from './services/dateUtils';
 import { calculateLevel, getComboMultiplier, checkUnlockedBadges } from './services/gamification';
 import { sound } from './services/audio';
+import { setSpeechEnabled } from './services/speech';
 import { fireLevelUp } from './components/Confetti';
 
 import { Header } from './components/Header';
@@ -49,6 +51,11 @@ export const App: React.FC = () => {
   const [isYdsYokdilOpen, setIsYdsYokdilOpen] = useState(false);
   const [isSecretWordOpen, setIsSecretWordOpen] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [ambiguousSelection, setAmbiguousSelection] = useState<{
+    wordData: Omit<Word, 'id'>;
+    candidates: Word[];
+    silent?: boolean;
+  } | null>(null);
 
   // Keyboard awareness listener with debouncing to prevent frame drops
   useEffect(() => {
@@ -133,17 +140,7 @@ export const App: React.FC = () => {
     await deduplicateDatabaseWords(db);
     await syncYokdilCategoriesToDb(db);
     const loadedWords = await db.words.toArray();
-    let loadedProgress = await db.progress.toArray();
-
-    // If there are unreviewed pre-seeded records (never actually reviewed in app),
-    // remove them from progress so user's own words appear in "Öğren" with top priority!
-    const unreviewedSeeded = loadedProgress.filter(
-      p => p.lastReviewDate === undefined && p.totalWrong === 0 && p.lapses === 0
-    );
-    if (unreviewedSeeded.length > 0) {
-      await db.progress.bulkDelete(unreviewedSeeded.map(p => p.wordId));
-      loadedProgress = await db.progress.toArray();
-    }
+    const loadedProgress = await db.progress.toArray();
 
     const loadedSettings = (await db.settings.get(1)) || DEFAULT_SETTINGS;
     const loadedProfile = (await db.profile.get(1)) || DEFAULT_PROFILE;
@@ -159,7 +156,11 @@ export const App: React.FC = () => {
       speedScore: loadedProfile.highScoreSpeedRound,
       masteredCount: masteredCnt,
       comboCount: loadedProfile.maxCombo || 0,
-      hasCustomWord: loadedWords.some(w => !!w.isCustom)
+      hasCustomWord: loadedWords.some(w => !!w.isCustom),
+      highScoreSnake: loadedProfile.highScoreSnake || 0,
+      totalSnakeWords: loadedProfile.totalSnakeWords || 0,
+      secretWordPuzzlesSolved: loadedProfile.secretWordPuzzlesSolved || 0,
+      secretWordNoHintSolves: loadedProfile.secretWordNoHintSolves || 0
     });
     if (syncedBadges.length !== (loadedProfile.unlockedBadges?.length || 0)) {
       loadedProfile.unlockedBadges = syncedBadges;
@@ -172,7 +173,9 @@ export const App: React.FC = () => {
     setProfile(loadedProfile);
     setDailyLogs(loadedLogs);
 
-    sound.setPreferences(loadedSettings.soundEffects, loadedSettings.vibration);
+    const isMasterSound = loadedSettings.soundEnabled !== false;
+    sound.setPreferences(loadedSettings.soundEffects, loadedSettings.vibration, isMasterSound);
+    setSpeechEnabled(isMasterSound);
   }, []);
 
   // First-time database setup
@@ -341,7 +344,13 @@ export const App: React.FC = () => {
     isCustomWordCreated: boolean = false,
     speedScore?: number,
     masteredCount?: number,
-    comboCount?: number
+    comboCount?: number,
+    gameStats?: {
+      highScoreSnake?: number;
+      totalSnakeWords?: number;
+      secretWordPuzzlesSolved?: number;
+      secretWordNoHintSolves?: number;
+    }
   ): string[] => {
     return checkUnlockedBadges({
       currentBadges: currentProf.unlockedBadges || [],
@@ -350,7 +359,11 @@ export const App: React.FC = () => {
       speedScore: speedScore ?? currentProf.highScoreSpeedRound,
       masteredCount,
       comboCount: Math.max(comboCount || 0, currentProf.maxCombo || 0),
-      hasCustomWord: isCustomWordCreated || allWords.some(w => !!w.isCustom)
+      hasCustomWord: isCustomWordCreated || allWords.some(w => !!w.isCustom),
+      highScoreSnake: gameStats?.highScoreSnake ?? currentProf.highScoreSnake ?? 0,
+      totalSnakeWords: gameStats?.totalSnakeWords ?? currentProf.totalSnakeWords ?? 0,
+      secretWordPuzzlesSolved: gameStats?.secretWordPuzzlesSolved ?? currentProf.secretWordPuzzlesSolved ?? 0,
+      secretWordNoHintSolves: gameStats?.secretWordNoHintSolves ?? currentProf.secretWordNoHintSolves ?? 0
     });
   };
 
@@ -466,14 +479,26 @@ export const App: React.FC = () => {
   // Handle Learn mode word completion (passed both multiple choice and typing)
   const handleLearnWordComplete = async (word: Word, isCorrect: boolean, comboCount: number = 1) => {
     const existingProg = await db.progress.get(word.id);
-    // Enters the 21-day repetition queue with dueDate = today so it is immediately reviewable today!
+    const isMastered = existingProg?.status === 'mastered';
+    const hasStep = (existingProg?.step || 0) > 0;
+
+    // Preserve step/streakDays if word was already mastered or step > 0
+    const preservedStep = (isMastered || hasStep) ? existingProg!.step : 0;
+    const preservedStreak = (isMastered || hasStep)
+      ? existingProg!.streakDays + (isCorrect ? 1 : 0)
+      : (isCorrect ? 1 : 0);
+    const preservedStatus = isMastered ? 'mastered' : 'learning';
+    const preservedDueDate = isMastered
+      ? (existingProg?.dueDate || addDays(today, 60))
+      : today;
+
     const nextProgress: Progress = {
       wordId: word.id,
-      step: 0,
-      streakDays: isCorrect ? 1 : 0,
-      dueDate: today,
+      step: preservedStep,
+      streakDays: preservedStreak,
+      dueDate: preservedDueDate,
       lastReviewDate: today,
-      status: 'learning',
+      status: preservedStatus,
       lapses: existingProg ? existingProg.lapses + (isCorrect ? 0 : 1) : 0,
       totalCorrect: (existingProg?.totalCorrect || 0) + (isCorrect ? 1 : 0),
       totalWrong: (existingProg?.totalWrong || 0) + (isCorrect ? 0 : 1),
@@ -486,7 +511,7 @@ export const App: React.FC = () => {
       return [...filtered, nextProgress];
     });
 
-    await recordAnswerResult(isCorrect, true, comboCount, false, false);
+    await recordAnswerResult(isCorrect, !existingProg, comboCount, false, false);
   };
 
   // Permanently mark word as known when swiped 'Biliyorum' in discovery
@@ -511,13 +536,21 @@ export const App: React.FC = () => {
   // Mark word as learning when swiped 'Bilmiyorum' in discovery
   const handleMarkWordLearning = async (word: Word) => {
     const existingProg = await db.progress.get(word.id);
+    const isMastered = existingProg?.status === 'mastered';
+    const hasStep = (existingProg?.step || 0) > 0;
+
+    // Preserve step/streakDays if word was already mastered or step > 0
+    const preservedStep = (isMastered || hasStep) ? existingProg!.step : 0;
+    const preservedStreak = (isMastered || hasStep) ? existingProg!.streakDays : 0;
+    const preservedStatus = isMastered ? 'mastered' : 'learning';
+
     const learningProg: Progress = {
       wordId: word.id,
-      step: 0,
-      streakDays: 0,
+      step: preservedStep,
+      streakDays: preservedStreak,
       dueDate: today,
-      lastReviewDate: undefined,
-      status: 'learning',
+      lastReviewDate: existingProg?.lastReviewDate,
+      status: preservedStatus,
       lapses: (existingProg?.lapses || 0) + 1,
       totalCorrect: existingProg?.totalCorrect || 0,
       totalWrong: (existingProg?.totalWrong || 0) + 1,
@@ -533,24 +566,31 @@ export const App: React.FC = () => {
     isCorrect: boolean,
     isPartial: boolean,
     lastMistake?: string,
-    comboCount: number = 1
+    comboCount: number = 1,
+    source?: 'game' | 'review'
   ) => {
     const existingProg = await db.progress.get(wordId);
-    const { nextProgress } = calculateNextProgress(existingProg || null, wordId, isCorrect, today, lastMistake);
+    const decision = decideReviewAnswer(
+      existingProg,
+      wordId,
+      isCorrect,
+      isPartial,
+      today,
+      lastMistake,
+      source
+    );
 
-    // If partial (hint used), grant partial interval step
-    if (isPartial && isCorrect && nextProgress.step > 1) {
-      nextProgress.step -= 1; // don't jump full ladder if hint was used
+    if (decision.shouldSaveProgress && decision.nextProgress) {
+      await db.progress.put(decision.nextProgress);
+      setAllProgress(prev => {
+        const filtered = prev.filter(p => p.wordId !== wordId);
+        return [...filtered, decision.nextProgress!];
+      });
     }
-    const becameMastered = isCorrect && nextProgress.status === 'mastered' && !isPartial;
 
-    await db.progress.put(nextProgress);
-    setAllProgress(prev => {
-      const filtered = prev.filter(p => p.wordId !== wordId);
-      return [...filtered, nextProgress];
-    });
-
-    await recordAnswerResult(isCorrect, false, comboCount, becameMastered, true);
+    if (decision.shouldRecordReview) {
+      await recordAnswerResult(isCorrect, false, comboCount, decision.becameMastered, true);
+    }
   };
 
   // Record single last mistake on a word (without bloating DB, only saves the latest one)
@@ -568,67 +608,94 @@ export const App: React.FC = () => {
     }
   };
 
-  // Add custom word (directly assigned to 'learning' queue, strictly prevents duplicates)
-  const handleAddCustomWord = async (wordData: Omit<Word, 'id'>, silent: boolean = false) => {
-    const cleanEn = (wordData.en || '').trim();
-    if (!cleanEn) return;
+  // Apply upsert for a resolved existing word (dictionary or custom)
+  const applyExistingWordUpsert = async (
+    targetWord: Word,
+    wordData: Omit<Word, 'id'>,
+    silent: boolean = false
+  ) => {
+    const existingProg = allProgress.find(p => p.wordId === targetWord.id);
 
-    // Check if word already exists in allWords (case-insensitive)
-    const existingWord = allWords.find(w => w.en.trim().toLowerCase() === cleanEn.toLowerCase());
+    // Merge categories with 'custom' and set isCustom: true
+    const updatedCategories = Array.from(new Set([...(targetWord.categories || []), 'custom']));
+    const updatedWord: Word = {
+      ...targetWord,
+      isCustom: true,
+      categories: updatedCategories,
+      tr: wordData.tr ? wordData.tr : targetWord.tr,
+      examples: (wordData.examples && wordData.examples.length > 0) ? wordData.examples : targetWord.examples,
+      emoji: wordData.emoji || targetWord.emoji,
+      ipa: wordData.ipa || targetWord.ipa
+    };
 
-    if (existingWord) {
-      const existingProg = allProgress.find(p => p.wordId === existingWord.id);
+    await db.words.put(updatedWord);
+    setAllWords(prev => prev.map(w => w.id === targetWord.id ? updatedWord : w));
 
-      // If already in progress (learning or mastered)
-      if (existingProg) {
+    // If word already has progress:
+    if (existingProg) {
+      if (existingProg.status === 'mastered') {
         if (!silent) {
-          alert(`"${cleanEn}" kelimesi zaten listenizde kayıtlı! Bir kelime iki kez eklenemez.`);
+          alert(`"${targetWord.en}" kelimesi zaten 'Öğrenilenler' (Mastered) listenizde kayıtlı! İlerlemeniz korundu.`);
         }
-        return;
-      }
-
-      // Word exists in dictionary but not yet in learning progress:
-      // Activate the existing word directly instead of creating a duplicate word record!
-      const updatedWord: Word = {
-        ...existingWord,
-        isCustom: true,
-        categories: Array.from(new Set([...(existingWord.categories || []), 'custom'])),
-        tr: wordData.tr ? wordData.tr : existingWord.tr,
-        examples: (wordData.examples && wordData.examples.length > 0) ? wordData.examples : existingWord.examples,
-        emoji: wordData.emoji || existingWord.emoji,
-        ipa: wordData.ipa || existingWord.ipa
-      };
-
-      await db.words.put(updatedWord);
-      setAllWords(prev => prev.map(w => w.id === existingWord.id ? updatedWord : w));
-
-      const customProgress: Progress = {
-        wordId: existingWord.id,
-        step: 0,
-        streakDays: 0,
-        dueDate: today,
-        lastReviewDate: undefined,
-        status: 'learning',
-        lapses: 0,
-        totalCorrect: 0,
-        totalWrong: 0,
-        updatedAt: Date.now()
-      };
-      await db.progress.put(customProgress);
-      setAllProgress(prev => [...prev.filter(p => p.wordId !== existingWord.id), customProgress]);
-
-      const updatedBadges = checkBadges(profile, allProgress.length + 1, profile.streak, true);
-      const updatedProf = { ...profile, unlockedBadges: updatedBadges };
-      await db.profile.put(updatedProf);
-      setProfile(updatedProf);
-
-      if (!silent) {
-        alert(`"${cleanEn}" kelimesi sözlükte mevcuttu ve 'Öğreniliyor' listenize eklendi!`);
+      } else {
+        if (!silent) {
+          alert(`"${targetWord.en}" kelimesi zaten listenizde kayıtlı, ilerlemeniz korundu.`);
+        }
       }
       return;
     }
 
-    // Completely new word
+    // Word exists in dictionary but not yet in learning progress:
+    // Create new progress record at step: 0
+    const customProgress: Progress = {
+      wordId: targetWord.id,
+      step: 0,
+      streakDays: 0,
+      dueDate: today,
+      lastReviewDate: undefined,
+      status: 'learning',
+      lapses: 0,
+      totalCorrect: 0,
+      totalWrong: 0,
+      updatedAt: Date.now()
+    };
+
+    await db.progress.put(customProgress);
+    setAllProgress(prev => [...prev.filter(p => p.wordId !== targetWord.id), customProgress]);
+
+    const updatedBadges = checkBadges(profile, allProgress.length + 1, profile.streak, true);
+    const updatedProf = { ...profile, unlockedBadges: updatedBadges };
+    await db.profile.put(updatedProf);
+    setProfile(updatedProf);
+
+    if (!silent) {
+      alert(`"${targetWord.en}" kelimesi sözlükte bulundu ve 'Öğreniliyor' listenize eklendi!`);
+    }
+  };
+
+  // Add / Upsert custom word with 4-step matching hierarchy (upsertCustomWord)
+  const handleAddCustomWord = async (wordData: Omit<Word, 'id'>, silent: boolean = false) => {
+    const cleanEn = (wordData.en || '').trim();
+    if (!cleanEn) return;
+
+    const match = matchWordCandidate(cleanEn, wordData.tr || '', allWords, progressMap);
+
+    if (match.type === 'exact' || match.type === 'single_base' || match.type === 'resolved') {
+      await applyExistingWordUpsert(match.word, wordData, silent);
+      return;
+    }
+
+    if (match.type === 'ambiguous') {
+      // Prompt user to select which meaning was intended
+      setAmbiguousSelection({
+        wordData,
+        candidates: match.candidates,
+        silent
+      });
+      return;
+    }
+
+    // Completely new word (new_word)
     const highestId = allWords.reduce((max, w) => Math.max(max, w.id), 0);
     const newId = Math.max(1000001, highestId + 1);
 
@@ -636,7 +703,7 @@ export const App: React.FC = () => {
       ...wordData,
       en: cleanEn,
       id: newId,
-      categories: ['custom'],
+      categories: Array.from(new Set([...(wordData.categories || []), 'custom'])),
       isCustom: true,
       createdAt: Date.now()
     };
@@ -734,6 +801,10 @@ export const App: React.FC = () => {
     const updated = { ...settings, ...patch };
     await db.settings.put(updated);
     setSettings(updated);
+
+    const isMasterSound = updated.soundEnabled !== false;
+    sound.setPreferences(updated.soundEffects, updated.vibration, isMasterSound);
+    setSpeechEnabled(isMasterSound);
   };
 
   // Update High Score in Speed Round
@@ -752,6 +823,76 @@ export const App: React.FC = () => {
     const updatedProf: UserProfile = {
       ...profile,
       highScoreSpeedRound: newBest,
+      unlockedBadges: updatedBadges
+    };
+    await db.profile.put(updatedProf);
+    setProfile(updatedProf);
+  };
+
+  // Handle Snake Game over
+  const handleSnakeGameOver = async (stats: { score: number; wordsCount: number }) => {
+    const newBest = Math.max(profile.highScoreSnake || 0, stats.score);
+    const newTotalWords = (profile.totalSnakeWords || 0) + stats.wordsCount;
+    const learnedCnt = allProgress.filter(p => p.status === 'learning' || p.status === 'mastered').length;
+    const masteredCnt = allProgress.filter(p => p.status === 'mastered').length;
+
+    const gameStats = {
+      highScoreSnake: newBest,
+      totalSnakeWords: newTotalWords,
+      secretWordPuzzlesSolved: profile.secretWordPuzzlesSolved || 0,
+      secretWordNoHintSolves: profile.secretWordNoHintSolves || 0
+    };
+
+    const updatedBadges = checkBadges(
+      profile,
+      learnedCnt,
+      profile.streak,
+      false,
+      undefined,
+      masteredCnt,
+      undefined,
+      gameStats
+    );
+
+    const updatedProf: UserProfile = {
+      ...profile,
+      highScoreSnake: newBest,
+      totalSnakeWords: newTotalWords,
+      unlockedBadges: updatedBadges
+    };
+    await db.profile.put(updatedProf);
+    setProfile(updatedProf);
+  };
+
+  // Handle Secret Word puzzle solved
+  const handleSecretWordPuzzleSolved = async (stats: { isNoHint: boolean }) => {
+    const newPuzzles = (profile.secretWordPuzzlesSolved || 0) + 1;
+    const newNoHintSolves = (profile.secretWordNoHintSolves || 0) + (stats.isNoHint ? 1 : 0);
+    const learnedCnt = allProgress.filter(p => p.status === 'learning' || p.status === 'mastered').length;
+    const masteredCnt = allProgress.filter(p => p.status === 'mastered').length;
+
+    const gameStats = {
+      highScoreSnake: profile.highScoreSnake || 0,
+      totalSnakeWords: profile.totalSnakeWords || 0,
+      secretWordPuzzlesSolved: newPuzzles,
+      secretWordNoHintSolves: newNoHintSolves
+    };
+
+    const updatedBadges = checkBadges(
+      profile,
+      learnedCnt,
+      profile.streak,
+      false,
+      undefined,
+      masteredCnt,
+      undefined,
+      gameStats
+    );
+
+    const updatedProf: UserProfile = {
+      ...profile,
+      secretWordPuzzlesSolved: newPuzzles,
+      secretWordNoHintSolves: newNoHintSolves,
       unlockedBadges: updatedBadges
     };
     await db.profile.put(updatedProf);
@@ -910,8 +1051,9 @@ export const App: React.FC = () => {
             progressMap={progressMap}
             onAnswerWord={async (wordId, isCorrect, comboCount, userMistake) => {
               // Typed answer without multiple choices: high quality SRS entry
-              await handleReviewWordAnswer(wordId, isCorrect, false, userMistake, comboCount);
+              await handleReviewWordAnswer(wordId, isCorrect, false, userMistake, comboCount, 'game');
             }}
+            onGameOver={handleSnakeGameOver}
             onAddXp={async (amount) => {
               const newXp = profile.xp + amount;
               const newLevel = calculateLevel(newXp);
@@ -957,7 +1099,10 @@ export const App: React.FC = () => {
           <SecretWordView
             allWords={allWords}
             progressMap={progressMap}
-            onReviewAnswer={handleReviewWordAnswer}
+            onReviewAnswer={(wordId, isCorrect, isPartial) =>
+              handleReviewWordAnswer(wordId, isCorrect, isPartial, undefined, 1, 'game')
+            }
+            onPuzzleSolved={handleSecretWordPuzzleSolved}
             onAddXp={async (amount) => {
               const newXp = profile.xp + amount;
               const newLevel = calculateLevel(newXp);
@@ -1084,6 +1229,48 @@ export const App: React.FC = () => {
           dueCount={dueQueue.length}
           newCount={newWordsQueue.length}
         />
+      )}
+
+      {/* Ambiguous Word Selection Modal */}
+      {ambiguousSelection && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white border-4 border-black w-full max-w-sm p-5 space-y-4 shadow-[8px_8px_0px_0px_#000] text-black animate-scaleUp">
+            <div className="border-b-2 border-black pb-2">
+              <h3 className="text-base font-black uppercase tracking-tight">KELİME SEÇİMİ</h3>
+              <p className="text-xs font-bold text-zinc-600 mt-0.5">
+                "{ambiguousSelection.wordData.en}" için birden fazla kayıt bulundu. Hangisini kastettin?
+              </p>
+            </div>
+
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              {ambiguousSelection.candidates.map(c => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    const chosen = c;
+                    const data = ambiguousSelection.wordData;
+                    const silent = ambiguousSelection.silent;
+                    setAmbiguousSelection(null);
+                    applyExistingWordUpsert(chosen, data, silent);
+                  }}
+                  className="w-full text-left p-3 border-2 border-black font-extrabold text-xs bg-[#FDFBF7] hover:bg-[#FFE600] active:translate-x-0.5 active:translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_#000]"
+                >
+                  <span className="font-black text-sm block">{c.en}</span>
+                  <span className="text-zinc-700 block truncate">{c.tr}</span>
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setAmbiguousSelection(null)}
+              className="w-full py-2.5 bg-zinc-200 text-black border-2 border-black font-black uppercase text-xs hover:bg-zinc-300 active:translate-x-0.5 active:translate-y-0.5"
+            >
+              VAZGEÇ
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

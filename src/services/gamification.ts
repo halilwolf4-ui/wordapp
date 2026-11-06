@@ -40,7 +40,15 @@ export const BADGES: BadgeDefinition[] = [
   { id: 'combo_25', title: 'Kombo Kralı', description: 'Üst üste 25 doğru cevap ver', icon: '💥', category: 'special' },
   { id: 'combo_50', title: 'Kombo Ustası', description: 'Üst üste 50 doğru cevap ver', icon: '⚡', category: 'special' },
   { id: 'combo_100', title: 'Kombo Efsanesi', description: 'Üst üste 100 doğru cevap ver', icon: '🔥', category: 'special' },
-  { id: 'custom_creator', title: 'Özgün Yazar', description: 'Kendi özel kelimeni ekle', icon: '✍️', category: 'special' }
+  { id: 'custom_creator', title: 'Özgün Yazar', description: 'Kendi özel kelimeni ekle', icon: '✍️', category: 'special' },
+
+  // --- OYUN ROZETLERİ (Games - Yılan Savaşı & Gizli Kelime) ---
+  { id: 'snake_score_50', title: 'Labirent Kaçkını', description: 'Yılan Savaşında tek turda 50 puana ulaş', icon: '🐍', category: 'games' },
+  { id: 'snake_score_150', title: 'Kıvrılan Gölge', description: 'Yılan Savaşında tek turda 150 puana ulaş', icon: '⚡', category: 'games' },
+  { id: 'snake_words_50', title: 'Deri Değiştiren', description: 'Yılan Savaşında toplam 50 kelime bil', icon: '🦎', category: 'games' },
+  { id: 'secret_puzzles_5', title: 'Şifre Çözücü', description: '5 Gizli Kelime bulmacasını tamamla', icon: '🔍', category: 'games' },
+  { id: 'secret_puzzles_25', title: 'Kriptolog', description: '25 Gizli Kelime bulmacasını tamamla', icon: '🗝️', category: 'games' },
+  { id: 'secret_no_hints', title: 'Kör Uçuş', description: 'Hiç ipucu kullanmadan bir bulmaca çöz', icon: '👁️', category: 'games' }
 ];
 
 export function calculateLevel(xp: number): number {
@@ -70,6 +78,10 @@ export function checkUnlockedBadges(params: {
   masteredCount?: number;
   comboCount?: number;
   hasCustomWord?: boolean;
+  highScoreSnake?: number;
+  totalSnakeWords?: number;
+  secretWordPuzzlesSolved?: number;
+  secretWordNoHintSolves?: number;
 }): string[] {
   const existing = new Set(params.currentBadges || []);
 
@@ -116,6 +128,20 @@ export function checkUnlockedBadges(params: {
   if (combo >= 25) existing.add('combo_25');
   if (combo >= 50) existing.add('combo_50');
   if (combo >= 100) existing.add('combo_100');
+
+  // Games: Snake
+  const snakeScore = params.highScoreSnake || 0;
+  if (snakeScore >= 50) existing.add('snake_score_50');
+  if (snakeScore >= 150) existing.add('snake_score_150');
+  const snakeWords = params.totalSnakeWords || 0;
+  if (snakeWords >= 50) existing.add('snake_words_50');
+
+  // Games: Secret Word
+  const secretPuzzles = params.secretWordPuzzlesSolved || 0;
+  if (secretPuzzles >= 5) existing.add('secret_puzzles_5');
+  if (secretPuzzles >= 25) existing.add('secret_puzzles_25');
+  const noHintSolves = params.secretWordNoHintSolves || 0;
+  if (noHintSolves >= 1) existing.add('secret_no_hints');
 
   return Array.from(existing);
 }

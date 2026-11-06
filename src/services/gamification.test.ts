@@ -160,4 +160,50 @@ describe('Gamification & Badges', () => {
     });
     expect(unlocked).toContain('master_1000');
   });
+
+  it('unlocks snake game badges (Labirent Kaçkını, Kıvrılan Gölge, Deri Değiştiren)', () => {
+    let unlocked = checkUnlockedBadges({
+      currentBadges: [],
+      totalLearned: 0,
+      streak: 0,
+      highScoreSnake: 60,
+      totalSnakeWords: 20
+    });
+    expect(unlocked).toContain('snake_score_50');
+    expect(unlocked).not.toContain('snake_score_150');
+    expect(unlocked).not.toContain('snake_words_50');
+
+    unlocked = checkUnlockedBadges({
+      currentBadges: unlocked,
+      totalLearned: 0,
+      streak: 0,
+      highScoreSnake: 160,
+      totalSnakeWords: 55
+    });
+    expect(unlocked).toContain('snake_score_150');
+    expect(unlocked).toContain('snake_words_50');
+  });
+
+  it('unlocks secret word badges (Şifre Çözücü, Kriptolog, Kör Uçuş)', () => {
+    let unlocked = checkUnlockedBadges({
+      currentBadges: [],
+      totalLearned: 0,
+      streak: 0,
+      secretWordPuzzlesSolved: 6,
+      secretWordNoHintSolves: 0
+    });
+    expect(unlocked).toContain('secret_puzzles_5');
+    expect(unlocked).not.toContain('secret_puzzles_25');
+    expect(unlocked).not.toContain('secret_no_hints');
+
+    unlocked = checkUnlockedBadges({
+      currentBadges: unlocked,
+      totalLearned: 0,
+      streak: 0,
+      secretWordPuzzlesSolved: 26,
+      secretWordNoHintSolves: 1
+    });
+    expect(unlocked).toContain('secret_puzzles_25');
+    expect(unlocked).toContain('secret_no_hints');
+  });
 });

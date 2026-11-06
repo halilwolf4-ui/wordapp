@@ -3,6 +3,59 @@ import { addDays, getEffectiveDate } from './dateUtils';
 
 export const SRS_INTERVALS = [1, 2, 4, 7, 14, 21]; // ladder in days
 
+export interface ReviewAnswerDecision {
+  shouldSaveProgress: boolean;
+  nextProgress: Progress | null;
+  becameMastered: boolean;
+  shouldRecordReview: boolean;
+}
+
+/**
+ * Decides whether to persist progress and how to update it.
+ * If call originates from a game (Snake Game, Secret Word) and the word has no existing
+ * progress record, progress is NOT saved (preventing active words count inflation),
+ * while review counters and stats continue to be recorded.
+ */
+export function decideReviewAnswer(
+  existingProg: Progress | null | undefined,
+  wordId: number,
+  isCorrect: boolean,
+  isPartial: boolean,
+  effectiveDate: string = getEffectiveDate(),
+  lastMistake?: string,
+  source?: 'game' | 'review'
+): ReviewAnswerDecision {
+  if (!existingProg && source === 'game') {
+    return {
+      shouldSaveProgress: false,
+      nextProgress: null,
+      becameMastered: false,
+      shouldRecordReview: true
+    };
+  }
+
+  const { nextProgress } = calculateNextProgress(
+    existingProg || null,
+    wordId,
+    isCorrect,
+    effectiveDate,
+    lastMistake
+  );
+
+  // If partial (hint used), grant partial interval step
+  if (isPartial && isCorrect && nextProgress.step > 1) {
+    nextProgress.step -= 1; // don't jump full ladder if hint was used
+  }
+  const becameMastered = isCorrect && nextProgress.status === 'mastered' && !isPartial;
+
+  return {
+    shouldSaveProgress: true,
+    nextProgress,
+    becameMastered,
+    shouldRecordReview: true
+  };
+}
+
 export interface SrsAnswerResult {
   nextProgress: Progress;
   isMastered: boolean;

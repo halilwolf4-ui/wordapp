@@ -5,6 +5,7 @@ import { HighlightedText } from '../components/HighlightedText';
 import { Plus, Search, RotateCcw, CheckCircle, Sparkles, X, Loader2, BookOpen, Wand2, Trash2, Edit2 } from 'lucide-react';
 import { lookupWord } from '../services/dictionaryService';
 import { getWordEmoji } from '../utils/wordEmoji';
+import { exactKey } from '../utils/wordMatcher';
 
 interface Props {
   allWords: Word[];
@@ -218,20 +219,14 @@ export const WordListView: React.FC<Props> = React.memo(({
     e.preventDefault();
     if (!newEn.trim() || !newTr.trim()) return;
 
-    const cleanEn = newEn.trim().toLowerCase();
-    const existing = allWords.find(w => w.en.trim().toLowerCase() === cleanEn);
-
-    if (!editingWord && existing) {
-      const existingProg = progressMap.get(existing.id);
-      if (existingProg) {
-        alert(`"${newEn.trim()}" kelimesi zaten listenizde kayıtlı! Bir kelime iki kez eklenemez.`);
+    if (editingWord) {
+      const existingOther = allWords.find(
+        w => w.id !== editingWord.id && exactKey(w.en) === exactKey(newEn)
+      );
+      if (existingOther) {
+        alert(`"${newEn.trim()}" kelimesi zaten kütüphanede mevcut! Bir kelime iki kez eklenemez.`);
         return;
       }
-    }
-
-    if (editingWord && existing && existing.id !== editingWord.id) {
-      alert(`"${newEn.trim()}" kelimesi zaten kütüphanede mevcut! Bir kelime iki kez eklenemez.`);
-      return;
     }
 
     setIsSubmitting(true);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Word, Progress } from '../types';
+import { matchWordCandidate } from '../utils/wordMatcher';
 import {
   ClozeQuestion,
   generatePrepositionQuestions,
@@ -115,11 +116,10 @@ export const ClozeTestView: React.FC<Props> = ({
       }
 
       const rect = element.getBoundingClientRect();
-      const isAlreadyCustom = allWords.some(
-        w =>
-          (w.isCustom || w.categories?.includes('custom')) &&
-          w.en.toLowerCase().trim() === clean.toLowerCase()
-      );
+      const match = matchWordCandidate(clean, '', allWords);
+      const isAlreadyCustom =
+        (match.type === 'exact' || match.type === 'single_base' || match.type === 'resolved') &&
+        (match.word.isCustom || match.word.categories?.includes('custom'));
 
       setActivePopup({
         word: clean,

@@ -23,6 +23,7 @@ import {
   Shuffle
 } from 'lucide-react';
 import { Word } from '../types';
+import { matchWordCandidate } from '../utils/wordMatcher';
 import { sound } from '../services/audio';
 import { speakEnglish } from '../services/speech';
 import { fireCelebration, fireMicroSpark } from '../components/Confetti';
@@ -285,12 +286,6 @@ export const YdsYokdilView: React.FC<Props> = ({
   // Add a YÖKDİL vocabulary item to custom words
   const handleAddVocabItemToCustom = async (item: YokdilVocabItem) => {
     if (!onAddCustomWord || addedVocabIds.has(item.id)) return;
-    const alreadyExists = allWords.some(
-      w =>
-        (w.isCustom || w.categories?.includes('custom')) &&
-        w.en.toLowerCase().trim() === item.word.toLowerCase()
-    );
-    if (alreadyExists) return;
 
     const wordData: Omit<Word, 'id'> = {
       en: item.word,
@@ -329,11 +324,10 @@ export const YdsYokdilView: React.FC<Props> = ({
       }
 
       const rect = element.getBoundingClientRect();
-      const isAlreadyCustom = allWords.some(
-        w =>
-          (w.isCustom || w.categories?.includes('custom')) &&
-          w.en.toLowerCase().trim() === clean.toLowerCase()
-      );
+      const match = matchWordCandidate(clean, '', allWords);
+      const isAlreadyCustom =
+        (match.type === 'exact' || match.type === 'single_base' || match.type === 'resolved') &&
+        (match.word.isCustom || match.word.categories?.includes('custom'));
 
       setActivePopup({
         word: clean,

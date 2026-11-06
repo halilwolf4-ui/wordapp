@@ -34,6 +34,7 @@ interface Props {
     mistake?: string
   ) => Promise<void>;
   onAddXp?: (amount: number) => Promise<void>;
+  onGameOver?: (stats: { score: number; wordsCount: number }) => Promise<void>;
   onClose: () => void;
 }
 
@@ -42,6 +43,7 @@ export const SnakeGameView: React.FC<Props> = ({
   progressMap,
   onAnswerWord,
   onAddXp,
+  onGameOver,
   onClose
 }) => {
   // Mobile visualViewport height tracker
@@ -208,8 +210,12 @@ export const SnakeGameView: React.FC<Props> = ({
       if (scoreRef.current > 0 && onAddXp) {
         await onAddXp(scoreRef.current * 12 + maxComboRef.current * 4);
       }
+
+      if (onGameOver) {
+        await onGameOver({ score: scoreRef.current, wordsCount: scoreRef.current });
+      }
     }, 850);
-  }, [onAddXp]);
+  }, [onAddXp, onGameOver]);
 
   // Start game
   const startGame = () => {

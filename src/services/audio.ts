@@ -5,6 +5,7 @@
 
 class SoundService {
   private ctx: AudioContext | null = null;
+  private masterEnabled: boolean = true;
   private soundEnabled: boolean = true;
   private vibrationEnabled: boolean = true;
 
@@ -12,13 +13,22 @@ class SoundService {
     // AudioContext will be initialized on first user gesture
   }
 
-  public setPreferences(sound: boolean, vibration: boolean) {
+  public setPreferences(sound: boolean, vibration: boolean, masterSound: boolean = true) {
     this.soundEnabled = sound;
     this.vibrationEnabled = vibration;
+    this.masterEnabled = masterSound !== false;
+  }
+
+  public isMasterEnabled(): boolean {
+    return this.masterEnabled;
+  }
+
+  public isSoundActive(): boolean {
+    return this.masterEnabled && this.soundEnabled;
   }
 
   private getContext(): AudioContext | null {
-    if (!this.soundEnabled) return null;
+    if (!this.masterEnabled || !this.soundEnabled) return null;
     if (!this.ctx && typeof window !== 'undefined') {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioCtx) {

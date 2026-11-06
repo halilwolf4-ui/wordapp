@@ -425,8 +425,30 @@ export const SettingsView: React.FC<Props> = ({
           <span>SES VE TİTREŞİM</span>
         </h3>
 
+        {/* Master Sound Switch */}
+        <div className="flex items-center justify-between pb-3 border-b-2 border-black/10">
+          <div>
+            <label className="text-xs font-black text-black block uppercase">
+              SES
+            </label>
+            <span className="text-[11px] font-semibold text-zinc-700">
+              Kapalıyken tüm sesler ve telaffuz susar
+            </span>
+          </div>
+          <input
+            type="checkbox"
+            checked={settings.soundEnabled !== false}
+            onChange={(e) => {
+              const val = e.target.checked;
+              onUpdateSettings({ soundEnabled: val });
+              sound.setPreferences(settings.soundEffects, settings.vibration, val);
+            }}
+            className="w-5 h-5 accent-black border-2 border-black cursor-pointer"
+          />
+        </div>
+
         {/* Sound FX */}
-        <div className="flex items-center justify-between">
+        <div className={`flex items-center justify-between transition-opacity ${settings.soundEnabled === false ? 'opacity-40' : ''}`}>
           <div>
             <label className="text-xs font-black text-black block uppercase">
               SES EFEKTLERİ
@@ -435,12 +457,13 @@ export const SettingsView: React.FC<Props> = ({
           </div>
           <input
             type="checkbox"
-            checked={settings.soundEffects}
+            disabled={settings.soundEnabled === false}
+            checked={settings.soundEffects && settings.soundEnabled !== false}
             onChange={(e) => {
               onUpdateSettings({ soundEffects: e.target.checked });
-              sound.setPreferences(e.target.checked, settings.vibration);
+              sound.setPreferences(e.target.checked, settings.vibration, settings.soundEnabled !== false);
             }}
-            className="w-5 h-5 accent-black border-2 border-black cursor-pointer"
+            className="w-5 h-5 accent-black border-2 border-black cursor-pointer disabled:cursor-not-allowed"
           />
         </div>
 
@@ -457,7 +480,7 @@ export const SettingsView: React.FC<Props> = ({
             checked={settings.vibration}
             onChange={(e) => {
               onUpdateSettings({ vibration: e.target.checked });
-              sound.setPreferences(settings.soundEffects, e.target.checked);
+              sound.setPreferences(settings.soundEffects, e.target.checked, settings.soundEnabled !== false);
             }}
             className="w-5 h-5 accent-black border-2 border-black cursor-pointer"
           />
