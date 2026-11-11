@@ -4,6 +4,7 @@ import { sound } from '../services/audio';
 import { fireCelebration } from '../components/Confetti';
 import { ArrowLeft, Clock, Award, Zap, RotateCcw } from 'lucide-react';
 import { QuizOptionButton } from '../components/QuizOptionButton';
+import { buildMultipleChoiceOptions } from '../utils/distractorHelper';
 
 interface Props {
   allWords: Word[];
@@ -42,20 +43,7 @@ export const SpeedRoundView: React.FC<Props> = ({
     const randWord = allWords[Math.floor(Math.random() * allWords.length)];
     setCurrentWord(randWord);
 
-    const correctTr = randWord.tr.split(',')[0].trim();
-    const opts = [correctTr];
-
-    let safety = 0;
-    while (opts.length < 4 && allWords.length > 4 && safety < 100) {
-      safety++;
-      const randOther = allWords[Math.floor(Math.random() * allWords.length)];
-      const randTr = randOther.tr.split(',')[0].trim();
-      if (!opts.includes(randTr) && randTr !== correctTr) {
-        opts.push(randTr);
-      }
-    }
-
-    opts.sort(() => Math.random() - 0.5);
+    const opts = buildMultipleChoiceOptions(randWord, allWords, 4);
     setOptions(opts);
   };
 

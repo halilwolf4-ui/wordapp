@@ -38,6 +38,365 @@ interface Props {
   onClose: () => void;
 }
 
+// -------------------------------------------------------------
+// MEMOIZED ARENA: Renders only when game state (distance, combo, damage) changes
+// -------------------------------------------------------------
+interface SnakeArenaProps {
+  combo: number;
+  displayDistance: number;
+  serpentinePathD: string;
+  roadPathRef: React.RefObject<SVGPathElement>;
+  snakeBodyRef: React.RefObject<SVGPathElement>;
+  snakeHeadRef: React.RefObject<SVGGElement>;
+  entranceLineRef: React.RefObject<SVGLineElement>;
+  snakeDamaged: boolean;
+  isDangerZone: boolean;
+  bodyDash: { dashArray: string; dashOffset: string };
+  headPoint: { x: number; y: number; angle: number };
+  floatingDamage: { id: number; text: string; x: number; y: number } | null;
+  isCaughtAnimation: boolean;
+}
+
+const SnakeArena: React.FC<SnakeArenaProps> = React.memo(({
+  combo,
+  displayDistance,
+  serpentinePathD,
+  roadPathRef,
+  snakeBodyRef,
+  snakeHeadRef,
+  entranceLineRef,
+  snakeDamaged,
+  isDangerZone,
+  bodyDash,
+  headPoint,
+  floatingDamage,
+  isCaughtAnimation
+}) => {
+  return (
+    <div
+      className="relative flex-shrink-0 w-full bg-gradient-to-b from-[#0F1626] to-[#0A0E17] border-b border-white/10 px-2 py-1 flex flex-col justify-between overflow-hidden"
+      style={{
+        height: '45%',
+        minHeight: '200px'
+      }}
+    >
+      {/* Right Corner: Solitary Clear Distance Pill */}
+      <div className="absolute top-2 right-3 z-20 flex items-center gap-2">
+        {combo >= 3 && (
+          <div className="px-2 py-0.5 rounded-full font-bold text-[10px] bg-orange-500/25 text-orange-300 border border-orange-500/40 animate-pulse">
+            {combo >= 5 ? '+%40 Kombo!' : '+%20 Kombo!'}
+          </div>
+        )}
+
+        <div
+          className={`px-2.5 py-0.5 rounded-full font-black text-xs tracking-wide shadow-md transition-all ${
+            displayDistance > 45
+              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+              : displayDistance >= 15
+              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+              : 'bg-red-500/35 text-red-200 border border-red-500/60 animate-bounce'
+          }`}
+        >
+          Mesafe: {Math.max(0, displayDistance)} sn
+        </div>
+      </div>
+
+      {/* Serpentine SVG Canvas (ViewBox: 0 0 440 240) */}
+      <div className="relative w-full h-full flex items-center justify-center">
+        <svg
+          viewBox="0 0 440 240"
+          className="w-full h-full max-h-full drop-shadow-md select-none overflow-visible"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <defs>
+            <linearGradient id="snakeBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#15803D" />
+              <stop offset="50%" stopColor="#22C55E" />
+              <stop offset="100%" stopColor="#4ADE80" />
+            </linearGradient>
+
+            <linearGradient id="snakeBodyDangerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#991B1B" />
+              <stop offset="50%" stopColor="#EF4444" />
+              <stop offset="100%" stopColor="#FBBF24" />
+            </linearGradient>
+
+            <linearGradient id="snakeDamageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FFFFFF" />
+              <stop offset="50%" stopColor="#EF4444" />
+              <stop offset="100%" stopColor="#FFFFFF" />
+            </linearGradient>
+
+            <filter id="roadGlow" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000000" floodOpacity="0.6" />
+            </filter>
+          </defs>
+
+          {/* A. Visible Top-Right Entrance Track (where snake retreats when distance > 60, up to 120s) */}
+          <path
+            d="M 440 20 L 360 20"
+            fill="none"
+            stroke="rgba(255,255,255,0.08)"
+            strokeWidth="22"
+            strokeLinecap="round"
+            strokeDasharray="4 4"
+          />
+
+          {/* Entrance portal ring */}
+          <circle cx="430" cy="20" r="11" fill="rgba(34, 197, 94, 0.2)" stroke="rgba(34, 197, 94, 0.4)" strokeWidth="2" />
+
+          {/* B. Base Serpentine Road Track */}
+          <path
+            d={serpentinePathD}
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.09)"
+            strokeWidth="22"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            filter="url(#roadGlow)"
+          />
+
+          <path
+            d={serpentinePathD}
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.2)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray="4 6"
+          />
+
+          {/* C. Measurable Reference Path */}
+          <path
+            ref={roadPathRef}
+            d={serpentinePathD}
+            fill="none"
+            stroke="transparent"
+            strokeWidth="0.1"
+          />
+
+          {/* D. Snake Body Path - Controlled directly at 60fps via snakeBodyRef */}
+          <path
+            ref={snakeBodyRef}
+            d={serpentinePathD}
+            fill="none"
+            stroke={
+              snakeDamaged
+                ? 'url(#snakeDamageGrad)'
+                : isDangerZone
+                ? 'url(#snakeBodyDangerGrad)'
+                : 'url(#snakeBodyGrad)'
+            }
+            strokeWidth={snakeDamaged ? '21' : '18'}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray={bodyDash.dashArray}
+            strokeDashoffset="0"
+          />
+
+          {/* Entrance Line for retreat beyond 60s */}
+          <line
+            ref={entranceLineRef}
+            x1="360"
+            y1="20"
+            x2="360"
+            y2="20"
+            stroke={snakeDamaged ? '#FFFFFF' : 'url(#snakeBodyGrad)'}
+            strokeWidth="18"
+            strokeLinecap="round"
+            style={{ display: 'none' }}
+          />
+
+          {/* E. Snake Head Figure with Damage Reaction */}
+          <g
+            ref={snakeHeadRef}
+            transform={`translate(${headPoint.x}, ${headPoint.y}) rotate(${headPoint.angle}) ${
+              snakeDamaged
+                ? 'scale(1.3) translate(0, -2)'
+                : isDangerZone
+                ? 'scale(1.3)'
+                : 'scale(1.1)'
+            }`}
+          >
+            {/* Skull */}
+            <ellipse
+              cx="4"
+              cy="0"
+              rx="11"
+              ry="9.5"
+              fill={
+                snakeDamaged
+                  ? '#FFFFFF'
+                  : isDangerZone
+                  ? '#B91C1C'
+                  : '#15803D'
+              }
+              stroke={snakeDamaged ? '#EF4444' : isDangerZone ? '#F87171' : '#4ADE80'}
+              strokeWidth="2"
+            />
+
+            {/* Eyes */}
+            <circle cx="6" cy="-4" r="3" fill={snakeDamaged ? '#EF4444' : isDangerZone ? '#EF4444' : '#FFE45E'} />
+            <circle cx="6" cy="4" r="3" fill={snakeDamaged ? '#EF4444' : isDangerZone ? '#EF4444' : '#FFE45E'} />
+            <circle cx="7.5" cy="-4" r="1.3" fill="#000000" />
+            <circle cx="7.5" cy="4" r="1.3" fill="#000000" />
+
+            {/* Tongue */}
+            <path
+              d="M 13 0 L 20 -4 M 13 0 L 20 4"
+              stroke="#EF4444"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+            />
+          </g>
+
+          {/* F. Floating Hit Damage Badge on Snake (-7s) */}
+          {floatingDamage && (
+            <g transform={`translate(${floatingDamage.x}, ${floatingDamage.y - 18})`} className="animate-bounce">
+              <rect x="-20" y="-14" width="40" height="18" rx="9" fill="#EF4444" opacity="0.95" />
+              <text x="0" y="0" textAnchor="middle" fontSize="11" fill="#FFFFFF" fontWeight="900">
+                {floatingDamage.text}
+              </text>
+            </g>
+          )}
+
+          {/* G. Player Target at the final road exit (360, 220) */}
+          <g transform="translate(365, 220)">
+            <circle cx="0" cy="0" r="13" fill="rgba(59, 130, 246, 0.25)" stroke="#60A5FA" strokeWidth="2" />
+            <text
+              x="0"
+              y="5"
+              textAnchor="middle"
+              fontSize="14"
+              className={isDangerZone ? 'animate-bounce' : ''}
+            >
+              {isDangerZone ? '🏃' : '🧍'}
+            </text>
+          </g>
+
+          {/* H. Caught Constriction Animation Overlay */}
+          {isCaughtAnimation && (
+            <g transform="translate(365, 220)" className="animate-in zoom-in-95 duration-150">
+              <circle cx="0" cy="0" r="22" fill="none" stroke="#EF4444" strokeWidth="6" strokeDasharray="10 5" className="animate-spin" />
+              <circle cx="0" cy="0" r="14" fill="#DC2626" />
+              <text x="0" y="4" textAnchor="middle" fontSize="11" fill="#FFFFFF" fontWeight="900">
+                💀
+              </text>
+            </g>
+          )}
+        </svg>
+      </div>
+    </div>
+  );
+});
+
+// -------------------------------------------------------------
+// ISOLATED INPUT COMPONENT: Keeps keystrokes from re-rendering the whole game
+// -------------------------------------------------------------
+interface SnakeInputFormProps {
+  currentWordId?: number;
+  disabled: boolean;
+  onSubmit: (answer: string) => void;
+  onPass: () => void;
+}
+
+const SnakeInputForm: React.FC<SnakeInputFormProps> = React.memo(({
+  currentWordId,
+  disabled,
+  onSubmit,
+  onPass
+}) => {
+  const [text, setText] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Clear text and refocus when current word changes
+  useEffect(() => {
+    setText('');
+    inputRef.current?.focus({ preventScroll: true });
+  }, [currentWordId]);
+
+  // Keep focus when unpaused / disabled ends
+  useEffect(() => {
+    if (!disabled) {
+      inputRef.current?.focus({ preventScroll: true });
+    }
+  }, [disabled]);
+
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = text.trim();
+    if (!trimmed || disabled) return;
+    onSubmit(trimmed);
+    setText('');
+    inputRef.current?.focus({ preventScroll: true });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit();
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      onPass();
+      setText('');
+      inputRef.current?.focus({ preventScroll: true });
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex-shrink-0 space-y-1.5 mt-1">
+      <input
+        ref={inputRef}
+        type="text"
+        value={text}
+        onChange={e => setText(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Türkçe karşılığını yaz..."
+        autoFocus
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        disabled={disabled}
+        className="w-full bg-[#151C2C] border-2 border-white/20 focus:border-[#22C55E] focus:outline-none focus:ring-2 focus:ring-[#22C55E]/20 rounded-xl px-3 py-2 text-center text-base font-bold text-white placeholder-slate-500 shadow-md transition-all"
+      />
+
+      <div className="flex items-center gap-2 w-full">
+        <button
+          type="button"
+          onPointerDown={e => e.preventDefault()}
+          onClick={(e) => {
+            e.preventDefault();
+            onPass();
+            setText('');
+            inputRef.current?.focus({ preventScroll: true });
+          }}
+          disabled={disabled}
+          className="flex-1 py-2 rounded-xl bg-white/10 hover:bg-white/15 active:scale-95 text-slate-300 font-bold text-xs border border-white/10 transition-all flex items-center justify-center gap-1"
+        >
+          <span>Pas</span>
+          <span className="text-[9px] bg-black/40 px-1 py-0.5 rounded text-slate-400 font-mono hidden sm:inline">
+            Tab
+          </span>
+        </button>
+
+        <button
+          type="submit"
+          onPointerDown={e => e.preventDefault()}
+          onClick={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+          disabled={disabled || !text.trim()}
+          className="flex-[2] py-2 rounded-xl bg-gradient-to-r from-[#22C55E] to-[#16A34A] text-white font-extrabold text-xs sm:text-sm shadow-md hover:brightness-110 active:scale-95 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-1"
+        >
+          <span>Cevapla</span>
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </form>
+  );
+});
+
 export const SnakeGameView: React.FC<Props> = ({
   allWords,
   progressMap,
@@ -94,7 +453,6 @@ export const SnakeGameView: React.FC<Props> = ({
 
   // Active question & input
   const [currentWord, setCurrentWord] = useState<Word | null>(null);
-  const [inputVal, setInputVal] = useState('');
   const [reviewState, setReviewState] = useState<{
     type: 'correct' | 'wrong' | 'pass';
     text: string;
@@ -126,7 +484,6 @@ export const SnakeGameView: React.FC<Props> = ({
   const reviewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const damageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scorePopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   // SVG Direct DOM manipulation refs for 60fps butter-smooth rendering
   const roadPathRef = useRef<SVGPathElement>(null);
@@ -178,17 +535,6 @@ export const SnakeGameView: React.FC<Props> = ({
   useEffect(() => {
     queueManagerRef.current?.updateConfig(config);
   }, [config]);
-
-  // Focus input automatically whenever playing or word changes
-  const keepInputFocused = useCallback(() => {
-    if (gameState === 'playing' && !isPausedRef.current) {
-      inputRef.current?.focus({ preventScroll: true });
-    }
-  }, [gameState]);
-
-  useEffect(() => {
-    keepInputFocused();
-  }, [currentWord, keepInputFocused]);
 
   // Trigger game over with catch constriction animation
   const endGame = useCallback(async () => {
@@ -357,18 +703,15 @@ export const SnakeGameView: React.FC<Props> = ({
     if (!queueManagerRef.current) return;
     const nextWord = queueManagerRef.current.getNextWord();
     setCurrentWord(nextWord);
-    setInputVal('');
     isPausedRef.current = false;
     lastTimeRef.current = performance.now();
-    keepInputFocused();
-  }, [keepInputFocused]);
+  }, []);
 
   // Handle Answer Submit
-  const handleAnswerSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const handleAnswerSubmit = useCallback((trimmedAnswer: string) => {
     if (!currentWord || gameState !== 'playing' || isPausedRef.current) return;
 
-    const trimmed = inputVal.trim();
+    const trimmed = trimmedAnswer.trim();
     if (!trimmed) return;
 
     const oldDist = distanceRef.current;
@@ -518,10 +861,10 @@ export const SnakeGameView: React.FC<Props> = ({
 
       advanceToNextWord();
     }
-  };
+  }, [currentWord, gameState, combo, score, config, synonymTrMap, advanceToNextWord, endGame, onAnswerWord]);
 
   // Handle Pass - Instant skip to next word without freezing
-  const handlePass = () => {
+  const handlePass = useCallback(() => {
     if (!currentWord || gameState !== 'playing') return;
 
     const oldDist = distanceRef.current;
@@ -553,17 +896,7 @@ export const SnakeGameView: React.FC<Props> = ({
     }, 1500);
 
     advanceToNextWord();
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAnswerSubmit();
-    } else if (e.key === 'Tab') {
-      e.preventDefault();
-      handlePass();
-    }
-  };
+  }, [currentWord, gameState, score, advanceToNextWord, onAnswerWord]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -660,220 +993,21 @@ export const SnakeGameView: React.FC<Props> = ({
       </div>
 
       {/* 2. THE SERPENTINE ROAD ARENA (~45% of visible height, min 200px) */}
-      <div
-        className="relative flex-shrink-0 w-full bg-gradient-to-b from-[#0F1626] to-[#0A0E17] border-b border-white/10 px-2 py-1 flex flex-col justify-between overflow-hidden"
-        style={{
-          height: '45%',
-          minHeight: '200px'
-        }}
-      >
-        {/* Right Corner: Solitary Clear Distance Pill */}
-        <div className="absolute top-2 right-3 z-20 flex items-center gap-2">
-          {combo >= 3 && (
-            <div className="px-2 py-0.5 rounded-full font-bold text-[10px] bg-orange-500/25 text-orange-300 border border-orange-500/40 animate-pulse">
-              {combo >= 5 ? '+%40 Kombo!' : '+%20 Kombo!'}
-            </div>
-          )}
-
-          <div
-            className={`px-2.5 py-0.5 rounded-full font-black text-xs tracking-wide shadow-md transition-all ${
-              displayDistance > 45
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                : displayDistance >= 15
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                : 'bg-red-500/35 text-red-200 border border-red-500/60 animate-bounce'
-            }`}
-          >
-            Mesafe: {Math.max(0, displayDistance)} sn
-          </div>
-        </div>
-
-        {/* Serpentine SVG Canvas (ViewBox: 0 0 440 240) */}
-        <div className="relative w-full h-full flex items-center justify-center">
-          <svg
-            viewBox="0 0 440 240"
-            className="w-full h-full max-h-full drop-shadow-md select-none overflow-visible"
-            preserveAspectRatio="xMidYMid meet"
-          >
-            <defs>
-              <linearGradient id="snakeBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#15803D" />
-                <stop offset="50%" stopColor="#22C55E" />
-                <stop offset="100%" stopColor="#4ADE80" />
-              </linearGradient>
-
-              <linearGradient id="snakeBodyDangerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#991B1B" />
-                <stop offset="50%" stopColor="#EF4444" />
-                <stop offset="100%" stopColor="#FBBF24" />
-              </linearGradient>
-
-              <linearGradient id="snakeDamageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#FFFFFF" />
-                <stop offset="50%" stopColor="#EF4444" />
-                <stop offset="100%" stopColor="#FFFFFF" />
-              </linearGradient>
-
-              <filter id="roadGlow" x="-10%" y="-10%" width="120%" height="120%">
-                <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000000" floodOpacity="0.6" />
-              </filter>
-            </defs>
-
-            {/* A. Visible Top-Right Entrance Track (where snake retreats when distance > 60, up to 120s) */}
-            <path
-              d="M 440 20 L 360 20"
-              fill="none"
-              stroke="rgba(255,255,255,0.08)"
-              strokeWidth="22"
-              strokeLinecap="round"
-              strokeDasharray="4 4"
-            />
-
-            {/* Entrance portal ring */}
-            <circle cx="430" cy="20" r="11" fill="rgba(34, 197, 94, 0.2)" stroke="rgba(34, 197, 94, 0.4)" strokeWidth="2" />
-
-            {/* B. Base Serpentine Road Track */}
-            <path
-              d={serpentinePathD}
-              fill="none"
-              stroke="rgba(255, 255, 255, 0.09)"
-              strokeWidth="22"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              filter="url(#roadGlow)"
-            />
-
-            <path
-              d={serpentinePathD}
-              fill="none"
-              stroke="rgba(255, 255, 255, 0.2)"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeDasharray="4 6"
-            />
-
-            {/* C. Measurable Reference Path */}
-            <path
-              ref={roadPathRef}
-              d={serpentinePathD}
-              fill="none"
-              stroke="transparent"
-              strokeWidth="0.1"
-            />
-
-            {/* D. Snake Body Path - Controlled directly at 60fps via snakeBodyRef */}
-            <path
-              ref={snakeBodyRef}
-              d={serpentinePathD}
-              fill="none"
-              stroke={
-                snakeDamaged
-                  ? 'url(#snakeDamageGrad)'
-                  : isDangerZone
-                  ? 'url(#snakeBodyDangerGrad)'
-                  : 'url(#snakeBodyGrad)'
-              }
-              strokeWidth={snakeDamaged ? '21' : '18'}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeDasharray={bodyDash.dashArray}
-              strokeDashoffset="0"
-            />
-
-            {/* Entrance Line for retreat beyond 60s */}
-            <line
-              ref={entranceLineRef}
-              x1="360"
-              y1="20"
-              x2="360"
-              y2="20"
-              stroke={snakeDamaged ? '#FFFFFF' : 'url(#snakeBodyGrad)'}
-              strokeWidth="18"
-              strokeLinecap="round"
-              style={{ display: 'none' }}
-            />
-
-            {/* E. Snake Head Figure with Damage Reaction */}
-            <g
-              ref={snakeHeadRef}
-              transform={`translate(${headPoint.x}, ${headPoint.y}) rotate(${headPoint.angle}) ${
-                snakeDamaged
-                  ? 'scale(1.3) translate(0, -2)'
-                  : isDangerZone
-                  ? 'scale(1.3)'
-                  : 'scale(1.1)'
-              }`}
-            >
-              {/* Skull */}
-              <ellipse
-                cx="4"
-                cy="0"
-                rx="11"
-                ry="9.5"
-                fill={
-                  snakeDamaged
-                    ? '#FFFFFF'
-                    : isDangerZone
-                    ? '#B91C1C'
-                    : '#15803D'
-                }
-                stroke={snakeDamaged ? '#EF4444' : isDangerZone ? '#F87171' : '#4ADE80'}
-                strokeWidth="2"
-              />
-
-              {/* Eyes */}
-              <circle cx="6" cy="-4" r="3" fill={snakeDamaged ? '#EF4444' : isDangerZone ? '#EF4444' : '#FFE45E'} />
-              <circle cx="6" cy="4" r="3" fill={snakeDamaged ? '#EF4444' : isDangerZone ? '#EF4444' : '#FFE45E'} />
-              <circle cx="7.5" cy="-4" r="1.3" fill="#000000" />
-              <circle cx="7.5" cy="4" r="1.3" fill="#000000" />
-
-              {/* Tongue */}
-              <path
-                d="M 13 0 L 20 -4 M 13 0 L 20 4"
-                stroke="#EF4444"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-              />
-            </g>
-
-            {/* F. Floating Hit Damage Badge on Snake (-7s) */}
-            {floatingDamage && (
-              <g transform={`translate(${floatingDamage.x}, ${floatingDamage.y - 18})`} className="animate-bounce">
-                <rect x="-20" y="-14" width="40" height="18" rx="9" fill="#EF4444" opacity="0.95" />
-                <text x="0" y="0" textAnchor="middle" fontSize="11" fill="#FFFFFF" fontWeight="900">
-                  {floatingDamage.text}
-                </text>
-              </g>
-            )}
-
-            {/* G. Player Target at the final road exit (360, 220) */}
-            <g transform="translate(365, 220)">
-              <circle cx="0" cy="0" r="13" fill="rgba(59, 130, 246, 0.25)" stroke="#60A5FA" strokeWidth="2" />
-              <text
-                x="0"
-                y="5"
-                textAnchor="middle"
-                fontSize="14"
-                className={isDangerZone ? 'animate-bounce' : ''}
-              >
-                {isDangerZone ? '🏃' : '🧍'}
-              </text>
-            </g>
-
-            {/* H. Caught Constriction Animation Overlay */}
-            {isCaughtAnimation && (
-              <g transform="translate(365, 220)" className="animate-in zoom-in-95 duration-150">
-                <circle cx="0" cy="0" r="22" fill="none" stroke="#EF4444" strokeWidth="6" strokeDasharray="10 5" className="animate-spin" />
-                <circle cx="0" cy="0" r="14" fill="#DC2626" />
-                <text x="0" y="4" textAnchor="middle" fontSize="11" fill="#FFFFFF" fontWeight="900">
-                  💀
-                </text>
-              </g>
-            )}
-          </svg>
-        </div>
-      </div>
+      <SnakeArena
+        combo={combo}
+        displayDistance={displayDistance}
+        serpentinePathD={serpentinePathD}
+        roadPathRef={roadPathRef}
+        snakeBodyRef={snakeBodyRef}
+        snakeHeadRef={snakeHeadRef}
+        entranceLineRef={entranceLineRef}
+        snakeDamaged={snakeDamaged}
+        isDangerZone={isDangerZone}
+        bodyDash={bodyDash}
+        headPoint={headPoint}
+        floatingDamage={floatingDamage}
+        isCaughtAnimation={isCaughtAnimation}
+      />
 
       {/* 3. CENTER & BOTTOM: COMPACT QUESTION CARD & INPUTS */}
       <div className="flex-1 flex flex-col justify-between p-2.5 max-w-md w-full mx-auto overflow-hidden">
@@ -948,54 +1082,12 @@ export const SnakeGameView: React.FC<Props> = ({
             </div>
 
             {/* INPUT + PAS + CEVAPLA BUTTONS */}
-            <form onSubmit={handleAnswerSubmit} className="flex-shrink-0 space-y-1.5 mt-1">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputVal}
-                onChange={e => setInputVal(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Türkçe karşılığını yaz..."
-                autoFocus
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                disabled={isPausedRef.current}
-                className="w-full bg-[#151C2C] border-2 border-white/20 focus:border-[#22C55E] focus:outline-none focus:ring-2 focus:ring-[#22C55E]/20 rounded-xl px-3 py-2 text-center text-base font-bold text-white placeholder-slate-500 shadow-md transition-all"
-              />
-
-              <div className="flex items-center gap-2 w-full">
-                <button
-                  type="button"
-                  onPointerDown={e => e.preventDefault()}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handlePass();
-                  }}
-                  disabled={isPausedRef.current}
-                  className="flex-1 py-2 rounded-xl bg-white/10 hover:bg-white/15 active:scale-95 text-slate-300 font-bold text-xs border border-white/10 transition-all flex items-center justify-center gap-1"
-                >
-                  <span>Pas</span>
-                  <span className="text-[9px] bg-black/40 px-1 py-0.5 rounded text-slate-400 font-mono hidden sm:inline">
-                    Tab
-                  </span>
-                </button>
-
-                <button
-                  type="submit"
-                  onPointerDown={e => e.preventDefault()}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleAnswerSubmit();
-                  }}
-                  disabled={isPausedRef.current || !inputVal.trim()}
-                  className="flex-[2] py-2 rounded-xl bg-gradient-to-r from-[#22C55E] to-[#16A34A] text-white font-extrabold text-xs sm:text-sm shadow-md hover:brightness-110 active:scale-95 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-1"
-                >
-                  <span>Cevapla</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </form>
+            <SnakeInputForm
+              currentWordId={currentWord.id}
+              disabled={isPausedRef.current}
+              onSubmit={handleAnswerSubmit}
+              onPass={handlePass}
+            />
           </>
         )}
 

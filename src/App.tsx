@@ -1149,6 +1149,7 @@ export const App: React.FC = () => {
               style={{ contentVisibility: currentTab === 'learn' ? 'visible' : 'hidden' }}
             >
               <LearnView
+                isActive={currentTab === 'learn'}
                 wordsQueue={newWordsQueue}
                 allWordsMap={wordsMap}
                 allProgress={allProgress}
@@ -1160,6 +1161,7 @@ export const App: React.FC = () => {
                 onMarkWordKnown={handleMarkWordKnown}
                 onMarkWordLearning={handleMarkWordLearning}
                 onRecordMistake={handleRecordMistake}
+                onDemoteMasteredWord={handleDemoteMasteredWord}
                 onSessionCompleted={handleSessionCompleted}
                 onComboUpdate={handleComboUpdate}
                 onClose={handleCloseToHome}
@@ -1172,6 +1174,7 @@ export const App: React.FC = () => {
               style={{ contentVisibility: currentTab === 'review' ? 'visible' : 'hidden' }}
             >
               <ReviewView
+                isActive={currentTab === 'review'}
                 dueQueue={dueQueue}
                 allWordsMap={wordsMap}
                 allProgress={allProgress}

@@ -259,7 +259,7 @@ export function syncAndSelectNextQuestion<T extends GenericSessionItem>(params: 
 
   if (pickedItem.isBuffer) {
     chosenWord = allWordsMap.get(pickedItem.wordId) || uncompleted[0].word;
-    questionType = 'choice';
+    questionType = 'typing';
   } else {
     const targetItem = list.find(i => i.word.id === pickedItem.wordId)!;
     chosenWord = targetItem.word;

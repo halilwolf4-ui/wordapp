@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getSmartDistractors, getWordPos, getNounDomain } from './distractorHelper';
+import { getSmartDistractors, getWordPos, getNounDomain, buildMultipleChoiceOptions } from './distractorHelper';
 import { Word } from '../types';
 
 describe('Smart Distractor Helper', () => {
@@ -77,5 +77,58 @@ describe('Smart Distractor Helper', () => {
     expect(getNounDomain(words[0])).toBe('body'); // back
     expect(getNounDomain(words[4])).toBe('body'); // spine
     expect(getNounDomain(words[6])).toBe('profession'); // lawyer
+  });
+
+  it('never picks a distractor that shares an alternative meaning with target (e.g. rear for back)', () => {
+    const testWords: Word[] = [
+      { id: 101, en: 'back', tr: 'sırt, arka, geri, geriye', examples: [], categories: ['anatomy'] },
+      { id: 102, en: 'rear', tr: 'geri, arka', examples: [], categories: ['anatomy'] },
+      { id: 103, en: 'chest', tr: 'göğüs', examples: [], categories: ['anatomy'] },
+      { id: 104, en: 'arm', tr: 'kol', examples: [], categories: ['anatomy'] },
+      { id: 105, en: 'leg', tr: 'bacak', examples: [], categories: ['anatomy'] }
+    ];
+
+    const distractors = getSmartDistractors(testWords[0], testWords, 3);
+    expect(distractors.length).toBe(3);
+    // 'rear' shares 'geri' and 'arka' with 'back', so it must be rejected!
+    expect(distractors).not.toContain('geri');
+    expect(distractors).not.toContain('arka');
+    expect(distractors).toContain('göğüs');
+    expect(distractors).toContain('kol');
+    expect(distractors).toContain('bacak');
+  });
+
+  it('rejects circumflex differences as overlap (e.g. hâkim vs hakim)', () => {
+    const testWords: Word[] = [
+      { id: 201, en: 'judge', tr: 'hâkim, yargıç', examples: [], categories: ['custom'] },
+      { id: 202, en: 'ruler', tr: 'hakim, egemen', examples: [], categories: ['custom'] },
+      { id: 203, en: 'lawyer', tr: 'avukat', examples: [], categories: ['custom'] },
+      { id: 204, en: 'doctor', tr: 'doktor', examples: [], categories: ['custom'] },
+      { id: 205, en: 'teacher', tr: 'öğretmen', examples: [], categories: ['custom'] }
+    ];
+
+    const distractors = getSmartDistractors(testWords[0], testWords, 3);
+    expect(distractors.length).toBe(3);
+    expect(distractors).not.toContain('hakim');
+    expect(distractors).not.toContain('hâkim');
+  });
+
+  it('buildMultipleChoiceOptions produces exactly 4 unique options including correct primary answer', () => {
+    const testWords: Word[] = [
+      { id: 301, en: 'back', tr: 'sırt, arka, geri, geriye', examples: [], categories: ['anatomy'] },
+      { id: 302, en: 'rear', tr: 'geri, arka', examples: [], categories: ['anatomy'] },
+      { id: 303, en: 'chest', tr: 'göğüs', examples: [], categories: ['anatomy'] },
+      { id: 304, en: 'arm', tr: 'kol', examples: [], categories: ['anatomy'] },
+      { id: 305, en: 'leg', tr: 'bacak', examples: [], categories: ['anatomy'] }
+    ];
+
+    const options = buildMultipleChoiceOptions(testWords[0], testWords, 4);
+    expect(options.length).toBe(4);
+    expect(options).toContain('sırt');
+    expect(options).not.toContain('geri');
+    expect(options).not.toContain('arka');
+    // Ensure all options are unique
+    const unique = new Set(options);
+    expect(unique.size).toBe(4);
   });
 });

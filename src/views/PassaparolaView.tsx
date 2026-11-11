@@ -17,6 +17,14 @@ interface Props {
   onClose: () => void;
 }
 
+const getPassaparolaFontSize = (text: string): string => {
+  const len = text.length;
+  if (len <= 12) return 'text-base sm:text-lg';
+  if (len <= 20) return 'text-sm';
+  if (len <= 30) return 'text-xs';
+  return 'text-[10px] leading-tight';
+};
+
 export const PassaparolaView: React.FC<Props> = ({
   allWords,
   progressMap,
@@ -328,30 +336,79 @@ export const PassaparolaView: React.FC<Props> = ({
             })}
 
             {/* Center Area: Big Letter & English Word */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-auto px-4">
-              <div className="w-10 h-10 bg-[#FFE600] border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_0px_#000] mb-0.5">
-                <span className="text-xl font-black text-black">{currentQ.letter}</span>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-auto px-3">
+              {/* Big Letter Box */}
+              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#FFE600] border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_0px_#000] mb-0.5 shrink-0">
+                <span className="text-lg sm:text-xl font-black text-black">{currentQ.letter}</span>
               </div>
 
-              <div className="flex items-center justify-center space-x-1 mt-0.5 max-w-[170px]">
-                <span className={`font-black text-black uppercase tracking-wide truncate ${
-                  currentQ.displayWord.length > 13 ? 'text-sm' : 'text-base sm:text-lg'
-                }`}>
-                  {currentQ.displayWord}
-                </span>
-                <AudioButton text={currentQ.displayWord} size={15} />
+              {/* English Word Display */}
+              <div className="max-w-[145px] w-full flex flex-col items-center justify-center">
+                {(() => {
+                  const display = currentQ.displayWord;
+                  const isToInfinitive = /^to\s+/i.test(display);
+                  const isThreeForms = display.includes(' - ');
+
+                  if (isToInfinitive) {
+                    const mainWord = display.replace(/^to\s+/i, '').trim();
+                    const fontSize = getPassaparolaFontSize(mainWord);
+                    return (
+                      <>
+                        <span className="px-1.5 py-0.5 bg-zinc-200 text-zinc-700 text-[9px] font-black uppercase tracking-wider border border-zinc-400 shadow-[1px_1px_0px_0px_#000] mb-0.5 inline-block">
+                          TO
+                        </span>
+                        <span className={`font-black text-black uppercase tracking-wide break-words whitespace-normal text-center leading-tight ${fontSize}`}>
+                          {mainWord}
+                        </span>
+                      </>
+                    );
+                  }
+
+                  if (isThreeForms) {
+                    const forms = display.split(/\s*-\s*/);
+                    return (
+                      <div className="flex flex-col items-center leading-tight my-0.5">
+                        {forms.map((form, idx) => (
+                          <span
+                            key={idx}
+                            className={`font-black text-black uppercase tracking-wide break-words whitespace-normal text-center ${
+                              form.length > 10 || forms.length > 3 ? 'text-[10px]' : 'text-xs sm:text-sm'
+                            }`}
+                          >
+                            {form}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  const fontSize = getPassaparolaFontSize(display);
+                  return (
+                    <span className={`font-black text-black uppercase tracking-wide break-words whitespace-normal text-center leading-tight ${fontSize}`}>
+                      {display}
+                    </span>
+                  );
+                })()}
               </div>
 
-              {currentQ.word.ipa && (
-                <span className="text-[10px] text-zinc-600 font-mono font-bold">
-                  {currentQ.word.ipa}
-                </span>
-              )}
+              {/* Audio & IPA pronunciation row */}
+              <div className="flex items-center justify-center gap-1 mt-0.5 max-w-[145px]">
+                {currentQ.word.ipa && (
+                  <span className="text-[9px] sm:text-[10px] text-zinc-600 font-mono font-bold truncate max-w-[110px]">
+                    {currentQ.word.ipa}
+                  </span>
+                )}
+                <AudioButton
+                  text={currentQ.displayWord}
+                  size={12}
+                  className="p-1 bg-white text-black border border-black shadow-[1px_1px_0px_0px_#000] hover:bg-[#FFE600] active:translate-x-[1px] active:translate-y-[1px] transition-all shrink-0"
+                />
+              </div>
 
               {/* Feedback inline under word */}
               {lastFeedback && (
                 <div
-                  className={`mt-1 px-2 py-0.5 text-[10px] font-black uppercase border-2 border-black max-w-[170px] truncate shadow-[2px_2px_0px_0px_#000] ${
+                  className={`mt-1 px-2 py-0.5 text-[9px] sm:text-[10px] font-black uppercase border-2 border-black max-w-[145px] w-full text-center break-words whitespace-normal leading-tight shadow-[2px_2px_0px_0px_#000] ${
                     lastFeedback.isCorrect
                       ? 'bg-[#4ADE80] text-black'
                       : 'bg-[#FF5588] text-white'

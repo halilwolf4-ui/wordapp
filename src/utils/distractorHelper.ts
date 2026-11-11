@@ -1,4 +1,5 @@
 import { Word } from '../types';
+import { normalizeTurkishKey } from './turkishMatcher';
 
 export type PartOfSpeech = 'phrasal_verb' | 'verb' | 'adjective' | 'adverb' | 'noun';
 export type NounDomain = 'body' | 'profession' | 'finance' | 'nature' | 'place' | 'time' | 'event' | 'object' | 'general';
@@ -54,6 +55,7 @@ interface WordMeta {
   level: number;
   trClean: string;
   trNorm: string;
+  allTrNorms: string[];
 }
 
 const wordMetaCache = new WeakMap<Word, WordMeta>();
@@ -65,8 +67,12 @@ function getWordMeta(w: Word): WordMeta {
     const domain = pos === 'noun' ? computeNounDomain(w) : null;
     const level = computeWordLevel(w);
     const trClean = w.tr.split(/[,;/]+/)[0].trim();
-    const trNorm = trClean.toLocaleLowerCase('tr-TR');
-    meta = { pos, domain, level, trClean, trNorm };
+    const trNorm = normalizeTurkishKey(trClean);
+    const allTrNorms = (w.tr || '')
+      .split(/[,;/]+/)
+      .map(m => normalizeTurkishKey(m))
+      .filter(Boolean);
+    meta = { pos, domain, level, trClean, trNorm, allTrNorms };
     wordMetaCache.set(w, meta);
   }
   return meta;
@@ -246,13 +252,24 @@ export function getSmartDistractors(
   sessionWords?: Word[]
 ): string[] {
   const targetMeta = getWordMeta(targetWord);
-  const targetTrNorm = targetMeta.trNorm;
   const targetPos = targetMeta.pos;
   const targetDomain = targetMeta.domain;
   const targetLevel = targetMeta.level;
 
   const selectedDistractors: string[] = [];
-  const usedTrSet = new Set<string>([targetTrNorm]);
+  // 1. Hedef kelimenin Türkçe karşılığındaki TÜM anlamlarını normalize edip yasaklı kümeye ekle
+  const usedTrSet = new Set<string>(targetMeta.allTrNorms);
+  if (targetMeta.trNorm) {
+    usedTrSet.add(targetMeta.trNorm);
+  }
+
+  // 2. Çeldirici adayının herhangi bir Türkçe anlamı hedef kelimenin anlamlarından biriyle kesişiyorsa ele
+  const hasOverlap = (w: Word): boolean => {
+    if (w.id === targetWord.id) return true;
+    const meta = getWordMeta(w);
+    if (!meta.trNorm || meta.trClean.length === 0) return true;
+    return meta.allTrNorms.some(norm => usedTrSet.has(norm));
+  };
 
   function pickFrom(pool: Word[]) {
     if (pool.length === 0 || selectedDistractors.length >= count) return;
@@ -273,10 +290,11 @@ export function getSmartDistractors(
         bucket[randIdx] = bucket[len - 1];
         len--;
 
-        const meta = getWordMeta(w);
-        if (!usedTrSet.has(meta.trNorm) && meta.trClean.length > 0) {
+        if (!hasOverlap(w)) {
+          const meta = getWordMeta(w);
           selectedDistractors.push(meta.trClean);
           usedTrSet.add(meta.trNorm);
+          meta.allTrNorms.forEach(norm => usedTrSet.add(norm));
         }
       }
     }
@@ -288,10 +306,9 @@ export function getSmartDistractors(
   // Priority 1: Pick from current session words matching the exact same POS!
   if (sessionWords && sessionWords.length > 0) {
     const sessionMatchPool = sessionWords.filter(w => {
-      if (w.id === targetWord.id) return false;
-      const meta = getWordMeta(w);
-      if (meta.trNorm === targetTrNorm || meta.trNorm.length === 0) return false;
+      if (hasOverlap(w)) return false;
 
+      const meta = getWordMeta(w);
       const isWVerbFamily = meta.pos === 'verb' || meta.pos === 'phrasal_verb';
       if (isTargetVerbFamily !== isWVerbFamily) return false;
       if (!isTargetVerbFamily && meta.pos !== targetPos) return false;
@@ -314,11 +331,10 @@ export function getSmartDistractors(
       : (pools.get(targetGroupKey) || []);
 
     const pool1 = candidatePool.filter(w => {
-      if (w.id === targetWord.id) return false;
-      const meta = getWordMeta(w);
-      if (meta.trNorm === targetTrNorm || meta.trNorm.length === 0) return false;
+      if (hasOverlap(w)) return false;
 
       if (targetPos === 'noun') {
+        const meta = getWordMeta(w);
         const wDomain = meta.domain;
         if (targetDomain === 'event' && wDomain !== 'event') return false;
         if (targetDomain === 'body' && wDomain !== 'body') return false;
@@ -334,13 +350,56 @@ export function getSmartDistractors(
   // Priority 3: Fallback same POS family
   if (selectedDistractors.length < count) {
     const fallbackPool = pools.get(targetGroupKey) || [];
-    const pool2 = fallbackPool.filter(w => {
-      if (w.id === targetWord.id) return false;
-      const meta = getWordMeta(w);
-      return meta.trNorm !== targetTrNorm && meta.trNorm.length > 0;
-    });
+    const pool2 = fallbackPool.filter(w => !hasOverlap(w));
     pickFrom(pool2);
   }
 
+  // Priority 4: Ultimate fallback from any words (ensures we never return too few or crash)
+  if (selectedDistractors.length < count) {
+    const pool3 = allWords.filter(w => !hasOverlap(w));
+    pickFrom(pool3);
+  }
+
   return selectedDistractors;
+}
+
+/**
+ * Assembles and deduplicates 4 multiple choice options (1 correct + distractors).
+ * Guarantees zero overlapping meanings, no duplicate texts, and exactly `count` items.
+ */
+export function buildMultipleChoiceOptions(
+  targetWord: Word,
+  allWords: Word[],
+  count: number = 4,
+  sessionWords?: Word[]
+): string[] {
+  const correctTr = targetWord.tr.split(/[,;/]+/)[0].trim();
+  const smartDistractors = getSmartDistractors(targetWord, allWords, count - 1, sessionWords);
+
+  // Normalize edilmiş metne göre tekilleştir
+  const seenKeys = new Set<string>([normalizeTurkishKey(correctTr)]);
+  const uniqueOptions: string[] = [correctTr];
+
+  for (const dist of smartDistractors) {
+    const key = normalizeTurkishKey(dist);
+    if (!seenKeys.has(key) && dist.trim().length > 0) {
+      seenKeys.add(key);
+      uniqueOptions.push(dist);
+    }
+  }
+
+  // Tekilleştirme sonrası şık sayısı count'un altına düşerse yeni çeldirici ekle
+  if (uniqueOptions.length < count) {
+    const extraDistractors = getSmartDistractors(targetWord, allWords, count * 2, sessionWords);
+    for (const dist of extraDistractors) {
+      const key = normalizeTurkishKey(dist);
+      if (!seenKeys.has(key) && dist.trim().length > 0) {
+        seenKeys.add(key);
+        uniqueOptions.push(dist);
+        if (uniqueOptions.length >= count) break;
+      }
+    }
+  }
+
+  return uniqueOptions.sort(() => Math.random() - 0.5);
 }

@@ -7,7 +7,7 @@
  *   input: "  KOL " -> TRUE
  */
 
-function normalizeText(text: string): string {
+export function normalizeText(text: string): string {
   return text
     .trim()
     .toLocaleLowerCase('tr-TR')
@@ -16,14 +16,23 @@ function normalizeText(text: string): string {
 }
 
 // Remove Turkish accents for relaxed matching
-function stripAccents(text: string): string {
+export function stripAccents(text: string): string {
   return text
     .replace(/ç/g, 'c')
     .replace(/ğ/g, 'g')
     .replace(/ı/g, 'i')
     .replace(/ö/g, 'o')
     .replace(/ş/g, 's')
-    .replace(/ü/g, 'u');
+    .replace(/ü/g, 'u')
+    .replace(/â/g, 'a')
+    .replace(/î/g, 'i')
+    .replace(/û/g, 'u');
+}
+
+export function normalizeTurkishKey(text: string): string {
+  if (!text) return '';
+  const noParens = text.replace(/\([^)]*\)/g, '');
+  return stripAccents(normalizeText(noParens));
 }
 
 export function checkTurkishAnswer(input: string, correctTr: string): boolean {

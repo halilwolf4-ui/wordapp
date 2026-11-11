@@ -68,6 +68,69 @@ const B1_C2_CATEGORIES = new Set([
 ]);
 
 /**
+ * LocalStorage key for persisting played secret word IDs across sessions.
+ */
+export const STORAGE_SECRET_WORD_PLAYED_IDS = 'secretWordPlayedIds';
+
+/**
+ * Robust Fisher-Yates shuffle algorithm.
+ */
+export function shuffleArray<T>(array: T[]): T[] {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = result[i];
+    result[i] = result[j];
+    result[j] = temp;
+  }
+  return result;
+}
+
+/**
+ * Safely retrieves previously played target word IDs from localStorage.
+ */
+export function getPlayedTargetWordIds(): Set<number> {
+  if (typeof localStorage === 'undefined') return new Set<number>();
+  try {
+    const raw = localStorage.getItem(STORAGE_SECRET_WORD_PLAYED_IDS);
+    if (!raw) return new Set<number>();
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return new Set<number>(parsed.filter(n => typeof n === 'number'));
+    }
+  } catch (err) {
+    console.warn('SecretWord: error reading played IDs from localStorage', err);
+  }
+  return new Set<number>();
+}
+
+/**
+ * Safely persists a played target word ID into localStorage.
+ */
+export function savePlayedTargetWordId(id: number): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    const played = getPlayedTargetWordIds();
+    played.add(id);
+    localStorage.setItem(STORAGE_SECRET_WORD_PLAYED_IDS, JSON.stringify(Array.from(played)));
+  } catch (err) {
+    console.warn('SecretWord: error saving played ID to localStorage', err);
+  }
+}
+
+/**
+ * Clears previously played target word IDs from localStorage when pool is exhausted.
+ */
+export function clearPlayedTargetWordIds(): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.removeItem(STORAGE_SECRET_WORD_PLAYED_IDS);
+  } catch (err) {
+    console.warn('SecretWord: error clearing played IDs from localStorage', err);
+  }
+}
+
+/**
  * Strips leading "to " infinitive marker and trims English word.
  */
 export function cleanEnglishWord(en: string): string {
@@ -357,7 +420,7 @@ export function generateSecretWordPuzzle(
   const usedTargets = sessionState?.usedTargetWordIds || new Set<number>();
   const usedRows = sessionState?.usedRowWordIds || new Set<number>();
 
-  // 1. Target word candidate pool
+  // 1. Target word candidate pool (User words first)
   let targetCandidates: Word[] = userWords.filter(
     w => isValidTargetWord(w) && !usedTargets.has(w.id)
   );
@@ -368,24 +431,33 @@ export function generateSecretWordPuzzle(
     const generalValid = generalWords.filter(
       w => isValidTargetWord(w) && !usedTargets.has(w.id)
     );
-    // Add B1-C2 general words
-    targetCandidates = targetCandidates.concat(generalValid.slice(0, 50));
+    // Fisher-Yates shuffle the valid general words
+    const shuffledGeneral = shuffleArray(generalValid);
+    targetCandidates = targetCandidates.concat(shuffledGeneral.slice(0, 50));
   }
 
-  // If all targets were exhausted in session, reset usedTargets
+  // If all targets were exhausted in session / localStorage, reset and start fresh cycle
   if (targetCandidates.length === 0) {
     usedTargets.clear();
-    targetCandidates = userWords
-      .concat(generalWords)
-      .filter(w => isValidTargetWord(w));
+    clearPlayedTargetWordIds();
+
+    const freshUserValid = userWords.filter(w => isValidTargetWord(w));
+    const freshGeneralValid = generalWords.filter(w => isValidTargetWord(w));
+    targetCandidates = freshUserValid.concat(shuffleArray(freshGeneralValid).slice(0, 50));
   }
 
-  // Weight candidates towards B1-C2 levels
+  // Randomize order within candidates, then prioritize User words and B1-C2 level words
+  targetCandidates = shuffleArray(targetCandidates);
   targetCandidates.sort((a, b) => {
+    const aUser = progressMap.has(a.id) ? 1 : 0;
+    const bUser = progressMap.has(b.id) ? 1 : 0;
+    if (aUser !== bUser) return bUser - aUser;
+
     const aB1 = isB1ToC2Word(a) ? 1 : 0;
     const bB1 = isB1ToC2Word(b) ? 1 : 0;
     if (aB1 !== bB1) return bB1 - aB1;
-    return Math.random() - 0.5;
+
+    return 0;
   });
 
   // Try up to 30 target candidates
@@ -414,10 +486,9 @@ export function generateSecretWordPuzzle(
 
   // Fallback: If no candidate among sampleTargets produced a valid puzzle, try general pool targets
   if (!bestPuzzle) {
-    const generalFallbackTargets = generalWords
-      .filter(w => isValidTargetWord(w))
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 30);
+    const generalFallbackTargets = shuffleArray(
+      generalWords.filter(w => isValidTargetWord(w))
+    ).slice(0, 30);
 
     for (const target of generalFallbackTargets) {
       const puzzle = generatePuzzleForTarget(
@@ -438,13 +509,14 @@ export function generateSecretWordPuzzle(
     throw new Error('Bulmaca oluşturulamadı: Uygun kelime eşleşmesi bulunamadı.');
   }
 
-  // Register used words in session
+  // Register used words in session & persist in localStorage
   if (sessionState) {
     sessionState.usedTargetWordIds.add(bestPuzzle.targetWord.id);
     for (const row of bestPuzzle.rows) {
       sessionState.usedRowWordIds.add(row.wordId);
     }
   }
+  savePlayedTargetWordId(bestPuzzle.targetWord.id);
 
   return bestPuzzle;
 }
@@ -462,7 +534,7 @@ export class SecretWordSessionManager {
     this.allWords = allWords;
     this.progressMap = progressMap;
     this.sessionState = {
-      usedTargetWordIds: new Set<number>(),
+      usedTargetWordIds: getPlayedTargetWordIds(),
       usedRowWordIds: new Set<number>()
     };
     this.initIndexes();

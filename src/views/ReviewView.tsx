@@ -3,8 +3,8 @@ import { Word, Progress } from '../types';
 import { AudioButton } from '../components/AudioButton';
 import { sound } from '../services/audio';
 import { fireCelebration } from '../components/Confetti';
-import { checkTurkishAnswer, checkTurkishAnswerDetailed } from '../utils/turkishMatcher';
-import { getSmartDistractors } from '../utils/distractorHelper';
+import { checkTurkishAnswerDetailed, normalizeTurkishKey } from '../utils/turkishMatcher';
+import { buildMultipleChoiceOptions } from '../utils/distractorHelper';
 import {
   ArrowLeft,
   ArrowRight,
@@ -27,6 +27,7 @@ import { syncAndSelectNextQuestion, PoolQueueItem, MIN_QUESTION_GAP } from '../u
 import { getWordEmoji, formatCorrectAnswer } from '../utils/wordEmoji';
 
 interface Props {
+  isActive?: boolean;
   dueQueue: Progress[];
   allWordsMap: Map<number, Word>;
   allProgress?: Progress[];
@@ -74,6 +75,7 @@ interface PersistedReviewState {
 const STORAGE_REVIEW_SESSION = 'kelime_avi_active_review_session';
 
 export const ReviewView: React.FC<Props> = React.memo(({
+  isActive = false,
   dueQueue,
   allWordsMap,
   allProgress,
@@ -123,6 +125,7 @@ export const ReviewView: React.FC<Props> = React.memo(({
 
   const [combo, setCombo] = useState(0);
   const lastWordIdRef = useRef<number | null>(null);
+  const spokenWordIdRef = useRef<number | null>(null);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initializedRef = useRef(false);
   const typingInputRef = useRef<HTMLInputElement>(null);
@@ -200,56 +203,60 @@ export const ReviewView: React.FC<Props> = React.memo(({
     return prog?.status === 'mastered';
   }, [currentQuestion, allProgress]);
 
-  // Önceki tekrar edilmiş veya öğrenilmiş kelimeleri topla (Tampon / Ara Pekiştirme havuzu)
-  // KULLANICI KURALI: 4'ten az kelime kalınca araya öğrenilenler ve daha önce 6/6 yapılmış (mastered) kelimeler harmanlanarak girer.
+  // Önceki pekişen (Tampon / Ara Pekiştirme) kelimeleri topla
+  // KULLANICI KURALI: Yalnızca kullanıcının ustalaştığı (status === 'mastered', 6/6) kelimelerden rastgele seçilir.
+  // 'learning' ve oturum içi henüz master olmamış kelimeler KESİNLİKLE dahil edilmez.
   const getPreviouslyReviewedWords = useCallback((): Word[] => {
+    if (!allProgress || allProgress.length === 0) return [];
+
+    const masteredWords: Word[] = [];
     const addedIds = new Set<number>();
 
-    // 1. Bu oturumda zaten tamamlanmış kelimeler
-    const sessionCompleted: Word[] = [];
-    sessionList.forEach(item => {
-      if (item.typingPassed && !addedIds.has(item.word.id)) {
-        sessionCompleted.push(item.word);
-        addedIds.add(item.word.id);
-      }
-    });
-
-    // 2. Daha önce 6/6 yapılmış (pekişen / 'mastered') kelimeler
-    const masteredWords: Word[] = [];
-    // 3. Halen öğrenilmekte olan ('learning') kelimeler
-    const learningWords: Word[] = [];
-
-    if (allProgress && allProgress.length > 0) {
-      allProgress.forEach(p => {
-        if (!addedIds.has(p.wordId)) {
-          const w = allWordsMap.get(p.wordId);
-          if (w) {
-            if (p.status === 'mastered') {
-              masteredWords.push(w);
-            } else if (p.status === 'learning') {
-              learningWords.push(w);
-            }
-            addedIds.add(w.id);
-          }
+    for (const p of allProgress) {
+      if (p.status === 'mastered' && !addedIds.has(p.wordId)) {
+        const w = allWordsMap.get(p.wordId);
+        if (w) {
+          masteredWords.push(w);
+          addedIds.add(w.id);
         }
-      });
+      }
     }
 
-    const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
-
-    const shuffledMastered = shuffle(masteredWords);
-    const shuffledOthers = shuffle([...sessionCompleted, ...learningWords]);
-
-    // Mastered (6/6) kelimelerin ara pekiştirmede düzenli aralıklarla gelmesi için harmanla
-    const mixed: Word[] = [];
-    const maxLen = Math.max(shuffledMastered.length, shuffledOthers.length);
-    for (let i = 0; i < maxLen; i++) {
-      if (i < shuffledMastered.length) mixed.push(shuffledMastered[i]);
-      if (i < shuffledOthers.length) mixed.push(shuffledOthers[i]);
+    // Hiç master kelime yoksa pekiştirme sorusu hiç çıkmasın (ana kuyruk devam etsin)
+    if (masteredWords.length === 0) {
+      return [];
     }
 
-    return mixed.length > 0 ? mixed : shuffle([...masteredWords, ...learningWords, ...sessionCompleted]);
-  }, [sessionList, allProgress, allWordsMap]);
+    const shuffle = <T,>(arr: T[]): T[] => {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    };
+
+    const shuffled = shuffle(masteredWords);
+
+    // Master kelime sayısı gereken sayıdan (en az 5) azsa:
+    // Eldeki master kelimeleri tekrar kullanarak aralarında mümkün olduğunca mesafe bırakarak tamamla
+    if (shuffled.length < 5) {
+      const repeated: Word[] = [];
+      while (repeated.length < 5) {
+        const cycle = shuffle(masteredWords);
+        for (const w of cycle) {
+          if (repeated.length > 0 && repeated[repeated.length - 1].id === w.id && cycle.length > 1) {
+            continue;
+          }
+          repeated.push(w);
+          if (repeated.length >= 5) break;
+        }
+      }
+      return repeated;
+    }
+
+    return shuffled;
+  }, [allProgress, allWordsMap]);
 
   // Pick Next Question
   const pickNextQuestion = useCallback(
@@ -349,10 +356,8 @@ export const ReviewView: React.FC<Props> = React.memo(({
       });
 
       if (questionType === 'choice') {
-        const correctTr = chosenWord.tr.split(/[,;/]+/)[0].trim();
         const sessionWords = list.map(i => i.word);
-        const smartDistractors = getSmartDistractors(chosenWord, allWordsArr, 3, sessionWords);
-        const opts = [correctTr, ...smartDistractors].sort(() => Math.random() - 0.5);
+        const opts = buildMultipleChoiceOptions(chosenWord, allWordsArr, 4, sessionWords);
         setChoiceOptions(opts);
       }
     },
@@ -568,12 +573,15 @@ export const ReviewView: React.FC<Props> = React.memo(({
     });
   };
 
-  // Auto pronounce
+  // Auto pronounce only when Review tab is active and only once per question
   useEffect(() => {
-    if (currentQuestion && phase === 'study') {
-      speakEnglish(currentQuestion.word.en);
+    if (isActive && phase === 'study' && currentQuestion) {
+      if (spokenWordIdRef.current !== currentQuestion.word.id) {
+        speakEnglish(currentQuestion.word.en);
+        spokenWordIdRef.current = currentQuestion.word.id;
+      }
     }
-  }, [currentQuestion, phase]);
+  }, [isActive, currentQuestion, phase]);
 
   useEffect(() => {
     return () => {
@@ -587,7 +595,8 @@ export const ReviewView: React.FC<Props> = React.memo(({
 
     setSelectedChoice(option);
     const targetWord = currentQuestion.word;
-    const isCorrect = checkTurkishAnswer(option, targetWord.tr);
+    const correctTr = targetWord.tr.split(/[,;/]+/)[0].trim();
+    const isCorrect = normalizeTurkishKey(option) === normalizeTurkishKey(correctTr);
     const isRefresherOrFiller = currentQuestion.isRefresher || currentQuestion.isFiller;
 
     if (isCorrect) {
@@ -686,10 +695,9 @@ export const ReviewView: React.FC<Props> = React.memo(({
   const handleTypingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!typedInput.trim() || !currentQuestion) return;
-    // Ara pekiştirme kelimeleri asla SRS aşamasını (0/6 sayacı) değiştiremez
-    if (currentQuestion.isFiller || currentQuestion.isRefresher) return;
 
     const targetWord = currentQuestion.word;
+    const isBuffer = !!(currentQuestion.isFiller || currentQuestion.isRefresher);
     const detailed = checkTurkishAnswerDetailed(typedInput, targetWord.tr);
     const isCorrect = detailed.isCorrect;
 
@@ -700,54 +708,85 @@ export const ReviewView: React.FC<Props> = React.memo(({
       setCombo(nextCombo);
       onComboUpdate?.(nextCombo);
 
-      const targetItem = sessionList.find(i => i.word.id === targetWord.id);
-      const hadFailed = targetItem?.failedAny ?? false;
+      if (!isBuffer) {
+        const targetItem = sessionList.find(i => i.word.id === targetWord.id);
+        const hadFailed = targetItem?.failedAny ?? false;
 
-      const updatedList = sessionList.map(item =>
-        item.word.id === targetWord.id ? { ...item, typingPassed: true, lastAskedStep: globalStep } : item
-      );
-      setSessionList(updatedList);
+        const updatedList = sessionList.map(item =>
+          item.word.id === targetWord.id ? { ...item, typingPassed: true, lastAskedStep: globalStep } : item
+        );
+        setSessionList(updatedList);
 
-      // Show feedback instantly; the DB write + app-wide re-render runs after the feedback animation
-      setInlineFeedback({ status: 'correct', correctAnswer: targetWord.tr });
+        // Show feedback instantly; the DB write + app-wide re-render runs after the feedback animation
+        setInlineFeedback({ status: 'correct', correctAnswer: targetWord.tr });
 
-      const nextStep = globalStep + 1;
-      setGlobalStep(nextStep);
-      saveReviewSession(updatedList, nextStep);
+        const nextStep = globalStep + 1;
+        setGlobalStep(nextStep);
+        saveReviewSession(updatedList, nextStep);
 
-      const isExtra = isExtraReviewRef.current;
-      feedbackTimerRef.current = setTimeout(async () => {
-        // Ekstra tekrarda SRS (0/6) aşaması ilerletilmez ve kullanıcının serisi bozulmaz
-        if (!isExtra) {
-          await onReviewAnswer(targetWord.id, !hadFailed, false);
-        }
-        pickNextQuestion(updatedList, nextStep, targetWord.id, sessionTarget);
-      }, 350);
+        const isExtra = isExtraReviewRef.current;
+        feedbackTimerRef.current = setTimeout(async () => {
+          // Ekstra tekrarda SRS (0/6) aşaması ilerletilmez ve kullanıcının serisi bozulmaz
+          if (!isExtra) {
+            await onReviewAnswer(targetWord.id, !hadFailed, false);
+          }
+          pickNextQuestion(updatedList, nextStep, targetWord.id, sessionTarget);
+        }, 350);
+      } else {
+        // Ara pekiştirme kelimeleri asla SRS aşamasını (0/6 sayacı) ve oturum sayaçlarını DEĞİŞTİREMEZ
+        bufferLastAskedRef.current.set(targetWord.id, globalStep);
+        setInlineFeedback({ status: 'correct', correctAnswer: targetWord.tr });
+
+        const nextStep = globalStep + 1;
+        setGlobalStep(nextStep);
+        saveReviewSession(sessionList, nextStep);
+
+        feedbackTimerRef.current = setTimeout(() => {
+          pickNextQuestion(sessionList, nextStep, targetWord.id, sessionTarget);
+        }, 350);
+      }
     } else {
       sound.playWrong();
       setCombo(0);
 
       const typedMistake = typedInput.trim();
-      const updatedList = sessionList.map(item =>
-        item.word.id === targetWord.id
-          ? {
-              ...item,
-              failedAny: true,
-              choicePassed: false,
-              choicePassedAtStep: null,
-              lastAskedStep: globalStep,
-              lastMistake: typedMistake // Bir önceki yanlış kelimeyi kaydet (hafıza şişmez)
-            }
-          : item
-      );
-      setSessionList(updatedList);
-
-      if (!isExtraReviewRef.current && onRecordMistake) {
-        onRecordMistake(targetWord.id, typedMistake);
-      }
-
       const nextStep = globalStep + 1;
       setGlobalStep(nextStep);
+
+      if (!isBuffer) {
+        const updatedList = sessionList.map(item =>
+          item.word.id === targetWord.id
+            ? {
+                ...item,
+                failedAny: true,
+                choicePassed: false,
+                choicePassedAtStep: null,
+                lastAskedStep: globalStep,
+                lastMistake: typedMistake // Bir önceki yanlış kelimeyi kaydet (hafıza şişmez)
+              }
+            : item
+        );
+        setSessionList(updatedList);
+
+        if (!isExtraReviewRef.current && onRecordMistake) {
+          onRecordMistake(targetWord.id, typedMistake);
+        }
+
+        saveReviewSession(updatedList, nextStep);
+      } else {
+        // Ara pekiştirme kelimeleri oturum sayaçlarını bozmaz, sadece adım kaydedilir
+        bufferLastAskedRef.current.set(targetWord.id, globalStep);
+        saveReviewSession(sessionList, nextStep);
+
+        // KULLANICI KURALI: Eğer kullanıcı yanlış bilirse 6/6 yaptığı kelime 5/6'ya düşsün
+        const prog = allProgress?.find(p => p.wordId === targetWord.id);
+        if (prog?.status === 'mastered' && onDemoteMasteredWord) {
+          onDemoteMasteredWord(targetWord.id, typedMistake);
+        }
+        if (!isExtraReviewRef.current && onRecordMistake) {
+          onRecordMistake(targetWord.id, typedMistake);
+        }
+      }
 
       // Increment wrong count for hints logic
       setHintStats(prev => {
@@ -759,18 +798,51 @@ export const ReviewView: React.FC<Props> = React.memo(({
             wrongCount: existing.wrongCount + 1
           }
         };
-        saveReviewSession(updatedList, nextStep, updated);
+        saveReviewSession(sessionList, nextStep, updated);
         return updated;
       });
+
+      const prog = allProgress?.find(p => p.wordId === targetWord.id);
+      const wasDemoted = isBuffer && prog?.status === 'mastered';
 
       setInlineFeedback({
         status: 'wrong',
         correctAnswer: targetWord.tr,
         isNear: detailed.isNear,
-        nearExplanation: detailed.nearExplanation
+        nearExplanation: wasDemoted
+          ? '⚠️ 6/6 seviyesinden 5/6 seviyesine düşürüldü (Öğrenilenler havuzuna geri alındı).'
+          : detailed.nearExplanation
       });
-      // Kullanıcı "Geç" butonuna basınca ilerler
+      // Kullanıcı "DİĞER KELİMEYE GEÇ" butonuna basınca ilerler
     }
+  };
+
+  // Pekiştirmede "Pas / Hatırlayamadım" butonu
+  const handlePassBuffer = () => {
+    if (!currentQuestion || inlineFeedback !== null) return;
+    sound.playWrong();
+    setCombo(0);
+
+    const targetWord = currentQuestion.word;
+    const nextStep = globalStep + 1;
+    setGlobalStep(nextStep);
+
+    bufferLastAskedRef.current.set(targetWord.id, globalStep);
+    saveReviewSession(sessionList, nextStep);
+
+    const prog = allProgress?.find(p => p.wordId === targetWord.id);
+    if (prog?.status === 'mastered' && onDemoteMasteredWord) {
+      onDemoteMasteredWord(targetWord.id, 'Pas');
+    }
+    if (!isExtraReviewRef.current && onRecordMistake) {
+      onRecordMistake(targetWord.id, 'Pas');
+    }
+
+    setInlineFeedback({
+      status: 'wrong',
+      correctAnswer: targetWord.tr,
+      nearExplanation: '⚠️ 6/6 seviyesinden 5/6 seviyesine düşürüldü (Öğrenilenler havuzuna geri alındı).'
+    });
   };
 
   const handleAdvanceManually = () => {
@@ -1058,7 +1130,8 @@ export const ReviewView: React.FC<Props> = React.memo(({
               <div className={inlineFeedback !== null ? "space-y-1.5 sm:space-y-2" : "space-y-2.5 sm:space-y-3"}>
                 {choiceOptions.map((opt, idx) => {
                   const isSelected = selectedChoice === opt;
-                  const isThisCorrect = checkTurkishAnswer(opt, currentQuestion.word.tr);
+                  const correctTr = currentQuestion.word.tr.split(/[,;/]+/)[0].trim();
+                  const isThisCorrect = normalizeTurkishKey(opt) === normalizeTurkishKey(correctTr);
 
                   return (
                     <QuizOptionButton
@@ -1130,13 +1203,25 @@ export const ReviewView: React.FC<Props> = React.memo(({
                     <ArrowRight size={16} strokeWidth={3} />
                   </button>
                 ) : (
-                  <button
-                    type="submit"
-                    disabled={!typedInput.trim()}
-                    className="w-full py-2.5 sm:py-3 bg-[#4ADE80] text-black active:translate-x-[1px] active:translate-y-[1px] disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:text-zinc-500 dark:disabled:text-zinc-500 disabled:shadow-none disabled:cursor-not-allowed border-2 border-black font-black uppercase text-xs sm:text-sm shadow-[3px_3px_0px_0px_#000] active:shadow-none transition-all"
-                  >
-                    ONAYLA
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      type="submit"
+                      disabled={!typedInput.trim()}
+                      className="w-full py-2.5 sm:py-3 bg-[#4ADE80] text-black active:translate-x-[1px] active:translate-y-[1px] disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:text-zinc-500 dark:disabled:text-zinc-500 disabled:shadow-none disabled:cursor-not-allowed border-2 border-black font-black uppercase text-xs sm:text-sm shadow-[3px_3px_0px_0px_#000] active:shadow-none transition-all"
+                    >
+                      ONAYLA
+                    </button>
+
+                    {(currentQuestion.isFiller || currentQuestion.isRefresher) && (
+                      <button
+                        type="button"
+                        onClick={handlePassBuffer}
+                        className="w-full py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 border-2 border-dashed border-zinc-400 dark:border-zinc-600 font-bold uppercase text-xs transition-all flex items-center justify-center space-x-1.5"
+                      >
+                        <span>Pas / Hatırlayamadım</span>
+                      </button>
+                    )}
+                  </div>
                 )}
               </form>
             )}

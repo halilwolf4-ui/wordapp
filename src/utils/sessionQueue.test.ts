@@ -394,6 +394,70 @@ describe('sessionQueue - 5 Kelimelik Tampon Döngüsü ve Minimum 5 Soru Aralık
     // Yalnızca 3 kelimeye saplanıp kalmamalı, havuzdan yeni tampon kelimeler rotasyona girmelidir!
     expect(allSeenBufferIds.size).toBeGreaterThan(3);
   });
+
+  it('pekiştirme (isBuffer) soruları daima typing (yazmalı) tipi ile döner', () => {
+    const targetWord = createMockWord(1, 'target', 'hedef');
+    const bufferWord = createMockWord(2, 'master', 'usta');
+    const map = new Map<number, Word>([
+      [1, targetWord],
+      [2, bufferWord]
+    ]);
+
+    const list: GenericSessionItem[] = [
+      {
+        word: targetWord,
+        choicePassed: false,
+        typingPassed: false,
+        choicePassedAtStep: null,
+        lastAskedStep: 1
+      }
+    ];
+
+    const res = syncAndSelectNextQuestion({
+      list,
+      currentStep: 2,
+      excludeWordId: 1,
+      currentQueue: [],
+      candidateBuffers: [bufferWord],
+      allWordsMap: map,
+      bufferLastAskedMap: new Map()
+    });
+
+    expect(res).not.toBeNull();
+    expect(res!.isBuffer).toBe(true);
+    expect(res!.chosenWord.id).toBe(2);
+    expect(res!.questionType).toBe('typing');
+  });
+
+  it('hiç buffer kelime yoksa (candidateBuffers boş) kilitlenmeden hedef kelimelerle devam eder', () => {
+    const targetWord = createMockWord(1, 'target', 'hedef');
+    const map = new Map<number, Word>([[1, targetWord]]);
+
+    const list: GenericSessionItem[] = [
+      {
+        word: targetWord,
+        choicePassed: false,
+        typingPassed: false,
+        choicePassedAtStep: null,
+        lastAskedStep: null
+      }
+    ];
+
+    const res = syncAndSelectNextQuestion({
+      list,
+      currentStep: 1,
+      excludeWordId: null,
+      currentQueue: [],
+      candidateBuffers: [],
+      allWordsMap: map,
+      bufferLastAskedMap: new Map()
+    });
+
+    expect(res).not.toBeNull();
+    expect(res!.isBuffer).toBe(false);
+    expect(res!.chosenWord.id).toBe(1);
+    expect(res!.nextQueue.filter(q => q.isBuffer).length).toBe(0);
+  });
 });
 
 
